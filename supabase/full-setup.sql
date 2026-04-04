@@ -513,10 +513,10 @@ DO $$ DECLARE tbl TEXT; BEGIN
   FOR tbl IN SELECT table_name FROM information_schema.tables
     WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
   LOOP
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM anon', tbl);
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM authenticated', tbl);
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM public', tbl);
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM app_user', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM anon', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM authenticated', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM public', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM app_user', tbl);
   END LOOP;
 END $$;
 

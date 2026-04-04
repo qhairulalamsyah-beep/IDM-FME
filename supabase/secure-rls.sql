@@ -27,11 +27,11 @@ BEGIN
     WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
   LOOP
     -- Revoke ALL from anon
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM anon', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM anon', tbl);
     -- Revoke ALL from authenticated
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM authenticated', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM authenticated', tbl);
     -- Revoke ALL from public (the PostgreSQL role)
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM public', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM public', tbl);
   END LOOP;
 END $$;
 
@@ -55,7 +55,7 @@ BEGIN
   FOR tbl IN SELECT table_name FROM information_schema.tables
     WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
   LOOP
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM app_user', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM app_user', tbl);
   END LOOP;
 END $$;
 
@@ -175,7 +175,7 @@ BEGIN
     FROM pg_policies
     WHERE schemaname = 'public'
   LOOP
-    EXECUTE format('DROP POLICY IF EXISTS "%I" ON public."%I"', r.policyname, r.tablename);
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', r.policyname, r.tablename);
   END LOOP;
 END $$;
 
