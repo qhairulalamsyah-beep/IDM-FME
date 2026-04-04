@@ -176,13 +176,13 @@ CREATE POLICY authenticated_read_public_users ON public."User"
   FOR SELECT TO authenticated USING ("isAdmin" = false);
 
 CREATE POLICY authenticated_read_own_profile ON public."User"
-  FOR SELECT TO authenticated USING (auth.uid() = id);
+  FOR SELECT TO authenticated USING (auth.uid()::text = id);
 
 CREATE POLICY authenticated_insert_user ON public."User"
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid()::text = id);
 
 CREATE POLICY authenticated_update_own_profile ON public."User"
-  FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+  FOR UPDATE TO authenticated USING (auth.uid()::text = id) WITH CHECK (auth.uid()::text = id);
 
 CREATE POLICY app_user_all_user ON public."User"
   FOR ALL TO app_user USING (true) WITH CHECK (true);
@@ -207,7 +207,7 @@ CREATE POLICY authenticated_read_registrations ON public."Registration"
   FOR SELECT TO authenticated USING (true);
 
 CREATE POLICY authenticated_insert_own_registration ON public."Registration"
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = "userId");
+  FOR INSERT TO authenticated WITH CHECK (auth.uid()::text = "userId");
 
 CREATE POLICY app_user_all_registration ON public."Registration"
   FOR ALL TO app_user USING (true) WITH CHECK (true);
@@ -273,7 +273,7 @@ CREATE POLICY anon_read_confirmed_donations ON public."Donation"
   FOR SELECT TO anon USING ("paymentStatus" = 'confirmed');
 
 CREATE POLICY authenticated_read_own_donations ON public."Donation"
-  FOR SELECT TO authenticated USING ("paymentStatus" = 'confirmed' OR auth.uid() = "userId");
+  FOR SELECT TO authenticated USING ("paymentStatus" = 'confirmed' OR auth.uid()::text = "userId");
 
 CREATE POLICY authenticated_insert_donation ON public."Donation"
   FOR INSERT TO authenticated WITH CHECK (true);
