@@ -390,3 +390,21 @@ Stage Summary:
 - Supabase connection works in code but fails from sandbox (network limitation, not a bug)
 - All code passes lint, main page compiles successfully
 - Pushed to GitHub: `404bdc6..0ac9a35 main -> main`
+
+---
+Task ID: 2
+Agent: main
+Task: Prepare and deploy to Vercel
+
+Work Log:
+- Fixed `next.config.ts`: removed `output: "standalone"` (not needed for Vercel)
+- Fixed `package.json`: simplified build script to `npx prisma generate && next build` (removed standalone cp commands)
+- Verified lint passes cleanly
+- Pushed changes to GitHub
+- Attempted Vercel CLI deployment but CLI requires interactive login (not available in sandbox)
+- Provided complete Vercel Dashboard deployment guide with all 13 environment variables
+
+Stage Summary:
+- Code is deployment-ready on GitHub (branch main, commit 682e176)
+- 2 config changes: next.config.ts (no standalone) + package.json (simplified build)
+- User needs to deploy via Vercel Dashboard at vercel.com/new
