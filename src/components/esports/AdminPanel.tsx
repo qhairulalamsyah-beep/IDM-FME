@@ -41,6 +41,8 @@ import {
   Gamepad2,
   ChevronDown,
   Pencil,
+  Upload,
+  Camera,
 } from 'lucide-react';
 import { BotManagementTab } from './BotManagementTab';
 import { PlayerManagementScreen } from './PlayerManagementScreen';
@@ -393,6 +395,7 @@ export function AdminPanel({
   const [editingClub, setEditingClub] = useState<ClubData | null>(null);
   const [clubEditForm, setClubEditForm] = useState<Partial<ClubData>>({});
   const [editClubSaving, setEditClubSaving] = useState(false);
+  const [clubLogoUploading, setClubLogoUploading] = useState(false);
   const [showCreateClub, setShowCreateClub] = useState(false);
   const [newClubForm, setNewClubForm] = useState<Partial<ClubData>>({ name: '' });
   const [creatingClub, setCreatingClub] = useState(false);
@@ -2016,13 +2019,58 @@ export function AdminPanel({
                             <p className="text-[11px] tracking-[0.2em] uppercase text-white/30 font-semibold">Club Baru</p>
                             <motion.button onClick={() => setShowCreateClub(false)} className="text-white/30 hover:text-white/60" whileTap={{ scale: 0.9 }}><X className="w-4 h-4" /></motion.button>
                           </div>
-                          <input
-                            type="text"
-                            value={newClubForm.name || ''}
-                            onChange={(e) => setNewClubForm(f => ({ ...f, name: e.target.value }))}
-                            placeholder="Nama club..."
-                            className="w-full bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-white/90 text-[13px] placeholder-white/20 focus:outline-none focus:border-white/20 transition-colors"
-                          />
+                          {/* Logo Upload */}
+                          <div className="flex items-center gap-3">
+                            <label className={`relative w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center cursor-pointer overflow-hidden transition-all ${clubLogoUploading ? 'opacity-60 pointer-events-none' : 'hover:ring-2 hover:ring-white/20'} ${newClubForm.logoUrl ? '' : isMale ? 'bg-gradient-to-br from-amber-500/20 to-orange-600/20' : 'bg-gradient-to-br from-violet-500/20 to-purple-600/20'}`}>
+                              {clubLogoUploading ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-white/40" />
+                              ) : newClubForm.logoUrl ? (
+                                <img src={newClubForm.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                              ) : (
+                                <Camera className="w-4 h-4 text-white/30" />
+                              )}
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,image/gif"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  if (file.size > 5 * 1024 * 1024) { addToast('Ukuran file maksimal 5MB', 'error'); return; }
+                                  if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) { addToast('Format harus JPG, PNG, WebP, atau GIF', 'error'); return; }
+                                  setClubLogoUploading(true);
+                                  try {
+                                    const fd = new FormData();
+                                    fd.append('file', file);
+                                    const res = await adminFetch('/api/upload/logo', { method: 'POST', body: fd });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      setNewClubForm(f => ({ ...f, logoUrl: data.url }));
+                                      addToast('Logo berhasil diupload!', 'success');
+                                    } else {
+                                      addToast(data.error || 'Gagal upload logo', 'error');
+                                    }
+                                  } catch { addToast('Terjadi kesalahan upload', 'error'); }
+                                  finally { setClubLogoUploading(false); }
+                                }}
+                              />
+                            </label>
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={newClubForm.name || ''}
+                                onChange={(e) => setNewClubForm(f => ({ ...f, name: e.target.value }))}
+                                placeholder="Nama club..."
+                                className="w-full bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-white/90 text-[13px] placeholder-white/20 focus:outline-none focus:border-white/20 transition-colors"
+                              />
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <p className="text-[10px] text-white/20">JPG, PNG, WebP, GIF • Maks 5MB</p>
+                                {newClubForm.logoUrl && (
+                                  <button onClick={() => setNewClubForm(f => ({ ...f, logoUrl: null }))} className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors">Hapus logo</button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                           {/* Stats Grid */}
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {[
@@ -2159,9 +2207,36 @@ export function AdminPanel({
                                       <td className="px-4 py-2.5 text-white/25 font-medium">{index + 1}</td>
                                       <td className="px-4 py-2.5">
                                         <div className="flex items-center gap-2.5">
-                                          <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white/70 ${isMale ? 'bg-gradient-to-br from-amber-500/25 to-orange-600/25' : 'bg-gradient-to-br from-violet-500/25 to-purple-600/25'}`}>
+                                          <label className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white/70 cursor-pointer overflow-hidden transition-all hover:ring-2 hover:ring-white/20 ${club.logoUrl ? '' : isMale ? 'bg-gradient-to-br from-amber-500/25 to-orange-600/25' : 'bg-gradient-to-br from-violet-500/25 to-purple-600/25'}`}>
                                             {club.logoUrl ? <img src={club.logoUrl} alt="" className="w-full h-full rounded-lg object-cover" /> : club.name.slice(0, 2).toUpperCase()}
-                                          </div>
+                                            <input
+                                              type="file"
+                                              accept="image/jpeg,image/png,image/webp,image/gif"
+                                              className="absolute inset-0 opacity-0 cursor-pointer hidden"
+                                              onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                if (file.size > 5 * 1024 * 1024) { addToast('Ukuran file maksimal 5MB', 'error'); return; }
+                                                setClubLogoUploading(true);
+                                                try {
+                                                  const fd = new FormData();
+                                                  fd.append('file', file);
+                                                  const res = await adminFetch('/api/upload/logo', { method: 'POST', body: fd });
+                                                  const data = await res.json();
+                                                  if (data.success) {
+                                                    adminFetch('/api/clubs', {
+                                                      method: 'PUT',
+                                                      headers: { 'Content-Type': 'application/json' },
+                                                      body: JSON.stringify({ clubId: club.id, logoUrl: data.url }),
+                                                    }).then(r => r.json()).then(d => {
+                                                      if (d.success) { fetchClubs(); broadcastClubUpdate(); addToast('Logo berhasil diupload!', 'success'); }
+                                                    });
+                                                  } else { addToast(data.error || 'Gagal upload', 'error'); }
+                                                } catch { addToast('Terjadi kesalahan', 'error'); }
+                                                finally { setClubLogoUploading(false); }
+                                              }}
+                                            />
+                                          </label>
                                           <span className="font-bold text-white/90">{club.name}</span>
                                         </div>
                                       </td>
@@ -2205,9 +2280,36 @@ export function AdminPanel({
                                 <>
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2.5">
-                                      <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white/70 ${isMale ? 'bg-gradient-to-br from-amber-500/25 to-orange-600/25' : 'bg-gradient-to-br from-violet-500/25 to-purple-600/25'}`}>
+                                      <label className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white/70 cursor-pointer overflow-hidden transition-all hover:ring-2 hover:ring-white/20 ${club.logoUrl ? '' : isMale ? 'bg-gradient-to-br from-amber-500/25 to-orange-600/25' : 'bg-gradient-to-br from-violet-500/25 to-purple-600/25'}`}>
                                         {club.logoUrl ? <img src={club.logoUrl} alt="" className="w-full h-full rounded-lg object-cover" /> : club.name.slice(0, 2).toUpperCase()}
-                                      </div>
+                                        <input
+                                          type="file"
+                                          accept="image/jpeg,image/png,image/webp,image/gif"
+                                          className="absolute inset-0 opacity-0 cursor-pointer hidden"
+                                          onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            if (file.size > 5 * 1024 * 1024) { addToast('Ukuran file maksimal 5MB', 'error'); return; }
+                                            setClubLogoUploading(true);
+                                            try {
+                                              const fd = new FormData();
+                                              fd.append('file', file);
+                                              const res = await adminFetch('/api/upload/logo', { method: 'POST', body: fd });
+                                              const data = await res.json();
+                                              if (data.success) {
+                                                adminFetch('/api/clubs', {
+                                                  method: 'PUT',
+                                                  headers: { 'Content-Type': 'application/json' },
+                                                  body: JSON.stringify({ clubId: club.id, logoUrl: data.url }),
+                                                }).then(r => r.json()).then(d => {
+                                                  if (d.success) { fetchClubs(); broadcastClubUpdate(); addToast('Logo berhasil diupload!', 'success'); }
+                                                });
+                                              } else { addToast(data.error || 'Gagal upload', 'error'); }
+                                            } catch { addToast('Terjadi kesalahan', 'error'); }
+                                            finally { setClubLogoUploading(false); }
+                                          }}
+                                        />
+                                      </label>
                                       <div>
                                         <p className="text-[13px] font-bold text-white/90">{club.name}</p>
                                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -2952,6 +3054,99 @@ export function AdminPanel({
                     <p className="text-[11px] text-white/30">{clubEditForm.name}</p>
                   </div>
                   <button onClick={() => setEditingClub(null)} className="text-white/30 hover:text-white/60"><X className="w-5 h-5" /></button>
+                </div>
+
+                {/* Logo Upload */}
+                <div>
+                  <label className="text-[11px] tracking-[0.15em] uppercase text-white/40 font-semibold mb-1.5 block">Logo Club</label>
+                  <div className="flex items-center gap-3">
+                    <label className={`relative w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center cursor-pointer overflow-hidden transition-all ${clubLogoUploading ? 'opacity-60 pointer-events-none' : 'hover:ring-2 hover:ring-white/20'} ${clubEditForm.logoUrl ? '' : isMale ? 'bg-gradient-to-br from-amber-500/20 to-orange-600/20' : 'bg-gradient-to-br from-violet-500/20 to-purple-600/20'}`}>
+                      {clubLogoUploading ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-white/40" />
+                      ) : clubEditForm.logoUrl ? (
+                        <img src={clubEditForm.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                      ) : (
+                        <Camera className="w-5 h-5 text-white/30" />
+                      )}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 5 * 1024 * 1024) { addToast('Ukuran file maksimal 5MB', 'error'); return; }
+                          if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) { addToast('Format harus JPG, PNG, WebP, atau GIF', 'error'); return; }
+                          setClubLogoUploading(true);
+                          try {
+                            const fd = new FormData();
+                            fd.append('file', file);
+                            const res = await adminFetch('/api/upload/logo', { method: 'POST', body: fd });
+                            const data = await res.json();
+                            if (data.success) {
+                              setClubEditForm(f => ({ ...f, logoUrl: data.url }));
+                              addToast('Logo berhasil diupload!', 'success');
+                            } else {
+                              addToast(data.error || 'Gagal upload logo', 'error');
+                            }
+                          } catch {
+                            addToast('Terjadi kesalahan upload', 'error');
+                          } finally {
+                            setClubLogoUploading(false);
+                          }
+                        }}
+                      />
+                    </label>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={async () => {
+                            setClubLogoUploading(true);
+                            try {
+                              const fd = new FormData();
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+                              input.onchange = async (ev) => {
+                                const file = (ev.target as HTMLInputElement).files?.[0];
+                                if (!file) { setClubLogoUploading(false); return; }
+                                if (file.size > 5 * 1024 * 1024) { addToast('Ukuran file maksimal 5MB', 'error'); setClubLogoUploading(false); return; }
+                                try {
+                                  const formData = new FormData();
+                                  formData.append('file', file);
+                                  const res = await adminFetch('/api/upload/logo', { method: 'POST', body: formData });
+                                  const data = await res.json();
+                                  if (data.success) {
+                                    setClubEditForm(f => ({ ...f, logoUrl: data.url }));
+                                    addToast('Logo berhasil diupload!', 'success');
+                                  } else {
+                                    addToast(data.error || 'Gagal upload logo', 'error');
+                                  }
+                                } catch { addToast('Terjadi kesalahan upload', 'error'); }
+                                finally { setClubLogoUploading(false); }
+                              };
+                              input.click();
+                            } catch { setClubLogoUploading(false); }
+                          }}
+                          disabled={clubLogoUploading}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/8 text-white/50 text-[11px] font-medium transition-colors disabled:opacity-40"
+                        >
+                          <Upload className="w-3 h-3" />
+                          Upload
+                        </button>
+                        {clubEditForm.logoUrl && (
+                          <button
+                            onClick={() => setClubEditForm(f => ({ ...f, logoUrl: null }))}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/8 hover:bg-red-500/15 text-red-400/60 text-[11px] font-medium transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Hapus
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-white/20 mt-1">JPG, PNG, WebP, GIF • Maks 5MB</p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Name Input */}
