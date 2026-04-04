@@ -1118,7 +1118,7 @@ export function Dashboard({
               <span className={accentColor}>
                 <Shield className="w-3 h-3 inline" />
               </span>
-              <span className="text-[11px] font-semibold text-white/90 hidden sm:inline">CLUB TERBAIK</span>
+              <span className="text-[11px] font-semibold text-white/90 hidden sm:inline">RANK CLUB</span>
               <span className="text-[11px] font-semibold text-white/90 sm:hidden">CLUB</span>
             </div>
           </div>

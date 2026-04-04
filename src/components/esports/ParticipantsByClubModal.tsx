@@ -160,8 +160,8 @@ export function ParticipantsByClubModal({
       setClubs(sortedClubs);
       setUnassigned(unassignedPlayers);
 
-      // Expand all clubs by default
-      setExpandedClubs(new Set(sortedClubs.map(c => c.id)));
+      // Start with all clubs collapsed — user clicks to expand
+      setExpandedClubs(new Set());
     } catch (error) {
       console.error('Error fetching participants:', error);
     } finally {

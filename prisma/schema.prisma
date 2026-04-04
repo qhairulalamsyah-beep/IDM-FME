@@ -24,6 +24,7 @@ model User {
   points       Int      @default(0)
   avatar       String?                     // Supabase Storage URL or local path
   phone        String?                     // Normalized phone (digits only)
+  city         String?                     // Asal kota
   whatsappJid  String?                     // Full WhatsApp JID (e.g., 62812345678@s.whatsapp.net or 10814945763505@lid)
   discordId    String?
   role         String   @default("user") // user / admin / super_admin

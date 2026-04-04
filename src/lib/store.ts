@@ -137,7 +137,7 @@ interface AppState {
 
   // API Actions
   fetchData: (showLoading?: boolean) => Promise<void>;
-  registerUser: (name: string, phone: string, avatarUrl?: string, club?: string) => Promise<void>;
+  registerUser: (name: string, phone: string, avatarUrl?: string, club?: string, city?: string) => Promise<void>;
   approveRegistration: (registrationId: string, tier: string) => Promise<void>;
   rejectRegistration: (registrationId: string) => Promise<void>;
   deleteRegistration: (registrationId: string) => Promise<void>;
@@ -563,7 +563,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     return fetchPromise;
   },
 
-  registerUser: async (name, phone, avatarUrl, club) => {
+  registerUser: async (name, phone, avatarUrl, club, city) => {
     try {
       const { currentTournament, division } = get();
       if (!currentTournament) {
@@ -575,7 +575,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const userRes = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, gender: division, avatar: avatarUrl, club }),
+        body: JSON.stringify({ name, phone, city, gender: division, avatar: avatarUrl, club }),
       });
       const userData = await userRes.json();
 

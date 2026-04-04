@@ -62,11 +62,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, phone, gender, discordId, avatar, club, whatsappJid } = body;
+    const { name, phone, city, gender, discordId, avatar, club, whatsappJid } = body;
 
     // Normalize inputs
     const normalizedName = name.trim().toLowerCase();
     const normalizedPhone = phone ? phone.trim() : null;
+    const normalizedCity = city ? city.trim() : null;
     const normalizedJid = whatsappJid ? whatsappJid.trim() : null;
 
     // PRIORITY 1: Check by WhatsApp JID first (most reliable identifier)
@@ -77,11 +78,14 @@ export async function POST(request: NextRequest) {
       });
       if (existingByJid) {
         console.log(`[API Users] Found existing user by WhatsApp JID: ${normalizedJid} -> user: ${existingByJid.name}`);
-        // Update avatar if a new one was uploaded
-        if (avatar) {
+        // Update avatar/city if new ones provided
+        if (avatar || normalizedCity) {
+          const updateData: Record<string, string | null> = {};
+          if (avatar) updateData.avatar = avatar;
+          if (normalizedCity && !existingByJid.city) updateData.city = normalizedCity;
           const updated = await db.user.update({
             where: { id: existingByJid.id },
-            data: { avatar },
+            data: updateData,
           });
           return NextResponse.json(
             { success: true, user: updated, isExisting: true },
@@ -102,13 +106,16 @@ export async function POST(request: NextRequest) {
       });
       if (existingByPhone) {
         console.log(`[API Users] Found existing user by phone: ${normalizedPhone} -> user: ${existingByPhone.name}`);
-        // Update JID if we have a new one
+        // Update JID/avatar/city if we have new ones
         const updateData: Record<string, string | null> = {};
         if (normalizedJid && !existingByPhone.whatsappJid) {
           updateData.whatsappJid = normalizedJid;
         }
         if (avatar) {
           updateData.avatar = avatar;
+        }
+        if (normalizedCity && !existingByPhone.city) {
+          updateData.city = normalizedCity;
         }
         if (Object.keys(updateData).length > 0) {
           const updated = await db.user.update({
@@ -140,7 +147,7 @@ export async function POST(request: NextRequest) {
       // Same name found - this could be the same person with a new JID/phone
       console.log(`[API Users] Found existing user by name: ${name} -> updating JID/phone`);
       
-      // Update avatar, JID, and phone if we have new ones
+      // Update avatar, JID, phone, and city if we have new ones
       const updateData: Record<string, string | null> = {};
       if (normalizedJid && !existingByName.whatsappJid) {
         updateData.whatsappJid = normalizedJid;
@@ -150,6 +157,9 @@ export async function POST(request: NextRequest) {
       }
       if (avatar) {
         updateData.avatar = avatar;
+      }
+      if (normalizedCity && !existingByName.city) {
+        updateData.city = normalizedCity;
       }
       
       if (Object.keys(updateData).length > 0) {
@@ -192,6 +202,7 @@ export async function POST(request: NextRequest) {
         gender: gender || 'male',
         tier: 'B',
         phone: phone || null,
+        city: normalizedCity || null,
         whatsappJid: normalizedJid || null,
         discordId,
         avatar: avatar || null,

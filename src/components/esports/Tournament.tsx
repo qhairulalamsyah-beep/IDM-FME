@@ -62,9 +62,9 @@ interface TournamentTabProps {
   } | null;
   registrations: Registration[];
   teams: Team[];
-  users?: { id: string; name: string; phone?: string; avatar?: string | null; club?: { name: string } | null }[];
+  users?: { id: string; name: string; phone?: string; city?: string | null; avatar?: string | null; club?: { name: string } | null }[];
   isAdmin?: boolean;
-  onRegister: (name: string, phone: string, avatarUrl: string, club?: string) => void;
+  onRegister: (name: string, phone: string, avatarUrl: string, club?: string, city?: string) => void;
   onApprove: (id: string, tier: string) => void;
   onGenerateTeams: () => void;
   onResetTeams: () => void;
@@ -104,6 +104,7 @@ export function TournamentTab({
   const [activeSection, setActiveSection] = useState<'register' | 'teams' | 'bracket'>('register');
   const [registerName, setRegisterName] = useState('');
   const [registerPhone, setRegisterPhone] = useState('');
+  const [registerCity, setRegisterCity] = useState('');
   const [registerClub, setRegisterClub] = useState('');
   const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   const [selectedBracketType, setSelectedBracketType] = useState<string>('single');
@@ -146,12 +147,15 @@ export function TournamentTab({
         (u) => u.name.trim().toLowerCase() === trimmedName
       );
       if (existing) {
-        // Auto-fill: avatar, phone, club from existing user
+        // Auto-fill: avatar, phone, city, club from existing user
         if (existing.avatar && !uploadedAvatarUrl) {
           setUploadedAvatarUrl(existing.avatar);
         }
         if (existing.phone && !registerPhone) {
           setRegisterPhone(existing.phone);
+        }
+        if (existing.city && !registerCity) {
+          setRegisterCity(existing.city);
         }
         if (existing.club?.name && !registerClub) {
           setRegisterClub(existing.club.name);
@@ -192,9 +196,10 @@ export function TournamentTab({
 
   const handleRegister = () => {
     if (registerName.trim() && uploadedAvatarUrl) {
-      onRegister(registerName.trim(), registerPhone.trim(), uploadedAvatarUrl, registerClub.trim() || undefined);
+      onRegister(registerName.trim(), registerPhone.trim(), uploadedAvatarUrl, registerClub.trim() || undefined, registerCity.trim() || undefined);
       setRegisterName('');
       setRegisterPhone('');
+      setRegisterCity('');
       setRegisterClub('');
       setUploadedAvatarUrl(null);
       setIsAutoLoaded(false);
@@ -423,6 +428,20 @@ export function TournamentTab({
                         className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-3.5 py-3 text-white/90 text-[13px] placeholder-white/25 focus:outline-none focus:border-amber-400/30 focus:bg-white/[0.06] focus:ring-1 focus:ring-amber-400/10 transition-all"
                       />
                     </div>
+                  </div>
+
+                  {/* Asal Kota */}
+                  <div>
+                    <label className="text-[11px] text-white/40 mb-1.5 block uppercase tracking-wider font-semibold">
+                      Asal Kota
+                    </label>
+                    <input
+                      type="text"
+                      value={registerCity}
+                      onChange={(e) => setRegisterCity(e.target.value)}
+                      placeholder="Contoh: Jakarta, Bandung, Surabaya"
+                      className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl px-4 py-3 text-white/90 text-[13px] placeholder-white/25 focus:outline-none focus:border-amber-400/30 focus:bg-white/[0.06] focus:ring-1 focus:ring-amber-400/10 transition-all"
+                    />
                   </div>
                 </div>
 
