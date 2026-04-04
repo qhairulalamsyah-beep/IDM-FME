@@ -6,6 +6,32 @@ export async function GET() {
   try {
     const results: Record<string, unknown> = {};
 
+    // Parse DATABASE_URL to show connection details (without password)
+    const dbUrl = process.env.DATABASE_URL || '';
+    try {
+      const url = new URL(dbUrl.replace('postgresql://', 'http://'));
+      results.connectionInfo = {
+        protocol: 'postgresql',
+        username: url.username,           // should be postgres.[project-ref]
+        host: url.hostname,               // should end with pooler.supabase.com
+        port: url.port,                   // 6543 for pooler
+        database: url.pathname.slice(1),  // postgres
+        hasPgbouncer: url.searchParams.has('pgbouncer'),
+        pgbouncerValue: url.searchParams.get('pgbouncer'),
+        passwordLength: url.password?.length || 0,
+        usernameFormat: url.username.includes('.') ? 'pooler format ✅' : 'WRONG — should be postgres.[project-ref] ❌',
+      };
+    } catch {
+      results.connectionInfo = { error: 'Failed to parse DATABASE_URL', raw_prefix: dbUrl.substring(0, 30) };
+    }
+
+    // Parse DIRECT_DATABASE_URL too
+    const directUrl = process.env.DIRECT_DATABASE_URL || '';
+    results.directUrlInfo = {
+      set: !!directUrl,
+      sameAsDbUrl: directUrl === dbUrl,
+    };
+
     // 1. Test database connection (use Prisma ORM, not $queryRaw — PgBouncer doesn't support prepared statements)
     const startMs = Date.now();
     await db.user.findFirst({ select: { id: true } });
@@ -52,7 +78,7 @@ export async function GET() {
     // 8. Check env vars (without exposing secrets)
     results.env = {
       DATABASE_URL_set: !!process.env.DATABASE_URL,
-      DATABASE_URL_prefix: process.env.DATABASE_URL?.substring(0, 20) || 'NOT SET',
+      DIRECT_DATABASE_URL_set: !!process.env.DIRECT_DATABASE_URL,
       NODE_ENV: process.env.NODE_ENV || 'not set',
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT SET',
     };
@@ -60,13 +86,32 @@ export async function GET() {
     return NextResponse.json({ success: true, ...results });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
+
+    // Still parse connection info even on error
+    const dbUrl = process.env.DATABASE_URL || '';
+    let connectionInfo: Record<string, unknown> = { error: 'Failed to parse' };
+    try {
+      const url = new URL(dbUrl.replace('postgresql://', 'http://'));
+      connectionInfo = {
+        username: url.username,
+        host: url.hostname,
+        port: url.port,
+        hasPgbouncer: url.searchParams.has('pgbouncer'),
+        passwordLength: url.password?.length || 0,
+        usernameFormat: url.username.includes('.') ? 'pooler format ✅' : 'WRONG — should be postgres.[project-ref] ❌',
+      };
+    } catch {
+      // ignore parse error
+    }
+
     return NextResponse.json(
       {
         success: false,
         error: msg,
+        connectionInfo,
         env: {
           DATABASE_URL_set: !!process.env.DATABASE_URL,
-          DATABASE_URL_prefix: process.env.DATABASE_URL?.substring(0, 20) || 'NOT SET',
+          DIRECT_DATABASE_URL_set: !!process.env.DIRECT_DATABASE_URL,
           NODE_ENV: process.env.NODE_ENV || 'not set',
         },
       },
