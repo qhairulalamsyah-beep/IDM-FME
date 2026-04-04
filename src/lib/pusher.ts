@@ -3,16 +3,16 @@ import Pusher from 'pusher';
 /**
  * Server-side Pusher client
  *
- * Triggers real-time events to the local Pusher-compatible server (port 6001).
- * All API routes import this to broadcast events after database operations.
+ * Triggers real-time events to the Pusher-compatible server.
+ * Credentials MUST be set via environment variables.
  */
 const pusher = new Pusher({
-  appId: process.env.PUSHER_APP_ID || 'idol-meta',
-  key: process.env.PUSHER_KEY || 'local-dev-key',
-  secret: process.env.PUSHER_SECRET || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('PUSHER_SECRET is required in production') })() : 'local-dev-secret'),
+  appId: process.env.PUSHER_APP_ID!,
+  key: process.env.PUSHER_KEY!,
+  secret: process.env.PUSHER_SECRET!,
   host: process.env.PUSHER_HOST || 'localhost',
   port: parseInt(process.env.PUSHER_PORT || '6001'),
-  useTLS: false,
+  useTLS: process.env.NODE_ENV === 'production',
 });
 
 export default pusher;
@@ -24,8 +24,11 @@ export const tournamentChannel = (tournamentId: string) =>
   `private-tournament-${tournamentId}`;
 
 /** Public channel for a division (male/female) */
-export const divisionChannel = (division: string) =>
-  `division-${division}`;
+export const divisionChannel = (division: string) => {
+  // Validate division to prevent channel injection
+  const validDivision = division === 'male' || division === 'female' ? division : 'male';
+  return `division-${validDivision}`;
+};
 
 /** Global public channel for cross-division updates */
 export const globalChannel = 'global-updates';

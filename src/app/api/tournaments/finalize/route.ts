@@ -170,11 +170,15 @@ export async function POST(request: NextRequest) {
       })
     );
 
+    // Clear all existing MVPs first to prevent multiple simultaneous MVPs
+    const clearMvpOp = [db.user.updateMany({ where: { isMVP: true }, data: { isMVP: false } })];
+
     const mvpUpdateOp = finalMatch.mvpId
       ? [db.user.update({ where: { id: finalMatch.mvpId }, data: { isMVP: true } })]
       : [];
 
     await db.$transaction([
+      ...clearMvpOp,
       ...userUpdateOps,
       ...rankingUpdateOps,
       ...mvpUpdateOp,

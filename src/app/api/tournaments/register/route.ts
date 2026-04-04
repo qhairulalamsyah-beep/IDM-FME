@@ -4,9 +4,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { triggerRegistrationUpdate } from '@/lib/pusher';
 import { requireAdmin } from '@/lib/admin-guard';
 
-// POST - Register user for tournament
+// POST - Register user for tournament (admin only — prevents unauthorized registration)
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard — only authenticated admin can register players
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
+
     const body = await request.json();
     const { userId, tournamentId } = body;
 

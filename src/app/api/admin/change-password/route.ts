@@ -1,51 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createHash } from 'crypto';
 import { requireAdmin } from '@/lib/admin-guard';
+import { comparePin, isBcryptHash, legacySha256Hash, hashPin } from '@/lib/auth-helpers';
+import { verifyAdmin } from '@/lib/admin-guard';
 
-// PUT - Change own password (requires current password verification)
+// PUT - Change own PIN (requires current PIN verification)
 export async function PUT(request: NextRequest) {
   try {
-    // Auth guard — verify the request comes from an authenticated admin
+    // Auth guard
     const denied = await requireAdmin(request);
     if (denied) return denied;
 
-    const adminId = request.headers.get('x-admin-id')!;
+    // Get authenticated admin info (works with both JWT and legacy headers)
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ success: false, error: 'Sesi tidak valid' }, { status: 401 });
+    }
 
     const body = await request.json();
-    const { currentPassword, newPassword } = body;
+    const { currentPin, newPin } = body;
 
-    if (!currentPassword || !newPassword) {
-      return NextResponse.json({ success: false, error: 'Password lama dan baru wajib diisi' }, { status: 400 });
+    if (!currentPin || !newPin) {
+      return NextResponse.json({ success: false, error: 'PIN lama dan baru wajib diisi' }, { status: 400 });
     }
 
-    if (newPassword.length < 4) {
-      return NextResponse.json({ success: false, error: 'Password baru minimal 4 karakter' }, { status: 400 });
+    // Validate PIN format (6 digits)
+    const cleanCurrentPin = String(currentPin).trim();
+    const cleanNewPin = String(newPin).trim();
+
+    if (!/^\d{6}$/.test(cleanCurrentPin) || !/^\d{6}$/.test(cleanNewPin)) {
+      return NextResponse.json({ success: false, error: 'PIN harus 6 digit angka' }, { status: 400 });
     }
 
-    const currentHash = createHash('sha256').update(currentPassword).digest('hex');
+    // Don't allow same PIN
+    if (cleanCurrentPin === cleanNewPin) {
+      return NextResponse.json({ success: false, error: 'PIN baru harus berbeda dari PIN lama' }, { status: 400 });
+    }
 
-    // Use the authenticated admin's ID instead of username-based lookup
-    // This prevents changing another admin's password by guessing their username
+    // Get current admin's password hash
     const user = await db.user.findUnique({
-      where: { id: adminId },
-      select: { id: true, name: true },
+      where: { id: admin.id },
+      select: { id: true, adminPass: true },
     });
 
-    // Also verify the current password hash matches
-    if (!user || !(await db.user.findFirst({ where: { id: adminId, adminPass: currentHash }, select: { id: true } }))) {
-      return NextResponse.json({ success: false, error: 'Password saat ini salah' }, { status: 401 });
+    if (!user || !user.adminPass) {
+      return NextResponse.json({ success: false, error: 'Akun tidak valid' }, { status: 400 });
     }
 
-    const newHash = createHash('sha256').update(newPassword).digest('hex');
+    // Verify current PIN
+    let currentPinValid = false;
+    if (isBcryptHash(user.adminPass)) {
+      currentPinValid = await comparePin(cleanCurrentPin, user.adminPass);
+    } else {
+      currentPinValid = legacySha256Hash(cleanCurrentPin) === user.adminPass;
+    }
+
+    if (!currentPinValid) {
+      return NextResponse.json({ success: false, error: 'PIN saat ini salah' }, { status: 401 });
+    }
+
+    // Hash new PIN with bcrypt
+    const newHash = await hashPin(cleanNewPin);
     await db.user.update({
-      where: { id: user.id },
+      where: { id: admin.id },
       data: { adminPass: newHash },
     });
 
-    return NextResponse.json({ success: true, message: 'Password berhasil diubah' });
+    return NextResponse.json({ success: true, message: 'PIN berhasil diubah' });
   } catch (error) {
-    console.error('Change password error:', error);
-    return NextResponse.json({ success: false, error: 'Gagal mengubah password' }, { status: 500 });
+    console.error('[CHANGE PIN] Error:', error);
+    return NextResponse.json({ success: false, error: 'Gagal mengubah PIN' }, { status: 500 });
   }
 }

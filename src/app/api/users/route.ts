@@ -239,9 +239,10 @@ export async function PUT(request: NextRequest) {
 
     // Update ranking if points changed
     if (points !== undefined) {
-      await db.ranking.update({
+      await db.ranking.upsert({
         where: { userId },
-        data: { points },
+        update: { points },
+        create: { userId, points },
       });
     }
 

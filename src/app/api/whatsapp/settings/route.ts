@@ -3,7 +3,10 @@ import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-guard';
 
 // GET - Get WhatsApp settings
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const denied = await requireAdmin(request);
+  if (denied) return denied;
+
   try {
     const settings = await db.whatsAppSettings.findFirst();
 

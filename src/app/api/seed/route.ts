@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, requirePermission } from '@/lib/admin-guard';
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -8,6 +8,11 @@ import { v4 as uuidv4 } from 'uuid';
 export async function POST(request: NextRequest) {
   const denied = await requireAdmin(request);
   if (denied) return denied;
+
+  // Require full_reset permission — not just any admin can wipe the database
+  const permCheck = await requirePermission(request, 'full_reset');
+  if (!permCheck.authorized) return permCheck as NextResponse;
+
   try {
     // ── Step 1: Delete all existing data (reverse dependency order) ──
     await db.playerMatchStat.deleteMany();

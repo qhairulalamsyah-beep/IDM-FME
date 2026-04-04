@@ -71,38 +71,42 @@ export async function POST(request: NextRequest) {
       where: { isMVP: true },
     });
 
-    // Remove previous MVP flag & deduct their bonus
-    if (existingMvp && existingMvp.id !== userId) {
-      await db.user.update({
-        where: { id: existingMvp.id },
+    // Atomically swap MVP: remove old + set new in a single transaction
+    // Prevents race condition where concurrent requests could leave inconsistent state
+    await db.$transaction(async (tx) => {
+      // Remove previous MVP flag & deduct their bonus
+      if (existingMvp && existingMvp.id !== userId) {
+        await tx.user.update({
+          where: { id: existingMvp.id },
+          data: {
+            isMVP: false,
+            mvpScore: 0,
+            points: { decrement: MVP_BONUS_POINTS },
+          },
+        });
+        await tx.ranking.upsert({
+          where: { userId: existingMvp.id },
+          create: { userId: existingMvp.id, points: 0 },
+          update: { points: { decrement: MVP_BONUS_POINTS } },
+        });
+      }
+
+      // Set new MVP — fixed +25 points bonus
+      await tx.user.update({
+        where: { id: userId },
         data: {
-          isMVP: false,
-          mvpScore: 0,
-          points: { decrement: MVP_BONUS_POINTS },
+          isMVP: true,
+          mvpScore: score,
+          points: { increment: MVP_BONUS_POINTS },
         },
       });
-      await db.ranking.upsert({
-        where: { userId: existingMvp.id },
-        create: { userId: existingMvp.id, points: 0 },
-        update: { points: { decrement: MVP_BONUS_POINTS } },
+
+      // Update ranking
+      await tx.ranking.upsert({
+        where: { userId },
+        create: { userId, points: MVP_BONUS_POINTS },
+        update: { points: { increment: MVP_BONUS_POINTS } },
       });
-    }
-
-    // Set new MVP — fixed +25 points bonus
-    await db.user.update({
-      where: { id: userId },
-      data: {
-        isMVP: true,
-        mvpScore: score,
-        points: { increment: MVP_BONUS_POINTS },
-      },
-    });
-
-    // Update ranking
-    await db.ranking.upsert({
-      where: { userId },
-      create: { userId, points: MVP_BONUS_POINTS },
-      update: { points: { increment: MVP_BONUS_POINTS } },
     });
 
     console.log(

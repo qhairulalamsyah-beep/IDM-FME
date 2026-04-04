@@ -3,6 +3,9 @@ import { db } from '@/lib/db';
 import { triggerMatchScore, triggerMatchResult } from '@/lib/pusher';
 import { requireAdmin } from '@/lib/admin-guard';
 
+// Type for Prisma transaction client (passed through from db.$transaction)
+type PrismaTx = Parameters<Parameters<typeof db.$transaction>[0]>[0];
+
 // ──────────────────────────────────────────────────────────────────
 // Point Configuration
 // ──────────────────────────────────────────────────────────────────
@@ -81,64 +84,82 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { matchId, scoreA, scoreB, mvpId, status } = body;
 
-    // Fetch match with basic team info
-    const match = await db.match.findUnique({
-      where: { id: matchId },
-      include: { teamA: true, teamB: true },
-    });
-
-    if (!match) {
-      return NextResponse.json(
-        { success: false, error: 'Match not found' },
-        { status: 404 }
-      );
-    }
-
-    // Determine winner from scores
+    // ─── Transaction: match fetch + update + point awarding (atomic) ───
+    // Wrapping in a transaction prevents concurrent PUT requests from both
+    // reading non-completed status and double-awarding points.
     let winnerId: string | null = null;
     let autoComplete = false;
-    if (scoreA !== undefined && scoreB !== undefined) {
-      if (scoreA > scoreB) winnerId = match.teamAId;
-      else if (scoreB > scoreA) winnerId = match.teamBId;
-      // Auto-complete when scores differ and match was pending/ongoing
-      if (winnerId && match.status !== 'completed') {
-        autoComplete = true;
+    let matchRef: MatchWithTeams;
+
+    const updatedMatch = await db.$transaction(async (tx) => {
+      // Fetch match inside transaction for serializable read
+      const match = await tx.match.findUnique({
+        where: { id: matchId },
+        include: { teamA: true, teamB: true },
+      });
+
+      if (!match) {
+        const err: Error & { statusCode?: number } = new Error('Match not found');
+        err.statusCode = 404;
+        throw err;
       }
-    }
 
-    // Build update data
-    const updateData: Record<string, string | number | null | Date> = {};
-    if (scoreA !== undefined) updateData.scoreA = scoreA;
-    if (scoreB !== undefined) updateData.scoreB = scoreB;
-    if (winnerId) updateData.winnerId = winnerId;
-    if (mvpId) updateData.mvpId = mvpId;
-    if (status) {
-      updateData.status = status;
-      if (status === 'completed') updateData.completedAt = new Date();
-    } else if (autoComplete) {
-      updateData.status = 'completed';
-      updateData.completedAt = new Date();
-    }
+      // Determine winner from scores
+      let localWinnerId: string | null = null;
+      let localAutoComplete = false;
+      if (scoreA !== undefined && scoreB !== undefined) {
+        if (scoreA > scoreB) localWinnerId = match.teamAId;
+        else if (scoreB > scoreA) localWinnerId = match.teamBId;
+        // Auto-complete when scores differ and match was pending/ongoing
+        if (localWinnerId && match.status !== 'completed') {
+          localAutoComplete = true;
+        }
+      }
 
-    // Update the match in DB
-    const updatedMatch = await db.match.update({
-      where: { id: matchId },
-      data: updateData,
-      include: {
-        teamA: { include: { members: { include: { user: true } } } },
-        teamB: { include: { members: { include: { user: true } } } },
-        winner: true,
-        mvp: true,
-      },
+      // Build update data
+      const updateData: Record<string, string | number | null | Date> = {};
+      if (scoreA !== undefined) updateData.scoreA = scoreA;
+      if (scoreB !== undefined) updateData.scoreB = scoreB;
+      if (localWinnerId) updateData.winnerId = localWinnerId;
+      if (mvpId) updateData.mvpId = mvpId;
+      if (status) {
+        updateData.status = status;
+        if (status === 'completed') updateData.completedAt = new Date();
+      } else if (localAutoComplete) {
+        updateData.status = 'completed';
+        updateData.completedAt = new Date();
+      }
+
+      // Update the match
+      const result = await tx.match.update({
+        where: { id: matchId },
+        data: updateData,
+        include: {
+          teamA: { include: { members: { include: { user: true } } } },
+          teamB: { include: { members: { include: { user: true } } } },
+          winner: true,
+          mvp: true,
+        },
+      });
+
+      // Award points atomically within the same transaction
+      if ((status === 'completed' || localAutoComplete) && localWinnerId) {
+        await awardMatchPoints(tx, match, localWinnerId, mvpId || null);
+      }
+
+      // Expose to outer scope for advancement logic
+      winnerId = localWinnerId;
+      autoComplete = localAutoComplete;
+      matchRef = match;
+
+      return result;
     });
 
-    // ─── Handle match completion: award points + advancement ───
+    // ─── Handle match completion: advancement (after transaction commit) ───
     if ((status === 'completed' || autoComplete) && winnerId) {
-      // Award points to team members
-      await awardMatchPoints(match, winnerId, mvpId || null);
       // Get tournament bracket type to determine advancement strategy
       const tournament = await db.tournament.findUnique({
-        where: { id: match.tournamentId },
+        where: { id: matchRef.tournamentId },
         select: { bracketType: true },
       });
 
@@ -146,28 +167,28 @@ export async function PUT(request: NextRequest) {
 
       if (bracketType === 'double') {
         await handleDoubleEliminationAdvancement(
-          match.tournamentId,
-          match.bracket as string,
-          match.round,
-          match.matchNumber,
+          matchRef.tournamentId,
+          matchRef.bracket as string,
+          matchRef.round,
+          matchRef.matchNumber,
           winnerId,
-          match.teamAId,
-          match.teamBId
+          matchRef.teamAId,
+          matchRef.teamBId
         );
       } else {
         // Single elimination, group, or playoff — simple winner advance
-        if (match.bracket === 'winners' || match.bracket === 'playoff') {
+        if (matchRef.bracket === 'winners' || matchRef.bracket === 'playoff') {
           await advanceWinnerInBracket(
-            match.tournamentId,
-            match.bracket as string,
-            match.round,
-            match.matchNumber,
+            matchRef.tournamentId,
+            matchRef.bracket as string,
+            matchRef.round,
+            matchRef.matchNumber,
             winnerId
           );
         }
         // Group bracket: check if all group matches done → transition to playoff
-        if (match.bracket === 'group' && bracketType === 'group') {
-          await checkAndTransitionToPlayoff(match.tournamentId);
+        if (matchRef.bracket === 'group' && bracketType === 'group') {
+          await checkAndTransitionToPlayoff(matchRef.tournamentId);
         }
       }
     }
@@ -185,7 +206,13 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, match: updatedMatch });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'statusCode' in error && (error as { statusCode: number }).statusCode === 404) {
+      return NextResponse.json(
+        { success: false, error: 'Match not found' },
+        { status: 404 }
+      );
+    }
     console.error('Error updating match:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to update match' },
@@ -648,9 +675,13 @@ interface MatchWithTeams {
   teamBId: string | null;
   tournamentId: string;
   status: string;
+  bracket: string;
+  round: number;
+  matchNumber: number;
 }
 
 async function awardMatchPoints(
+  tx: PrismaTx,
   match: MatchWithTeams,
   winnerTeamId: string,
   mvpUserId: string | null,
@@ -661,64 +692,64 @@ async function awardMatchPoints(
   const loserTeamId = match.teamAId === winnerTeamId ? match.teamBId : match.teamAId;
 
   // Fetch winning team members
-  const winnerMembers = await db.teamMember.findMany({
+  const winnerMembers = await tx.teamMember.findMany({
     where: { teamId: winnerTeamId },
     select: { userId: true },
   });
 
   // Fetch losing team members
   const loserMembers = loserTeamId
-    ? await db.teamMember.findMany({
+    ? await tx.teamMember.findMany({
         where: { teamId: loserTeamId },
         select: { userId: true },
       })
     : [];
 
-  // Process all point updates in a transaction
-  await db.$transaction(async (tx) => {
-    // Award WIN points to winning team members
-    for (const member of winnerMembers) {
-      await tx.user.update({
-        where: { id: member.userId },
-        data: { points: { increment: POINTS_CONFIG.win } },
-      });
-      // Update or create ranking
-      await tx.ranking.upsert({
-        where: { userId: member.userId },
-        create: { userId: member.userId, points: POINTS_CONFIG.win, wins: 1 },
-        update: { points: { increment: POINTS_CONFIG.win }, wins: { increment: 1 } },
-      });
-    }
+  // Award points directly via the provided transaction client
+  // (no nested transaction — already inside the caller's transaction)
 
-    // Award LOSS points to losing team members
-    for (const member of loserMembers) {
-      await tx.user.update({
-        where: { id: member.userId },
-        data: { points: { increment: POINTS_CONFIG.loss } },
-      });
-      await tx.ranking.upsert({
-        where: { userId: member.userId },
-        create: { userId: member.userId, points: POINTS_CONFIG.loss, losses: 1 },
-        update: { points: { increment: POINTS_CONFIG.loss }, losses: { increment: 1 } },
-      });
-    }
+  // Award WIN points to winning team members
+  for (const member of winnerMembers) {
+    await tx.user.update({
+      where: { id: member.userId },
+      data: { points: { increment: POINTS_CONFIG.win } },
+    });
+    // Update or create ranking
+    await tx.ranking.upsert({
+      where: { userId: member.userId },
+      create: { userId: member.userId, points: POINTS_CONFIG.win, wins: 1 },
+      update: { points: { increment: POINTS_CONFIG.win }, wins: { increment: 1 } },
+    });
+  }
 
-    // Award MVP bonus (must be a member of the winning team)
-    if (mvpUserId && winnerMembers.some(m => m.userId === mvpUserId)) {
-      await tx.user.update({
-        where: { id: mvpUserId },
-        data: {
-          points: { increment: POINTS_CONFIG.mvpBonus },
-          isMVP: true,
-        },
-      });
-      await tx.ranking.upsert({
-        where: { userId: mvpUserId },
-        create: { userId: mvpUserId, points: POINTS_CONFIG.mvpBonus },
-        update: { points: { increment: POINTS_CONFIG.mvpBonus } },
-      });
-    }
-  });
+  // Award LOSS points to losing team members
+  for (const member of loserMembers) {
+    await tx.user.update({
+      where: { id: member.userId },
+      data: { points: { increment: POINTS_CONFIG.loss } },
+    });
+    await tx.ranking.upsert({
+      where: { userId: member.userId },
+      create: { userId: member.userId, points: POINTS_CONFIG.loss, losses: 1 },
+      update: { points: { increment: POINTS_CONFIG.loss }, losses: { increment: 1 } },
+    });
+  }
+
+  // Award MVP bonus (must be a member of the winning team)
+  if (mvpUserId && winnerMembers.some(m => m.userId === mvpUserId)) {
+    await tx.user.update({
+      where: { id: mvpUserId },
+      data: {
+        points: { increment: POINTS_CONFIG.mvpBonus },
+        isMVP: true,
+      },
+    });
+    await tx.ranking.upsert({
+      where: { userId: mvpUserId },
+      create: { userId: mvpUserId, points: POINTS_CONFIG.mvpBonus },
+      update: { points: { increment: POINTS_CONFIG.mvpBonus } },
+    });
+  }
 
   console.log(
     `[Points] Match ${match.id}: +${POINTS_CONFIG.win}pts x${winnerMembers.length} winners` +

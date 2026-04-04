@@ -4,6 +4,7 @@ import { adminFetch } from '@/lib/admin-fetch';
 // Module-level fetch tracker (not stored in Zustand to avoid re-renders)
 let fetchStartTime = 0;
 let inFlightFetch: Promise<void> | null = null;
+let fetchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 interface User {
   id: string;
@@ -240,7 +241,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // Setters
   setActiveTab: (tab) => set({ activeTab: tab }),
-  setDivision: (division) => set({ division }),
+  setDivision: (division) => {
+    set({ division });
+    get().fetchData(true);
+  },
   setLoading: (loading) => set({ isLoading: loading }),
   loginAdmin: async (pin) => {
     try {
@@ -262,7 +266,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem('idm_admin_auth', 'true');
           localStorage.setItem('idm_admin_user', JSON.stringify(data.admin));
-          // Store SHA-256 hash of the PIN for API auth headers
+          // Store JWT token for API auth headers (preferred)
+          if (data.token) {
+            localStorage.setItem('idm_admin_token', data.token);
+          }
+          // Legacy: store raw PIN hash for backward compat
           const encoder = new TextEncoder();
           const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(pin));
           const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -283,6 +291,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       localStorage.removeItem('idm_admin_auth');
       localStorage.removeItem('idm_admin_user');
       localStorage.removeItem('idm_admin_hash');
+      localStorage.removeItem('idm_admin_token');
     }
   },
   fetchAdmins: async () => {
@@ -337,7 +346,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       // Update admin user data if changed
       if (data.admin) {
-        set({ adminUser: data.admin });
+        set({ adminUser: { ...get().adminUser, ...data.admin } });
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem('idm_admin_user', JSON.stringify(data.admin));
         }
@@ -352,12 +361,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // API Actions
   fetchData: async (showLoading = true) => {
-    if (!showLoading && inFlightFetch) return inFlightFetch;
-
-    const fetchPromise = (async () => {
+    const runFetch = async (loading: boolean) => {
       try {
-        if (showLoading) set({ isLoading: true });
-        if (showLoading) fetchStartTime = Date.now();
+        if (loading) set({ isLoading: true });
+        if (loading) fetchStartTime = Date.now();
         const { division } = get();
 
         // Parallel fetch: users + tournaments + donations + sawer + mvp (independent)
@@ -368,6 +375,13 @@ export const useAppStore = create<AppState>((set, get) => ({
           fetch('/api/sawer').catch(() => null),
           fetch('/api/users/mvp').catch(() => null),
         ]);
+
+        // Fix #27: Detect total network failure (all requests failed)
+        if ([usersRes, tournamentsRes, donationsRes, sawerRes, mvpRes].every((r) => r === null)) {
+          get().addToast('Tidak dapat terhubung ke server', 'error');
+          if (loading) set({ isLoading: false });
+          return;
+        }
 
         // Process users
         const usersData = usersRes ? await usersRes.json().catch(() => null) : null;
@@ -424,7 +438,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         } catch { /* sawer optional */ }
 
         // Minimum loading time for splash screen (4s) only on initial load
-        if (showLoading) {
+        if (loading) {
           const elapsed = Date.now() - fetchStartTime;
           const remaining = Math.max(0, 4000 - elapsed);
           if (remaining > 0) {
@@ -432,20 +446,34 @@ export const useAppStore = create<AppState>((set, get) => ({
           }
         }
 
-        if (showLoading) set({ isLoading: false });
+        if (loading) set({ isLoading: false });
       } catch (error) {
         console.error('Error fetching data:', error);
         set({ isLoading: false });
         get().addToast('Gagal memuat data', 'error');
-      } finally {
-        if (!showLoading) inFlightFetch = null;
       }
-    })();
+    };
 
-    // Store promise for deduplication
+    // Fix #22: Debounce background (non-loading) fetches to batch rapid calls
     if (!showLoading) {
-      inFlightFetch = fetchPromise;
+      if (fetchDebounceTimer) clearTimeout(fetchDebounceTimer);
+      return new Promise<void>((resolve) => {
+        fetchDebounceTimer = setTimeout(async () => {
+          fetchDebounceTimer = null;
+          // Fix #21: Dedup within debounced execution — set immediately
+          if (inFlightFetch) { resolve(); return; }
+          const fp = runFetch(false);
+          inFlightFetch = fp;
+          fp.finally(() => { inFlightFetch = null; resolve(); });
+        }, 300);
+      });
     }
+
+    // Fix #21: Dedup with immediate promise assignment to close race window
+    if (inFlightFetch) return inFlightFetch;
+    const fetchPromise = runFetch(true);
+    inFlightFetch = fetchPromise;
+    fetchPromise.finally(() => { inFlightFetch = null; });
     return fetchPromise;
   },
 
@@ -484,8 +512,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         });
       }
 
-      // Register user to tournament
-      const regRes = await fetch('/api/tournaments/register', {
+      // Register user to tournament (requires admin auth)
+      const regRes = await adminFetch('/api/tournaments/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -745,8 +773,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         const data = await res.json();
         if (data.match?.status === 'completed' && data.match?.winnerId) {
           const winnerName = data.match.winnerId === data.match.teamA?.id
-            ? data.match.teamA?.name
-            : data.match.teamB?.name;
+            ? (data.match.teamA?.name || 'Tim A')
+            : (data.match.teamB?.name || 'Tim B');
           get().addToast(`${winnerName} menang! +100 pts.`, 'success');
         } else {
           get().addToast('Skor berhasil diperbarui!', 'success');

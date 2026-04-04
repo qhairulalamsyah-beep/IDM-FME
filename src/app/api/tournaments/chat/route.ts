@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-guard';
 
 /* ────────────────────────────────────────────
    In-memory chat message store
@@ -17,8 +18,8 @@ interface ChatMessage {
 const chatStore = new Map<string, ChatMessage[]>();
 const MAX_MESSAGES_PER_TOURNAMENT = 200;
 
-// Shared secret for WhatsApp bot → Next.js bridge
-const CHAT_BRIDGE_SECRET = process.env.CHAT_BRIDGE_SECRET || 'idm-chat-bridge-2025';
+// Shared secret for WhatsApp bot → Next.js bridge (no default — must be set via env)
+const CHAT_BRIDGE_SECRET = process.env.CHAT_BRIDGE_SECRET;
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -26,26 +27,25 @@ function generateId(): string {
 
 /* ────────────────────────────────────────────
    POST /api/tournaments/chat
-   Send a new message (from web chat)
+   Send a new message (web — admin authenticated)
    ──────────────────────────────────────────── */
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard — admin must be authenticated to send chat messages
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
+
+    // Use authenticated admin's identity (not from body)
+    const adminId = request.headers.get('x-admin-id')!;
+
     const body = await request.json();
-    const { tournamentId, userId, userName, message, source } = body;
+    const { tournamentId, message } = body;
 
     if (!tournamentId || !message) {
       return NextResponse.json(
         { error: 'tournamentId and message are required' },
         { status: 400 }
-      );
-    }
-
-    // Validate userId and userName are provided (no anonymous chat)
-    if (!userId || !userName || userId === 'anon' || userName === 'Pengunjung') {
-      return NextResponse.json(
-        { error: 'Identitas pengguna diperlukan. Silakan masukkan nama terlebih dahulu.' },
-        { status: 403 }
       );
     }
 
@@ -64,18 +64,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sanitize inputs
-    const cleanUserName = String(userName).trim().slice(0, 25);
-    const cleanUserId = String(userId).trim().slice(0, 40);
-    const msgSource = source === 'whatsapp' ? 'whatsapp' : 'web';
-
     const newMessage: ChatMessage = {
       id: generateId(),
-      userId: cleanUserId,
-      userName: cleanUserName,
+      userId: adminId,
+      userName: `Admin-${adminId.substring(0, 6)}`,
       message: trimmed,
       timestamp: new Date().toISOString(),
-      source: msgSource,
+      source: 'web',
     };
 
     // Get or create store for this tournament
@@ -102,7 +97,7 @@ export async function POST(request: NextRequest) {
 
 /* ────────────────────────────────────────────
    GET /api/tournaments/chat?tournamentId=xxx
-   Fetch messages for a tournament
+   Fetch messages for a tournament (public read)
    ──────────────────────────────────────────── */
 
 export async function GET(request: NextRequest) {
@@ -128,26 +123,28 @@ export async function GET(request: NextRequest) {
 }
 
 /* ────────────────────────────────────────────
-   POST /api/tournaments/chat/whatsapp
+   PUT /api/tournaments/chat
    Bridge endpoint for WhatsApp bot
-   Requires X-Chat-Bridge-Secret header
+   Requires X-Chat-Bridge-Secret header (no IP bypass)
    ──────────────────────────────────────────── */
 
 export async function PUT(request: NextRequest) {
   try {
-    // For internal requests (localhost), skip secret validation
-    // External requests must provide X-Chat-Bridge-Secret header
-    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    const isInternal = clientIP === 'unknown' || clientIP === '::1' || clientIP.startsWith('127.') || clientIP.startsWith('10.') || clientIP.startsWith('172.') || clientIP.startsWith('192.168.');
+    // Always require bridge secret — no IP-based bypass
+    if (!CHAT_BRIDGE_SECRET) {
+      console.error('[Chat Bridge] CHAT_BRIDGE_SECRET env var is not set. Bridge disabled.');
+      return NextResponse.json(
+        { error: 'Chat bridge not configured' },
+        { status: 503 }
+      );
+    }
 
-    if (!isInternal) {
-      const bridgeSecret = request.headers.get('x-chat-bridge-secret');
-      if (bridgeSecret !== CHAT_BRIDGE_SECRET) {
-        return NextResponse.json(
-          { error: 'Unauthorized: Invalid bridge secret' },
-          { status: 401 }
-        );
-      }
+    const bridgeSecret = request.headers.get('x-chat-bridge-secret');
+    if (!bridgeSecret || bridgeSecret !== CHAT_BRIDGE_SECRET) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Invalid bridge secret' },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
@@ -202,8 +199,6 @@ export async function PUT(request: NextRequest) {
     if (store.length > MAX_MESSAGES_PER_TOURNAMENT) {
       store.splice(0, store.length - MAX_MESSAGES_PER_TOURNAMENT);
     }
-
-    console.log(`[Chat Bridge] 📱 WA message from ${cleanUserName} (${cleanUserId}): "${trimmed.substring(0, 60)}${trimmed.length > 60 ? '...' : ''}"`);
 
     return NextResponse.json({ success: true, message: newMessage });
   } catch {

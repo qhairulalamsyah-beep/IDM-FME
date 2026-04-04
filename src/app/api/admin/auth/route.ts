@@ -1,42 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createHash } from 'crypto';
-import { authLogger, apiLogger } from '@/lib/logger';
 import { requireAdmin } from '@/lib/admin-guard';
+import { comparePin, isBcryptHash, legacySha256Hash, hashPin } from '@/lib/auth-helpers';
+import { createAdminToken } from '@/lib/jwt';
 
 // POST - Admin login with PIN
 export async function POST(request: NextRequest) {
-  const timer = apiLogger.startTimer();
-  apiLogger.request('POST', '/api/admin/auth');
-  
   try {
     const body = await request.json();
     const { pin } = body;
 
     if (!pin) {
-      authLogger.warn('Login attempt without PIN');
-      apiLogger.response('POST', '/api/admin/auth', 400, timer());
       return NextResponse.json({ success: false, error: 'PIN wajib diisi' }, { status: 400 });
     }
 
-    // Normalize PIN - ensure it's a string of digits
+    // Normalize PIN
     const cleanPin = String(pin).trim();
 
     // PIN must be exactly 6 digits
     if (!/^\d{6}$/.test(cleanPin)) {
-      authLogger.warn('Invalid PIN format', { pinLength: cleanPin.length });
-      apiLogger.response('POST', '/api/admin/auth', 400, timer());
       return NextResponse.json({ success: false, error: 'PIN harus 6 digit angka' }, { status: 400 });
     }
 
-    // Hash input PIN with SHA-256 for comparison
-    const inputHash = createHash('sha256').update(cleanPin).digest('hex');
-
-    // Find admin with matching PIN
-    const user = await db.user.findFirst({
+    // Find all admins to check PIN against
+    const admins = await db.user.findMany({
       where: {
         role: { in: ['admin', 'super_admin'] },
-        adminPass: inputHash,
+        adminPass: { not: null },
       },
       select: {
         id: true,
@@ -47,51 +37,80 @@ export async function POST(request: NextRequest) {
         isAdmin: true,
         avatar: true,
         tier: true,
+        adminPass: true,
       },
     });
 
-    if (!user) {
-      authLogger.warn('Failed login attempt - invalid PIN');
-      apiLogger.response('POST', '/api/admin/auth', 401, timer());
+    let matchedAdmin: typeof admins[0] | null = null;
+
+    for (const admin of admins) {
+      if (!admin.adminPass) continue;
+
+      if (isBcryptHash(admin.adminPass)) {
+        // bcrypt hash — use bcrypt.compare
+        const valid = await comparePin(cleanPin, admin.adminPass);
+        if (valid) {
+          matchedAdmin = admin;
+          break;
+        }
+      } else {
+        // Legacy SHA-256 hash — compare directly
+        const inputHash = legacySha256Hash(cleanPin);
+        if (admin.adminPass === inputHash) {
+          matchedAdmin = admin;
+          break;
+        }
+      }
+    }
+
+    if (!matchedAdmin) {
       return NextResponse.json({ success: false, error: 'PIN salah' }, { status: 401 });
     }
 
-    authLogger.info('Admin logged in successfully', {
-      userId: user.id,
-      name: user.name,
-      role: user.role,
-    });
-    
-    apiLogger.response('POST', '/api/admin/auth', 200, timer());
+    // Migrate legacy SHA-256 hash to bcrypt on successful login
+    if (!isBcryptHash(matchedAdmin.adminPass)) {
+      try {
+        const newHash = await hashPin(cleanPin);
+        await db.user.update({
+          where: { id: matchedAdmin.id },
+          data: { adminPass: newHash },
+        });
+        console.log(`[AUTH] Migrated ${matchedAdmin.name} from SHA-256 to bcrypt`);
+      } catch (migrateError) {
+        console.error('[AUTH] Migration to bcrypt failed:', migrateError);
+        // Non-blocking — continue login even if migration fails
+      }
+    }
 
-    const permissions = JSON.parse(user.permissions || '{}');
+    // Create JWT token for session
+    const token = await createAdminToken(matchedAdmin.id, matchedAdmin.role);
+
+    const permissions = JSON.parse(matchedAdmin.permissions || '{}');
 
     return NextResponse.json({
       success: true,
+      token,
       admin: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        id: matchedAdmin.id,
+        name: matchedAdmin.name,
+        email: matchedAdmin.email,
+        role: matchedAdmin.role,
         permissions,
-        avatar: user.avatar,
-        tier: user.tier,
+        avatar: matchedAdmin.avatar,
+        tier: matchedAdmin.tier,
       },
     });
   } catch (error) {
-    authLogger.error('Admin auth error', error);
-    apiLogger.response('POST', '/api/admin/auth', 500, timer());
+    console.error('[AUTH] Admin login error:', error);
     return NextResponse.json({ success: false, error: 'Gagal login' }, { status: 500 });
   }
 }
 
-// GET - List all admins
+// GET - List all admins (authenticated only)
 export async function GET(request: NextRequest) {
   const denied = await requireAdmin(request);
   if (denied) return denied;
-  const timer = apiLogger.startTimer();
-  apiLogger.request('GET', '/api/admin/auth');
-  
+
   try {
     const admins = await db.user.findMany({
       where: { role: { in: ['admin', 'super_admin'] } },
@@ -113,13 +132,9 @@ export async function GET(request: NextRequest) {
       permissions: JSON.parse(a.permissions || '{}'),
     }));
 
-    authLogger.debug('Listed admins', { count: parsed.length });
-    apiLogger.response('GET', '/api/admin/auth', 200, timer());
-
     return NextResponse.json({ success: true, admins: parsed });
   } catch (error) {
-    authLogger.error('List admins error', error);
-    apiLogger.response('GET', '/api/admin/auth', 500, timer());
+    console.error('[AUTH] List admins error:', error);
     return NextResponse.json({ success: false, error: 'Gagal mengambil data admin' }, { status: 500 });
   }
 }

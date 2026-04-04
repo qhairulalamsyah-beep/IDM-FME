@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { authLogger } from '@/lib/logger';
+import { verifyAdminToken } from '@/lib/jwt';
+import { comparePin, isBcryptHash, legacySha256Hash } from '@/lib/auth-helpers';
 
 /**
  * Verify that the request comes from an authenticated admin.
  *
- * The client sends:
- *   Header:    x-admin-id   — the admin's user ID
- *   Header:    x-admin-hash — SHA-256 of the admin password (stored in localStorage)
+ * Supports two auth methods:
+ *   1. JWT token (x-admin-token header) — preferred, new system
+ *   2. Legacy ID+Hash (x-admin-id + x-admin-hash) — backward compatible
  *
- * We verify server-side that:
- *   1. The user exists and has role admin or super_admin
- *   2. The password hash matches what's in the DB
- *
- * Returns { admin } on success, or null on failure (caller should respond 401).
+ * Returns { admin } on success, or null on failure.
  */
 export async function verifyAdmin(request: NextRequest): Promise<{
   id: string;
@@ -23,25 +20,50 @@ export async function verifyAdmin(request: NextRequest): Promise<{
   permissions: Record<string, boolean>;
 } | null> {
   try {
+    // Method 1: JWT token (preferred)
+    const token = request.headers.get('x-admin-token');
+    if (token) {
+      const payload = await verifyAdminToken(token);
+      if (!payload) {
+        return null;
+      }
+
+      const user = await db.user.findUnique({
+        where: { id: payload.adminId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          permissions: true,
+          isAdmin: true,
+        },
+      });
+
+      if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+        return null;
+      }
+
+      const permissions = JSON.parse(user.permissions || '{}');
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        permissions,
+      };
+    }
+
+    // Method 2: Legacy ID + Hash (backward compatible)
     const adminId = request.headers.get('x-admin-id');
     const adminHash = request.headers.get('x-admin-hash');
 
-    authLogger.debug('Verifying admin', {
-      adminId: adminId ? `${adminId.slice(0, 8)}...` : null,
-      hasHash: !!adminHash,
-    });
-
     if (!adminId || !adminHash) {
-      authLogger.warn('Admin verification failed: missing headers');
       return null;
     }
 
-    const user = await db.user.findFirst({
-      where: {
-        id: adminId,
-        role: { in: ['admin', 'super_admin'] },
-        adminPass: adminHash,
-      },
+    const user = await db.user.findUnique({
+      where: { id: adminId },
       select: {
         id: true,
         name: true,
@@ -49,31 +71,32 @@ export async function verifyAdmin(request: NextRequest): Promise<{
         role: true,
         permissions: true,
         isAdmin: true,
+        adminPass: true,
       },
     });
 
-    if (!user) {
-      // Debug: Check if user exists at all
-      const userExists = await db.user.findUnique({
-        where: { id: adminId },
-        select: { id: true, role: true, adminPass: true },
-      });
-      
-      authLogger.warn('Admin verification failed', {
-        userExists: !!userExists,
-        userRole: userExists?.role,
-        hashMatch: userExists?.adminPass === adminHash,
-      });
-      
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin') || !user.adminPass) {
       return null;
     }
 
-    authLogger.info('Admin verified', { 
-      userId: user.id, 
-      name: user.name, 
-      role: user.role 
-    });
-    
+    // Compare hash — support both bcrypt and legacy SHA-256
+    let hashValid = false;
+    if (isBcryptHash(user.adminPass)) {
+      hashValid = await comparePin(adminHash, user.adminPass);
+      // For legacy clients, adminHash is the raw PIN, so compare directly
+      if (!hashValid && /^\d{6}$/.test(adminHash)) {
+        hashValid = await comparePin(adminHash, user.adminPass);
+      }
+    } else {
+      // Legacy SHA-256: adminHash might be the raw PIN or the SHA-256 hash
+      const sha256OfInput = legacySha256Hash(adminHash);
+      hashValid = user.adminPass === sha256OfInput;
+    }
+
+    if (!hashValid) {
+      return null;
+    }
+
     const permissions = JSON.parse(user.permissions || '{}');
     return {
       id: user.id,
@@ -83,7 +106,8 @@ export async function verifyAdmin(request: NextRequest): Promise<{
       permissions,
     };
   } catch (error) {
-    authLogger.error('Admin verification error', error);
+    // Avoid logging sensitive data (hashes, passwords) — log userId/role only if available
+    console.error('[Admin Guard] Verification error');
     return null;
   }
 }
@@ -106,43 +130,46 @@ export async function requireAdmin(
 }
 
 /**
- * Check if admin has specific permission
+ * Check if admin has specific permission.
+ * Super admin (by role) always has all permissions.
  */
 export function hasPermission(
   permissions: Record<string, boolean>,
-  permission: string
+  permission: string,
 ): boolean {
-  return permissions[permission] === true || permissions['super_admin'] === true;
+  // Note: We no longer check permissions['super_admin'] from JSON —
+  // super_admin status is determined by user.role in the database.
+  return permissions[permission] === true;
 }
 
 /**
- * Require specific permission - returns error response if not authorized
+ * Require specific permission — returns error response if not authorized.
+ * Also checks if user is super_admin (by role), which bypasses all permission checks.
  */
 export async function requirePermission(
   request: NextRequest,
-  permission: string
+  permission: string,
 ): Promise<{ authorized: boolean; admin: Awaited<ReturnType<typeof verifyAdmin>> } | NextResponse> {
   const admin = await verifyAdmin(request);
-  
+
   if (!admin) {
     return NextResponse.json(
       { success: false, error: 'Akses ditolak. Silakan login kembali.' },
       { status: 401 },
     );
   }
-  
+
+  // Super admin bypasses all permission checks
+  if (admin.role === 'super_admin') {
+    return { authorized: true, admin };
+  }
+
   if (!hasPermission(admin.permissions, permission)) {
-    authLogger.warn('Permission denied', {
-      userId: admin.id,
-      requiredPermission: permission,
-      userPermissions: admin.permissions,
-    });
-    
     return NextResponse.json(
       { success: false, error: `Anda tidak memiliki izin untuk aksi ini (${permission})` },
       { status: 403 },
     );
   }
-  
+
   return { authorized: true, admin };
 }

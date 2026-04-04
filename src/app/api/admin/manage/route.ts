@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createHash } from 'crypto';
+import { requireAdmin, requirePermission } from '@/lib/admin-guard';
+import { hashPin } from '@/lib/auth-helpers';
 
 interface Permission {
   tournament?: boolean;
@@ -27,16 +28,23 @@ const DEFAULT_PERMISSIONS: Permission = {
 // POST - Add new admin (super_admin only)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { requesterId, name, pin, permissions: customPermissions } = body;
+    // Auth guard — verify authenticated admin session
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
 
-    console.log('[ADMIN CREATE] Request:', { requesterId, name, hasPin: !!pin, permKeys: customPermissions ? Object.keys(customPermissions) : [] });
+    // Permission guard — require manage_admins permission
+    const permDenied = await requirePermission(request, 'manage_admins');
+    if (permDenied instanceof NextResponse) return permDenied;
 
-    // Verify requester is super_admin
-    const requester = await db.user.findUnique({ where: { id: requesterId } });
+    // Get authenticated admin ID from headers (NOT from request body)
+    const adminId = request.headers.get('x-admin-id')!;
+    const requester = await db.user.findUnique({ where: { id: adminId } });
     if (!requester || requester.role !== 'super_admin') {
       return NextResponse.json({ success: false, error: 'Akses ditolak — hanya super admin' }, { status: 403 });
     }
+
+    const body = await request.json();
+    const { name, pin, permissions: customPermissions } = body;
 
     if (!name || !pin) {
       return NextResponse.json({ success: false, error: 'Nama dan PIN wajib diisi' }, { status: 400 });
@@ -47,12 +55,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'PIN harus 6 digit angka' }, { status: 400 });
     }
 
-    const emailVal = `${name.toLowerCase().replace(/\s+/g, '_')}@idm.id`;
+    // Validate name
+    if (name.trim().length < 2) {
+      return NextResponse.json({ success: false, error: 'Nama minimal 2 karakter' }, { status: 400 });
+    }
+
+    const emailVal = `${name.trim().toLowerCase().replace(/\s+/g, '_')}@idm.id`;
 
     // Check duplicate name among admins only
     const existingAdmin = await db.user.findFirst({
       where: {
-        name,
+        name: name.trim(),
         role: { in: ['admin', 'super_admin'] }
       }
     });
@@ -60,12 +73,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Nama admin sudah digunakan' }, { status: 409 });
     }
 
-    const hash = createHash('sha256').update(pin).digest('hex');
+    const hash = await hashPin(pin);
     const permissions = JSON.stringify({ ...DEFAULT_PERMISSIONS, ...customPermissions });
 
     const admin = await db.user.create({
       data: {
-        name,
+        name: name.trim(),
         email: emailVal,
         gender: 'male',
         role: 'admin',
@@ -83,7 +96,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Add admin error:', error);
+    console.error('[ADMIN CREATE] Error:', msg);
     if (msg.includes('Unique')) {
       return NextResponse.json({ success: false, error: 'Email sudah terdaftar' }, { status: 409 });
     }
@@ -94,17 +107,30 @@ export async function POST(request: NextRequest) {
 // PUT - Update admin permissions or PIN (super_admin only)
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { requesterId, targetAdminId, permissions: newPermissions, newPin } = body;
+    // Auth guard — verify authenticated admin session
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
 
-    // Verify requester is super_admin
-    const requester = await db.user.findUnique({ where: { id: requesterId } });
+    // Permission guard — require manage_admins permission
+    const permDenied = await requirePermission(request, 'manage_admins');
+    if (permDenied instanceof NextResponse) return permDenied;
+
+    // Get authenticated admin ID from headers (NOT from request body)
+    const adminId = request.headers.get('x-admin-id')!;
+    const requester = await db.user.findUnique({ where: { id: adminId } });
     if (!requester || requester.role !== 'super_admin') {
       return NextResponse.json({ success: false, error: 'Akses ditolak — hanya super admin' }, { status: 403 });
     }
 
+    const body = await request.json();
+    const { targetAdminId, permissions: newPermissions, newPin } = body;
+
+    if (!targetAdminId) {
+      return NextResponse.json({ success: false, error: 'targetAdminId wajib diisi' }, { status: 400 });
+    }
+
     // Prevent modifying own role (safety)
-    if (targetAdminId === requesterId) {
+    if (targetAdminId === adminId) {
       return NextResponse.json({ success: false, error: 'Tidak bisa mengubah akun sendiri dari sini' }, { status: 400 });
     }
 
@@ -122,7 +148,7 @@ export async function PUT(request: NextRequest) {
       if (!/^\d{6}$/.test(newPin)) {
         return NextResponse.json({ success: false, error: 'PIN harus 6 digit angka' }, { status: 400 });
       }
-      const hash = createHash('sha256').update(newPin).digest('hex');
+      const hash = await hashPin(newPin);
       updateData.adminPass = hash;
     }
 
@@ -137,7 +163,7 @@ export async function PUT(request: NextRequest) {
       admin: { ...updated, permissions: JSON.parse(updated.permissions || '{}') },
     });
   } catch (error) {
-    console.error('Update admin error:', error);
+    console.error('[ADMIN UPDATE] Error:', error);
     return NextResponse.json({ success: false, error: 'Gagal mengupdate admin' }, { status: 500 });
   }
 }
@@ -145,20 +171,29 @@ export async function PUT(request: NextRequest) {
 // DELETE - Remove admin (super_admin only)
 export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const requesterId = searchParams.get('requesterId');
-    const targetId = searchParams.get('targetId');
+    // Auth guard — verify authenticated admin session
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
 
-    if (!requesterId || !targetId) {
-      return NextResponse.json({ success: false, error: 'Parameter tidak lengkap' }, { status: 400 });
-    }
+    // Permission guard — require manage_admins permission
+    const permDenied = await requirePermission(request, 'manage_admins');
+    if (permDenied instanceof NextResponse) return permDenied;
 
-    const requester = await db.user.findUnique({ where: { id: requesterId } });
+    // Get authenticated admin ID from headers (NOT from query params)
+    const adminId = request.headers.get('x-admin-id')!;
+    const requester = await db.user.findUnique({ where: { id: adminId } });
     if (!requester || requester.role !== 'super_admin') {
       return NextResponse.json({ success: false, error: 'Akses ditolak — hanya super admin' }, { status: 403 });
     }
 
-    if (targetId === requesterId) {
+    const { searchParams } = new URL(request.url);
+    const targetId = searchParams.get('targetId');
+
+    if (!targetId) {
+      return NextResponse.json({ success: false, error: 'targetId wajib diisi' }, { status: 400 });
+    }
+
+    if (targetId === adminId) {
       return NextResponse.json({ success: false, error: 'Tidak bisa menghapus akun sendiri' }, { status: 400 });
     }
 
@@ -171,7 +206,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: `Admin "${target.name}" berhasil dihapus` });
   } catch (error) {
-    console.error('Delete admin error:', error);
+    console.error('[ADMIN DELETE] Error:', error);
     return NextResponse.json({ success: false, error: 'Gagal menghapus admin' }, { status: 500 });
   }
 }

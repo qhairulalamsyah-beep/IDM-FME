@@ -2400,7 +2400,7 @@ export function AdminPanel({
                                           await adminFetch('/api/admin/manage', {
                                             method: 'PUT',
                                             headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ requesterId: adminUser?.id, targetAdminId: admin.id, permissions: admin.permissions }),
+                                            body: JSON.stringify({ targetAdminId: admin.id, permissions: admin.permissions }),
                                           });
                                           setEditingPermId(null);
                                         } catch {}
@@ -2724,7 +2724,7 @@ export function AdminPanel({
                               const res = await adminFetch('/api/admin/manage', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ requesterId: adminUser?.id, name: newAdminName.trim(), pin: newAdminPin, permissions: newAdminPerms }),
+                                body: JSON.stringify({ name: newAdminName.trim(), pin: newAdminPin, permissions: newAdminPerms }),
                               });
                               const data = await res.json().catch(() => null);
                               if (res.ok && data?.success) {
@@ -2799,7 +2799,7 @@ export function AdminPanel({
                             onClick={async () => {
                               setRbacLoading(true);
                               try {
-                                await fetch(`/api/admin/manage?requesterId=${adminUser?.id}&targetId=${showDeleteConfirm}`, { method: 'DELETE' });
+                                await adminFetch(`/api/admin/manage?targetId=${showDeleteConfirm}`, { method: 'DELETE' });
                                 setAdminList((prev) => prev.filter((a) => a.id !== showDeleteConfirm));
                                 setShowDeleteConfirm(null);
                               } catch {}

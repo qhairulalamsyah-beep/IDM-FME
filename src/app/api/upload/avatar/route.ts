@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { requireAdmin } from '@/lib/admin-guard';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -8,6 +9,10 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB for avatars
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard — only authenticated admin can upload avatars
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 

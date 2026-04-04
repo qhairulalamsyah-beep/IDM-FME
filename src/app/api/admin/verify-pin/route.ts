@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createHash } from 'crypto';
+import { requireAdmin } from '@/lib/admin-guard';
 
-// POST - Verify current PIN (for change PIN flow)
+// POST - Verify current PIN for the authenticated admin (for change PIN flow)
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard — must be an authenticated admin
+    const denied = await requireAdmin(request);
+    if (denied) return denied;
+
+    // Get the authenticated admin's ID from headers
+    const adminId = request.headers.get('x-admin-id')!;
     const body = await request.json();
     const { pin } = body;
 
@@ -20,27 +26,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ valid: false, error: 'PIN harus 6 digit angka' }, { status: 400 });
     }
 
-    // Hash input PIN
-    const inputHash = createHash('sha256').update(cleanPin).digest('hex');
-
-    // Find admin with matching PIN
-    const user = await db.user.findFirst({
-      where: {
-        role: { in: ['admin', 'super_admin'] },
-        adminPass: inputHash,
-      },
-      select: {
-        id: true,
-      },
+    // Compare PIN — support both bcrypt and legacy SHA-256
+    const user = await db.user.findUnique({
+      where: { id: adminId },
+      select: { id: true, adminPass: true },
     });
 
-    if (!user) {
+    if (!user || !user.adminPass) {
+      return NextResponse.json({ valid: false, error: 'Akun tidak valid' }, { status: 401 });
+    }
+
+    let pinValid = false;
+    const { isBcryptHash, comparePin, legacySha256Hash } = await import('@/lib/auth-helpers');
+    if (isBcryptHash(user.adminPass)) {
+      pinValid = await comparePin(cleanPin, user.adminPass);
+    } else {
+      const inputHash = legacySha256Hash(cleanPin);
+      pinValid = user.adminPass === inputHash;
+    }
+
+    if (!pinValid) {
       return NextResponse.json({ valid: false, error: 'PIN salah' }, { status: 401 });
     }
 
     return NextResponse.json({ valid: true });
   } catch (error) {
-    console.error('Verify PIN error:', error);
+    console.error('[VERIFY PIN] Error:', error);
     return NextResponse.json({ valid: false, error: 'Gagal memverifikasi PIN' }, { status: 500 });
   }
 }

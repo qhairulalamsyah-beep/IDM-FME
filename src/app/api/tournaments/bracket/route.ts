@@ -24,6 +24,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { tournamentId, bracketType } = body;
 
+    // Validate bracketType
+    if (!bracketType || !['single', 'double', 'group'].includes(bracketType)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid bracketType. Must be one of: single, double, group' },
+        { status: 400 }
+      );
+    }
+
     // Get teams
     const teams = await db.team.findMany({
       where: { tournamentId },

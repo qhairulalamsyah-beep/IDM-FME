@@ -7,7 +7,7 @@ import { triggerNewDonation } from '@/lib/pusher';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20') || 20, 100);
 
     const donations = await db.donation.findMany({
       where: {

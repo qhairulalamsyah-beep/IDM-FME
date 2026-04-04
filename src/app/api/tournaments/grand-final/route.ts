@@ -90,7 +90,6 @@ export async function GET(request: NextRequest) {
     const qualifiedPlayers = await db.user.findMany({
       where: {
         gender: division,
-        role: { in: ['user', 'admin'] },
         isAdmin: false,
       },
       orderBy: { points: 'desc' },
@@ -181,57 +180,31 @@ export async function POST(request: NextRequest) {
       teamNames.push(name);
     }
 
-    // 4. Create tournament
+    // 4. Create tournament + teams + members + matches atomically
+    // All-or-nothing: if any create fails, nothing is persisted
     const tournamentId = uuidv4();
-    await db.tournament.create({
-      data: {
-        id: tournamentId,
-        name: `GRAND FINAL - ${division === 'male' ? 'Putra' : 'Putri'}`,
-        division,
-        type: 'grand_final',
-        status: 'ongoing',
-        bracketType: 'single',
-        prizePool: prizePool || 0,
-        mode: mode || 'GR Arena 3vs3',
-        bpm: bpm || '130',
-        lokasi: lokasi || 'PUB 1',
-      },
-    });
-
-    // 5. Create 4 teams with members
     const teamIds: string[] = [];
 
+    // Pre-generate all IDs and collect create operations
     for (let t = 0; t < 4; t++) {
-      const teamId = uuidv4();
-      teamIds.push(teamId);
+      teamIds.push(uuidv4());
+    }
+
+    // Collect all member create data
+    const memberDataList: { teamId: string; userId: string; role: string }[] = [];
+    for (let t = 0; t < 4; t++) {
       const tp = teamPlayers.get(t)!;
-
-      await db.team.create({
-        data: {
-          id: teamId,
-          tournamentId,
-          name: teamNames[t],
-          seed: t + 1,
-        },
-      });
-
-      // Create team members (first player by rank = captain)
       const sortedPlayers = [...tp].sort((a, b) => a.rank - b.rank);
       for (let m = 0; m < sortedPlayers.length; m++) {
-        await db.teamMember.create({
-          data: {
-            teamId,
-            userId: sortedPlayers[m].id,
-            role: m === 0 ? 'captain' : 'member',
-          },
+        memberDataList.push({
+          teamId: teamIds[t],
+          userId: sortedPlayers[m].id,
+          role: m === 0 ? 'captain' : 'member',
         });
       }
     }
 
-    // 6. Generate 4-team single elimination bracket
-    // Semi 1: Team seed 1 vs Team seed 4
-    // Semi 2: Team seed 2 vs Team seed 3
-    // Final: Winner SF1 vs Winner SF2
+    // Generate match data
     const matches = [
       // Round 1 — Semifinals
       {
@@ -267,7 +240,41 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    await db.match.createMany({ data: matches });
+    // Execute all creates in a single transaction
+    await db.$transaction([
+      // Create tournament
+      db.tournament.create({
+        data: {
+          id: tournamentId,
+          name: `GRAND FINAL - ${division === 'male' ? 'Putra' : 'Putri'}`,
+          division,
+          type: 'grand_final',
+          status: 'ongoing',
+          bracketType: 'single',
+          prizePool: prizePool || 0,
+          mode: mode || 'GR Arena 3vs3',
+          bpm: bpm || '130',
+          lokasi: lokasi || 'PUB 1',
+        },
+      }),
+      // Create 4 teams
+      ...teamIds.map((teamId, t) =>
+        db.team.create({
+          data: {
+            id: teamId,
+            tournamentId,
+            name: teamNames[t],
+            seed: t + 1,
+          },
+        })
+      ),
+      // Create all team members
+      ...memberDataList.map((md) =>
+        db.teamMember.create({ data: md })
+      ),
+      // Create matches
+      db.match.createMany({ data: matches }),
+    ]);
 
     // 7. Fire Pusher events
     pusher.trigger(
