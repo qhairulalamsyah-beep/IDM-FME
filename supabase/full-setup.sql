@@ -477,7 +477,241 @@ VALUES (
   NOW()
 ) ON CONFLICT (id) DO NOTHING;
 
+-- ── 9. RLS — Row Level Security (Least Privilege) ────────────────
+-- Security model:
+--   postgres (superuser)     → Prisma ORM, bypasses RLS
+--   anon                     → Public read-only (tournament data, leaderboard)
+--   authenticated            → Read public + write own data
+--   service_role             → Supabase admin, bypasses RLS
+--   app_user (custom role)   → Backend service, subject to RLS
+
+-- 9a. Create app_user role
+DO $$ BEGIN
+  CREATE ROLE app_user NOLOGIN NOINHERIT;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- 9b. Enable RLS on ALL tables
+ALTER TABLE public."User" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."Tournament" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."Registration" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."Team" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."TeamMember" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."Match" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."Ranking" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."Donation" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."Sawer" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."Club" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."Settings" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."ActivityLog" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."PlayerMatchStat" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."BotLog" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public."WhatsAppSettings" ENABLE ROW LEVEL SECURITY;
+
+-- 9c. Revoke ALL from anon, authenticated, public, app_user
+DO $$ DECLARE tbl TEXT; BEGIN
+  FOR tbl IN SELECT table_name FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+  LOOP
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM anon', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM authenticated', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM public', tbl);
+    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public."%I" FROM app_user', tbl);
+  END LOOP;
+END $$;
+
+-- 9d. Least-privilege GRANTs — anon (read-only public data)
+GRANT SELECT ON TABLE public."Tournament" TO anon;
+GRANT SELECT ON TABLE public."Match" TO anon;
+GRANT SELECT ON TABLE public."Team" TO anon;
+GRANT SELECT ON TABLE public."TeamMember" TO anon;
+GRANT SELECT ON TABLE public."PlayerMatchStat" TO anon;
+GRANT SELECT ON TABLE public."Ranking" TO anon;
+GRANT SELECT ON TABLE public."Club" TO anon;
+GRANT SELECT ON TABLE public."Settings" TO anon;
+GRANT SELECT ON TABLE public."Donation" TO anon;
+GRANT SELECT ON TABLE public."Sawer" TO anon;
+GRANT SELECT (id, name, gender, tier, points, avatar, "isMVP", "mvpScore", "clubId", "createdAt") ON TABLE public."User" TO anon;
+GRANT SELECT ON TABLE public."Registration" TO anon;
+
+-- 9e. Least-privilege GRANTs — authenticated
+GRANT SELECT (id, name, gender, tier, points, avatar, phone, discordId, "isMVP", "mvpScore", "clubId", "createdAt", "updatedAt") ON TABLE public."User" TO authenticated;
+GRANT INSERT (name, email, gender, tier, points, avatar, phone, "whatsappJid", discordId, "isAdmin", "clubId") ON TABLE public."User" TO authenticated;
+GRANT UPDATE (name, avatar, phone, discordId, "whatsappJid") ON TABLE public."User" TO authenticated;
+GRANT SELECT ON TABLE public."Tournament" TO authenticated;
+GRANT SELECT ON TABLE public."Registration" TO authenticated;
+GRANT INSERT ON TABLE public."Registration" TO authenticated;
+GRANT SELECT ON TABLE public."Match" TO authenticated;
+GRANT SELECT ON TABLE public."Team" TO authenticated;
+GRANT SELECT ON TABLE public."TeamMember" TO authenticated;
+GRANT SELECT ON TABLE public."PlayerMatchStat" TO authenticated;
+GRANT SELECT ON TABLE public."Ranking" TO authenticated;
+GRANT SELECT ON TABLE public."Club" TO authenticated;
+GRANT SELECT, INSERT ON TABLE public."Donation" TO authenticated;
+GRANT SELECT, INSERT ON TABLE public."Sawer" TO authenticated;
+GRANT SELECT ON TABLE public."Settings" TO authenticated;
+
+-- 9f. Least-privilege GRANTs — app_user (backend service)
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."User" TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."Tournament" TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."Registration" TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."Team" TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."TeamMember" TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."Match" TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."PlayerMatchStat" TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."Ranking" TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."Donation" TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."Sawer" TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public."Club" TO app_user;
+GRANT SELECT, INSERT, UPDATE ON TABLE public."Settings" TO app_user;
+GRANT SELECT, INSERT ON TABLE public."ActivityLog" TO app_user;
+GRANT SELECT, INSERT ON TABLE public."BotLog" TO app_user;
+GRANT SELECT, INSERT, UPDATE ON TABLE public."WhatsAppSettings" TO app_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
+
+-- ── 10. RLS Policies ─────────────────────────────────────────────
+
+-- User: anon reads non-admin only, authenticated reads non-admin + own profile
+CREATE POLICY "anon_read_public_users" ON public."User"
+  FOR SELECT TO anon USING ("isAdmin" = false);
+CREATE POLICY "authenticated_read_public_users" ON public."User"
+  FOR SELECT TO authenticated USING ("isAdmin" = false);
+CREATE POLICY "authenticated_read_own_profile" ON public."User"
+  FOR SELECT TO authenticated USING (auth.uid() = id);
+CREATE POLICY "authenticated_insert_user" ON public."User"
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
+CREATE POLICY "authenticated_update_own_profile" ON public."User"
+  FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+CREATE POLICY "app_user_all_user" ON public."User"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- Tournament: anon + authenticated read, app_user full
+CREATE POLICY "anon_read_tournaments" ON public."Tournament"
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "authenticated_read_tournaments" ON public."Tournament"
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "app_user_all_tournament" ON public."Tournament"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- Registration: anon + authenticated read, authenticated insert own, app_user full
+CREATE POLICY "anon_read_registrations" ON public."Registration"
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "authenticated_read_registrations" ON public."Registration"
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_insert_own_registration" ON public."Registration"
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = "userId");
+CREATE POLICY "app_user_all_registration" ON public."Registration"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- Team
+CREATE POLICY "anon_read_teams" ON public."Team"
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "authenticated_read_teams" ON public."Team"
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "app_user_all_team" ON public."Team"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- TeamMember
+CREATE POLICY "anon_read_team_members" ON public."TeamMember"
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "authenticated_read_team_members" ON public."TeamMember"
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "app_user_all_team_member" ON public."TeamMember"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- Match
+CREATE POLICY "anon_read_matches" ON public."Match"
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "authenticated_read_matches" ON public."Match"
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "app_user_all_match" ON public."Match"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- PlayerMatchStat
+CREATE POLICY "anon_read_player_stats" ON public."PlayerMatchStat"
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "authenticated_read_player_stats" ON public."PlayerMatchStat"
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "app_user_all_player_stat" ON public."PlayerMatchStat"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- Ranking
+CREATE POLICY "anon_read_rankings" ON public."Ranking"
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "authenticated_read_rankings" ON public."Ranking"
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "app_user_all_ranking" ON public."Ranking"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- Donation: anon reads confirmed only, authenticated reads own + confirmed
+CREATE POLICY "anon_read_confirmed_donations" ON public."Donation"
+  FOR SELECT TO anon USING ("paymentStatus" = 'confirmed');
+CREATE POLICY "authenticated_read_own_donations" ON public."Donation"
+  FOR SELECT TO authenticated USING ("paymentStatus" = 'confirmed' OR auth.uid() = "userId");
+CREATE POLICY "authenticated_insert_donation" ON public."Donation"
+  FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "app_user_all_donation" ON public."Donation"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- Sawer: anon reads confirmed only
+CREATE POLICY "anon_read_confirmed_sawers" ON public."Sawer"
+  FOR SELECT TO anon USING ("paymentStatus" = 'confirmed');
+CREATE POLICY "authenticated_read_all_sawers" ON public."Sawer"
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "authenticated_insert_sawer" ON public."Sawer"
+  FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "app_user_all_sawer" ON public."Sawer"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- Club
+CREATE POLICY "anon_read_clubs" ON public."Club"
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "authenticated_read_clubs" ON public."Club"
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "app_user_all_club" ON public."Club"
+  FOR ALL TO app_user USING (true) WITH CHECK (true);
+
+-- Settings: anon/authenticated read safe keys only
+CREATE POLICY "anon_read_public_settings" ON public."Settings"
+  FOR SELECT TO anon USING ("key" IN ('site_name', 'app_version', 'maintenance_mode', 'public_notice'));
+CREATE POLICY "authenticated_read_public_settings" ON public."Settings"
+  FOR SELECT TO authenticated USING ("key" IN ('site_name', 'app_version', 'maintenance_mode', 'public_notice'));
+CREATE POLICY "app_user_read_settings" ON public."Settings"
+  FOR SELECT TO app_user USING (true);
+CREATE POLICY "app_user_write_safe_settings" ON public."Settings"
+  FOR INSERT TO app_user WITH CHECK ("key" NOT IN ('jwt_secret', 'admin_password'));
+CREATE POLICY "app_user_update_safe_settings" ON public."Settings"
+  FOR UPDATE TO app_user USING ("key" NOT IN ('jwt_secret', 'admin_password')) WITH CHECK ("key" NOT IN ('jwt_secret', 'admin_password'));
+
+-- ActivityLog: no anon/authenticated access, app_user read+insert only
+CREATE POLICY "app_user_read_activity_log" ON public."ActivityLog"
+  FOR SELECT TO app_user USING (true);
+CREATE POLICY "app_user_insert_activity_log" ON public."ActivityLog"
+  FOR INSERT TO app_user WITH CHECK (true);
+
+-- BotLog: no anon/authenticated access, app_user read+insert only
+CREATE POLICY "app_user_read_bot_log" ON public."BotLog"
+  FOR SELECT TO app_user USING (true);
+CREATE POLICY "app_user_insert_bot_log" ON public."BotLog"
+  FOR INSERT TO app_user WITH CHECK (true);
+
+-- WhatsAppSettings: no anon/authenticated access, app_user read+insert+update
+CREATE POLICY "app_user_read_whatsapp_settings" ON public."WhatsAppSettings"
+  FOR SELECT TO app_user USING (true);
+CREATE POLICY "app_user_insert_whatsapp_settings" ON public."WhatsAppSettings"
+  FOR INSERT TO app_user WITH CHECK (true);
+CREATE POLICY "app_user_update_whatsapp_settings" ON public."WhatsAppSettings"
+  FOR UPDATE TO app_user USING (true) WITH CHECK (true);
+
 -- ── DONE! ───────────────────────────────────────────────────────
 -- Tables created: User, Tournament, Registration, Team, TeamMember, Match, Ranking, Donation, Sawer, Club, Settings, ActivityLog, PlayerMatchStat, BotLog, WhatsAppSettings
 -- Storage buckets: avatars (public), payment-proofs (private), club-logos (public)
+-- RLS: ENABLED on all 15 tables with least-privilege policies
 -- Default admin: admin@idm-fme.com / PIN: 123456
+--
+-- Security Model:
+-- ■ postgres/superuser → Prisma ORM (bypasses RLS)
+-- ■ anon → Public read-only (tournaments, rankings, clubs, confirmed donations)
+-- ■ authenticated → Read public + write own data
+-- ■ service_role → Supabase admin (bypasses RLS)
+-- ■ app_user → Backend service (full CRUD, subject to RLS)

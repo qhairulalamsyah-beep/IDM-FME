@@ -243,3 +243,42 @@ Set up production deployment configuration for Vercel with Supabase PostgreSQL. 
 - Both schemas have identical models; only the datasource block differs
 
 **Verification:** `npm run lint` passes with 0 errors.
+
+---
+Task ID: 7
+Agent: Main
+Task: Implement secure RLS policies with least privilege principle
+
+Work Log:
+- Analyzed current Supabase state: RLS disabled + GRANT ALL on all 15 tables (from previous quick-fix)
+- Verified REST API access: anon key can currently see admin user (should be blocked)
+- Confirmed app architecture: Prisma uses postgres superuser (bypasses RLS), API routes use db.ts only
+- Storage upload code already uses serviceRoleKey (correct pattern)
+- Created `supabase/secure-rls.sql` — complete migration script with:
+  - REVOKE ALL from anon, authenticated, public, app_user (removes GRANT ALL)
+  - CREATE ROLE app_user (NOLOGIN, NOINHERIT) for backend service
+  - Least-privilege GRANTs per role per table (specific operations only)
+  - RLS enabled on ALL 15 tables (no exceptions)
+  - 40+ fine-grained RLS policies covering all access patterns
+- Updated `supabase/full-setup.sql` to include full RLS section (sections 9-10)
+- App code requires NO changes (Prisma superuser bypasses RLS correctly)
+- Storage policies already properly configured (service_role for uploads, public read for avatars/logos)
+
+Security Model:
+- postgres/superuser → Prisma ORM (bypasses RLS — needed for schema migrations)
+- anon → Public read-only (tournaments, rankings, clubs, confirmed donations, non-admin users)
+- authenticated → Read public + write own data (own profile, own registration, insert donations/sawers)
+- service_role → Supabase admin (bypasses RLS — server-side operations)
+- app_user → Backend service (full CRUD, but still subject to RLS as defense-in-depth)
+
+RLS Policy Highlights:
+- User table: anon sees non-admin only; authenticated sees non-admin + own profile
+- Donation/Sawer: anon sees confirmed only; authenticated sees own + all confirmed
+- Settings: anon/authenticated sees safe keys only (site_name, maintenance_mode, etc.)
+- ActivityLog/BotLog: no anon/authenticated access (internal logs only)
+- WhatsAppSettings: no anon/authenticated access (sensitive credentials)
+
+Stage Summary:
+- 2 SQL files created/updated: secure-rls.sql (migration) + full-setup.sql (fresh install)
+- No app code changes needed (Prisma superuser pattern is correct)
+- User needs to run secure-rls.sql in Supabase SQL Editor to apply
