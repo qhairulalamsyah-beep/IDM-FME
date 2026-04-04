@@ -527,3 +527,36 @@ Stage Summary:
 - **Impact**: All upload routes benefit (avatar, logo, payment proofs) since they all use uploadToStorage()
 - **User action needed**: Ensure "avatars" bucket exists in Supabase Storage (Dashboard → Storage → New Bucket → name: "avatars" → Public)
 - Files modified: src/lib/storage.ts, src/app/api/upload/avatar/route.ts, src/app/api/upload/logo/route.ts
+
+---
+Task ID: 15
+Agent: Main
+Task: Fix uploaded avatar & club logo not visible in Peserta & Club menu
+
+Work Log:
+- User reported: uploaded club logos and participant avatars don't show in the Peserta & Club menu — still showing letter fallbacks (A, T, Q)
+- Traced full data flow for avatar upload: AvatarUpload.tsx → POST /api/upload/avatar → URL → store.registerUser() → POST /api/users → database
+- Traced full data flow for club logo: AdminPanel → POST /api/upload/logo → URL → PUT /api/clubs → database
+
+Root cause #1 — Avatar not saved for existing users:
+- POST /api/users has 3 existing-user checks (by WhatsApp JID, phone, name) that return the user data WITHOUT updating the avatar field
+- When a returning user uploads a new avatar during registration, the URL was silently dropped
+- Fix: Added avatar update to all 3 existing-user branches in POST /api/users
+- Also removed redundant PUT /api/users call from store (used plain fetch without admin auth → would fail with 401)
+
+Root cause #2 — Club logo never rendered in ParticipantsByClubModal:
+- The component fetched logoUrl from API but rendering code ALWAYS showed letter fallback (charAt(0))
+- Never checked if club.logoUrl existed
+- Fix: Added conditional rendering — if logoUrl → <img>, else → letter
+
+Other components verified correct (already check logoUrl/avatar before rendering):
+- ParticipantsClubTab.tsx ✅
+- Dashboard.tsx ✅  
+- Leaderboard.tsx ✅
+- AllRankingsModal.tsx ✅
+- PlayerProfile.tsx ✅
+
+Stage Summary:
+- Two bugs fixed: avatar DB save + logo rendering in ParticipantsByClubModal
+- All display components now properly show uploaded images when available
+- Lint 0 errors, pushed to GitHub (commit de4b2ab)
