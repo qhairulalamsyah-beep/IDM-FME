@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { adminFetch } from '@/lib/admin-fetch';
+import { adminFetch, isAdminAuthenticated } from '@/lib/admin-fetch';
 
 // Module-level fetch tracker (not stored in Zustand to avoid re-renders)
 let fetchStartTime = 0;
@@ -296,6 +296,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   fetchAdmins: async () => {
     try {
+      // Skip if not authenticated — avoid unnecessary 401s
+      if (!isAdminAuthenticated()) return;
+
       // Use adminFetch (not plain fetch) so expired sessions trigger proper logout
       const res = await adminFetch('/api/admin/auth');
       if (!res.ok) return; // 401 handled by adminFetch (clearAdminAuth)
@@ -305,7 +308,13 @@ export const useAppStore = create<AppState>((set, get) => ({
         const currentAdmin = get().adminUser;
         if (currentAdmin) {
           const updated = data.admins.find((a: { id: string }) => a.id === currentAdmin.id);
-          if (updated) set({ adminUser: { ...updated, permissions: JSON.parse(updated.permissions || '{}') } });
+          if (updated) {
+            // permissions may already be a parsed object from the API, or a JSON string
+            const perms = typeof updated.permissions === 'string'
+              ? JSON.parse(updated.permissions || '{}')
+              : (updated.permissions || {});
+            set({ adminUser: { ...updated, permissions: perms } });
+          }
         }
       }
     } catch (error) {

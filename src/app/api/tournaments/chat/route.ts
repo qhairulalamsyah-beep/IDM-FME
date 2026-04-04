@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, verifyAdmin } from '@/lib/admin-guard';
 
 /* ────────────────────────────────────────────
    In-memory chat message store
@@ -36,8 +36,14 @@ export async function POST(request: NextRequest) {
     const denied = await requireAdmin(request);
     if (denied) return denied;
 
-    // Use authenticated admin's identity (not from body)
-    const adminId = request.headers.get('x-admin-id')!;
+    // Get authenticated admin via verifyAdmin (works with both JWT and legacy headers)
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Sesi tidak valid' },
+        { status: 401 }
+      );
+    }
 
     const body = await request.json();
     const { tournamentId, message } = body;
@@ -66,8 +72,8 @@ export async function POST(request: NextRequest) {
 
     const newMessage: ChatMessage = {
       id: generateId(),
-      userId: adminId,
-      userName: `Admin-${adminId.substring(0, 6)}`,
+      userId: admin.id,
+      userName: `Admin-${admin.name}`,
       message: trimmed,
       timestamp: new Date().toISOString(),
       source: 'web',

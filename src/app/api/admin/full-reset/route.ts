@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import pusher, { globalChannel } from '@/lib/pusher';
-import { requireAdmin, requirePermission } from '@/lib/admin-guard';
+import { requireAdmin, requirePermission, verifyAdmin } from '@/lib/admin-guard';
 
 // POST - Full database reset (super_admin only)
 export async function POST(request: NextRequest) {
@@ -14,10 +14,9 @@ export async function POST(request: NextRequest) {
     const permResult = await requirePermission(request, 'full_reset');
     if (permResult instanceof NextResponse) return permResult;
 
-    // Also verify role is super_admin
-    const adminId = request.headers.get('x-admin-id')!;
-    const requester = await db.user.findUnique({ where: { id: adminId } });
-    if (!requester || requester.role !== 'super_admin') {
+    // Get authenticated admin via verifyAdmin (works with both JWT and legacy headers)
+    const admin = await verifyAdmin(request);
+    if (!admin || admin.role !== 'super_admin') {
       return NextResponse.json({ success: false, error: 'Akses ditolak — hanya super admin' }, { status: 403 });
     }
 
@@ -32,7 +31,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log('[Full Reset] Starting database reset by super_admin:', requester.name);
+    console.log('[Full Reset] Starting database reset by super_admin:', admin.name);
 
     // Delete all data in correct dependency order using sequential operations
     // (sequential is safer than transaction for complex cascading deletes)
@@ -63,8 +62,8 @@ export async function POST(request: NextRequest) {
       await db.activityLog.create({
         data: {
           action: 'FULL_RESET',
-          details: `Super admin "${requester.name}" performed full database reset. Deleted: ${results.join(', ')}`,
-          userId: adminId,
+          details: `Super admin "${admin.name}" performed full database reset. Deleted: ${results.join(', ')}`,
+          userId: admin.id,
         },
       });
     } catch {}

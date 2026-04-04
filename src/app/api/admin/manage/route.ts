@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { requireAdmin, requirePermission } from '@/lib/admin-guard';
+import { requireAdmin, requirePermission, verifyAdmin } from '@/lib/admin-guard';
 import { hashPin } from '@/lib/auth-helpers';
 
 interface Permission {
@@ -36,10 +36,12 @@ export async function POST(request: NextRequest) {
     const permDenied = await requirePermission(request, 'manage_admins');
     if (permDenied instanceof NextResponse) return permDenied;
 
-    // Get authenticated admin ID from headers (NOT from request body)
-    const adminId = request.headers.get('x-admin-id')!;
-    const requester = await db.user.findUnique({ where: { id: adminId } });
-    if (!requester || requester.role !== 'super_admin') {
+    // Get authenticated admin via verifyAdmin (works with both JWT and legacy headers)
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ success: false, error: 'Akses ditolak' }, { status: 401 });
+    }
+    if (admin.role !== 'super_admin') {
       return NextResponse.json({ success: false, error: 'Akses ditolak — hanya super admin' }, { status: 403 });
     }
 
@@ -115,10 +117,12 @@ export async function PUT(request: NextRequest) {
     const permDenied = await requirePermission(request, 'manage_admins');
     if (permDenied instanceof NextResponse) return permDenied;
 
-    // Get authenticated admin ID from headers (NOT from request body)
-    const adminId = request.headers.get('x-admin-id')!;
-    const requester = await db.user.findUnique({ where: { id: adminId } });
-    if (!requester || requester.role !== 'super_admin') {
+    // Get authenticated admin via verifyAdmin (works with both JWT and legacy headers)
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ success: false, error: 'Akses ditolak' }, { status: 401 });
+    }
+    if (admin.role !== 'super_admin') {
       return NextResponse.json({ success: false, error: 'Akses ditolak — hanya super admin' }, { status: 403 });
     }
 
@@ -130,7 +134,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Prevent modifying own role (safety)
-    if (targetAdminId === adminId) {
+    if (targetAdminId === admin.id) {
       return NextResponse.json({ success: false, error: 'Tidak bisa mengubah akun sendiri dari sini' }, { status: 400 });
     }
 
@@ -179,10 +183,12 @@ export async function DELETE(request: NextRequest) {
     const permDenied = await requirePermission(request, 'manage_admins');
     if (permDenied instanceof NextResponse) return permDenied;
 
-    // Get authenticated admin ID from headers (NOT from query params)
-    const adminId = request.headers.get('x-admin-id')!;
-    const requester = await db.user.findUnique({ where: { id: adminId } });
-    if (!requester || requester.role !== 'super_admin') {
+    // Get authenticated admin via verifyAdmin (works with both JWT and legacy headers)
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ success: false, error: 'Akses ditolak' }, { status: 401 });
+    }
+    if (admin.role !== 'super_admin') {
       return NextResponse.json({ success: false, error: 'Akses ditolak — hanya super admin' }, { status: 403 });
     }
 
@@ -193,7 +199,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'targetId wajib diisi' }, { status: 400 });
     }
 
-    if (targetId === adminId) {
+    if (targetId === admin.id) {
       return NextResponse.json({ success: false, error: 'Tidak bisa menghapus akun sendiri' }, { status: 400 });
     }
 

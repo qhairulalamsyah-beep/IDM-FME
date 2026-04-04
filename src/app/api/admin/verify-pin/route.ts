@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdmin, verifyAdmin } from '@/lib/admin-guard';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 // POST - Verify current PIN for the authenticated admin (for change PIN flow)
@@ -25,8 +25,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the authenticated admin's ID from headers
-    const adminId = request.headers.get('x-admin-id')!;
+    // Get the authenticated admin via verifyAdmin (works with both JWT and legacy headers)
+    const admin = await verifyAdmin(request);
+    if (!admin) {
+      return NextResponse.json({ valid: false, error: 'Sesi tidak valid' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { pin } = body;
 
@@ -44,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     // Compare PIN — support both bcrypt and legacy SHA-256
     const user = await db.user.findUnique({
-      where: { id: adminId },
+      where: { id: admin.id },
       select: { id: true, adminPass: true },
     });
 

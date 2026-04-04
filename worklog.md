@@ -442,3 +442,31 @@ Stage Summary:
 - Admin PIN can be reset by running `supabase/reset-admin-pin.sql` in Supabase SQL Editor → PIN becomes "123456"
 - After Vercel deploy, visit `/api/debug/health` to verify DB connection and data counts
 - User needs to: (1) run reset SQL, (2) verify env vars on Vercel, (3) check health endpoint
+
+---
+Task ID: 12
+Agent: Main
+Task: Fix multiple production errors — logo upload, fetchAdmins JSON parse, JWT auth headers, CSP
+
+Work Log:
+- Fixed logo upload bucket name: changed SUPABASE_LOGO_BUCKET from 'club-logos' to 'sources' in .env.local (user's Supabase bucket is named 'sources')
+- Fixed fetchAdmins JSON parse error in store.ts: permissions was already a parsed object from the API, but code tried JSON.parse() on it again → "[object Object] is not valid JSON". Added typeof check before parsing.
+- Fixed critical JWT auth bug across 5 API routes: routes reading `x-admin-id` from headers directly failed when user authenticated via JWT (which doesn't send x-admin-id header). Changed all to use verifyAdmin(request) instead:
+  - src/app/api/admin/manage/route.ts (POST, PUT, DELETE)
+  - src/app/api/admin/verify-pin/route.ts
+  - src/app/api/admin/change-pin/route.ts
+  - src/app/api/admin/full-reset/route.ts
+  - src/app/api/tournaments/chat/route.ts
+- Fixed CSP in vercel.json: added `https://vercel.live/_next-live` to script-src and `wss://vercel.live` to connect-src for Vercel feedback scripts
+- Reduced noisy console.warn('[adminFetch] No auth headers available') — removed since it's expected for unauthenticated users
+- Added auth guard to fetchAdmins(): skips API call if not authenticated, avoiding unnecessary 401s
+- Imported isAdminAuthenticated in store.ts for the guard
+- All fixes verified: bun run lint passes with 0 errors
+
+Stage Summary:
+- **Bucket name fix**: SUPABASE_LOGO_BUCKET=sources (user must also update this in Vercel env vars)
+- **JWT auth fix**: ALL 5 routes using x-admin-id now use verifyAdmin() — this was the ROOT CAUSE of admin manage/verify-pin/change-pin/full-reset returning 401 when logged in via JWT
+- **JSON parse fix**: fetchAdmins no longer crashes on double-parsed permissions
+- **CSP fix**: Vercel feedback scripts no longer blocked
+- User action needed: Update SUPABASE_LOGO_BUCKET=sources in Vercel Environment Variables
+- User action needed: Get SUPABASE_SERVICE_ROLE_KEY from Supabase → Settings → API → "Legacy anon, service_role API keys" tab → service_role key

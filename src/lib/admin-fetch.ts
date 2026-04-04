@@ -84,7 +84,7 @@ export function adminFetch(
   const adminHeaders = getAdminAuthHeaders();
   if (Object.keys(adminHeaders).length === 0) {
     // No auth available — still send request, let server return 401
-    console.warn('[adminFetch] No auth headers available');
+    // Only log at debug level since this is expected for non-authenticated requests
   }
 
   // Build headers object
