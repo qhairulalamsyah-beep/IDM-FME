@@ -309,8 +309,10 @@ export default function IDOLMETAApp() {
       // Initial mount - show loading screen
       isInitialMount.current = false;
       fetchData(true);
-      // Verify admin session is still valid
-      fetchAdmins();
+      // Verify admin session only if currently logged in
+      if (isAdminAuthenticated) {
+        fetchAdmins();
+      }
     } else {
       // Division change - no loading screen
       fetchData(false);

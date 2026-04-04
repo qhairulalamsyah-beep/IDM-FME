@@ -115,8 +115,12 @@ export function adminFetch(
     headers,
   }).then((response) => {
     // If 401 Unauthorized, clear admin auth and dispatch event
+    // BUT only if the user was actually logged in before this request
     if (response.status === 401) {
-      clearAdminAuth();
+      const wasLoggedIn = localStorage.getItem('idm_admin_auth') === 'true';
+      if (wasLoggedIn) {
+        clearAdminAuth();
+      }
     }
     return response;
   });
