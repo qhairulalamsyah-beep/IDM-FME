@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { requireAdmin, verifyAdmin } from '@/lib/admin-guard';
+import { verifyAdmin } from '@/lib/admin-guard';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 // POST - Verify current PIN for the authenticated admin (for change PIN flow)
 export async function POST(request: NextRequest) {
   try {
-    // Auth guard — must be an authenticated admin
-    const denied = await requireAdmin(request);
-    if (denied) return denied;
-
     // Rate limit: max 10 verify attempts per minute per IP
     const clientIp = getClientIp(request);
     const rl = rateLimit(`verify-pin:${clientIp}`, 10, 60_000);
@@ -28,7 +24,7 @@ export async function POST(request: NextRequest) {
     // Get the authenticated admin via verifyAdmin (works with both JWT and legacy headers)
     const admin = await verifyAdmin(request);
     if (!admin) {
-      return NextResponse.json({ valid: false, error: 'Sesi tidak valid' }, { status: 401 });
+      return NextResponse.json({ valid: false, sessionExpired: true, error: 'Session kedaluwarsa. Silakan login kembali.' }, { status: 401 });
     }
 
     const body = await request.json();

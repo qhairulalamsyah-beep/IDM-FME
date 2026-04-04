@@ -120,6 +120,15 @@ export function AdminLogin({ isOpen, onOpenChange, onLogin }: AdminLoginProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: pinValue }),
       });
+
+      // If session expired (401 from requireAdmin), show clear message
+      if (res.status === 401) {
+        setError('Session kedaluwarsa. Silakan logout dan login kembali.');
+        setCurrentPin('');
+        setIsSubmitting(false);
+        return;
+      }
+
       const data = await res.json();
 
       if (res.ok && data.valid) {
@@ -169,6 +178,14 @@ export function AdminLogin({ isOpen, onOpenChange, onLogin }: AdminLoginProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPin: current, newPin: newPinVal }),
       });
+
+      // If session expired
+      if (res.status === 401) {
+        setError('Session kedaluwarsa. Silakan logout dan login kembali.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const data = await res.json();
       
       if (res.ok && data.success) {
