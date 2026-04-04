@@ -846,40 +846,6 @@ export function Premium3DEffects({
         </div>
       </div>
 
-      {/* ═══ SCAN LINES — Moving horizontal lines (desktop only) ═══ */}
-      <div className="hidden lg:block">
-        {/* Scan line 1 */}
-        <motion.div
-          className="absolute left-0 right-0 h-[1px]"
-          style={{
-            background: `linear-gradient(90deg, transparent, rgba(${accentRgb},0.06) 20%, rgba(${accentRgb},0.10) 50%, rgba(${accentRgb},0.06) 80%, transparent)`,
-            boxShadow: `0 0 30px 6px rgba(${accentRgb},0.03), 0 0 60px 12px rgba(${accentRgb},0.015)`,
-          }}
-          animate={{ y: ['-10%', '110%'] }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: 3,
-          }}
-        />
-
-        {/* Scan line 2 — thinner, offset timing for depth */}
-        <motion.div
-          className="absolute left-[10%] right-[10%] h-[0.5px]"
-          style={{
-            background: `linear-gradient(90deg, transparent, rgba(${accentRgb2},0.04) 30%, rgba(${accentRgb2},0.07) 50%, rgba(${accentRgb2},0.04) 70%, transparent)`,
-          }}
-          animate={{ y: ['110%', '-10%'] }}
-          transition={{
-            duration: 16,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: 8,
-          }}
-        />
-      </div>
-
       {/* ══════════════════════════════════════════════════════════════
           ALWAYS-SHOWN: Lightweight micro particles (6 on mobile, 25 on desktop)
           ══════════════════════════════════════════════════════════════ */}
