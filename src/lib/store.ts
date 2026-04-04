@@ -589,14 +589,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         get().addToast(`Nama "${name}" sudah terdaftar, mendaftarkan ke turnamen...`, 'info');
       }
 
-      // If user exists but doesn't have an avatar, update with the uploaded one
-      if (userData.isExisting && avatarUrl && !userData.user.avatar) {
-        await fetch('/api/users', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: userData.user.id, avatar: avatarUrl }),
-        });
-      }
+      // Avatar is already updated by POST /api/users for existing users,
+      // and included in user creation for new users — no separate PUT needed.
 
       // Register user to tournament (requires admin auth)
       const regRes = await adminFetch('/api/tournaments/register', {

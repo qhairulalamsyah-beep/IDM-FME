@@ -77,6 +77,17 @@ export async function POST(request: NextRequest) {
       });
       if (existingByJid) {
         console.log(`[API Users] Found existing user by WhatsApp JID: ${normalizedJid} -> user: ${existingByJid.name}`);
+        // Update avatar if a new one was uploaded
+        if (avatar) {
+          const updated = await db.user.update({
+            where: { id: existingByJid.id },
+            data: { avatar },
+          });
+          return NextResponse.json(
+            { success: true, user: updated, isExisting: true },
+            { status: 200 }
+          );
+        }
         return NextResponse.json(
           { success: true, user: existingByJid, isExisting: true },
           { status: 200 }
@@ -92,10 +103,17 @@ export async function POST(request: NextRequest) {
       if (existingByPhone) {
         console.log(`[API Users] Found existing user by phone: ${normalizedPhone} -> user: ${existingByPhone.name}`);
         // Update JID if we have a new one
+        const updateData: Record<string, string | null> = {};
         if (normalizedJid && !existingByPhone.whatsappJid) {
+          updateData.whatsappJid = normalizedJid;
+        }
+        if (avatar) {
+          updateData.avatar = avatar;
+        }
+        if (Object.keys(updateData).length > 0) {
           const updated = await db.user.update({
             where: { id: existingByPhone.id },
-            data: { whatsappJid: normalizedJid },
+            data: updateData,
           });
           return NextResponse.json(
             { success: true, user: updated, isExisting: true },
@@ -122,13 +140,16 @@ export async function POST(request: NextRequest) {
       // Same name found - this could be the same person with a new JID/phone
       console.log(`[API Users] Found existing user by name: ${name} -> updating JID/phone`);
       
-      // Update JID and phone if we have new ones
+      // Update avatar, JID, and phone if we have new ones
       const updateData: Record<string, string | null> = {};
       if (normalizedJid && !existingByName.whatsappJid) {
         updateData.whatsappJid = normalizedJid;
       }
       if (normalizedPhone && !existingByName.phone) {
         updateData.phone = normalizedPhone;
+      }
+      if (avatar) {
+        updateData.avatar = avatar;
       }
       
       if (Object.keys(updateData).length > 0) {

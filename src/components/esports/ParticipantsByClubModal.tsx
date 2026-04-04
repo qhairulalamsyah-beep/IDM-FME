@@ -379,10 +379,14 @@ export function ParticipantsByClubModal({
                         >
                           {/* Club avatar */}
                           <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-black text-sm"
-                            style={{ background: getClubGradient(club.name) }}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-black text-sm overflow-hidden"
+                            style={{ background: club.logoUrl ? 'transparent' : getClubGradient(club.name) }}
                           >
-                            {club.name.charAt(0).toUpperCase()}
+                            {club.logoUrl ? (
+                              <img src={club.logoUrl} alt={club.name} className="w-full h-full object-cover" />
+                            ) : (
+                              club.name.charAt(0).toUpperCase()
+                            )}
                           </div>
 
                           {/* Club info */}
