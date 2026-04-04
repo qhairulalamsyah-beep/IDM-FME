@@ -76,11 +76,21 @@ export async function GET() {
     }));
 
     // 8. Check env vars (without exposing secrets)
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
     results.env = {
       DATABASE_URL_set: !!process.env.DATABASE_URL,
       DIRECT_DATABASE_URL_set: !!process.env.DIRECT_DATABASE_URL,
       NODE_ENV: process.env.NODE_ENV || 'not set',
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT SET',
+      SUPABASE_SERVICE_ROLE_KEY: {
+        set: !!serviceRoleKey,
+        length: serviceRoleKey.length,
+        startsWith_eyJ: serviceRoleKey.startsWith('eyJ'),
+        // service_role key is ~250+ chars, anon key is ~200+ chars
+        looksValid: serviceRoleKey.length > 100 && serviceRoleKey.startsWith('eyJ'),
+      },
+      SUPABASE_LOGO_BUCKET: process.env.SUPABASE_LOGO_BUCKET || 'NOT SET (default: club-logos)',
+      SUPABASE_AVATAR_BUCKET: process.env.SUPABASE_AVATAR_BUCKET || 'NOT SET (default: avatars)',
     };
 
     return NextResponse.json({ success: true, ...results });
