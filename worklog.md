@@ -423,3 +423,22 @@ Work Log:
 Stage Summary:
 - Two-line fix prevents false 401 from triggering admin logout popup for unauthenticated users
 - Admin session verification still works correctly for logged-in admins
+
+---
+Task ID: 4
+Agent: main
+Task: Fix admin login failure - reset PIN and add database diagnostics
+
+Work Log:
+- Investigated admin login flow: PIN is bcrypt hashed (12 rounds), stored in User.adminPass
+- Seed data has a pre-computed bcrypt hash but the plaintext PIN is unknown
+- Generated new bcrypt hash for PIN "123456": $2b$12$igJUz9zY0R4xZxHJFD1zg.hBq6Xhq6h0HEZ3RA7tRIAzS3HOk16Iq
+- Created `supabase/reset-admin-pin.sql` — SQL to reset admin PIN to "123456" in Supabase
+- Created `/api/debug/health` endpoint — tests DB connection, counts users/clubs/tournaments/rankings, shows admin PIN status, checks env vars (without exposing secrets)
+- Note: Initial path was `/api/debug/db` but renamed to `/api/debug/health` because `.gitignore` has `db/` rule
+- Pushed both files to GitHub (commits 78ae6bf, e9289c0)
+
+Stage Summary:
+- Admin PIN can be reset by running `supabase/reset-admin-pin.sql` in Supabase SQL Editor → PIN becomes "123456"
+- After Vercel deploy, visit `/api/debug/health` to verify DB connection and data counts
+- User needs to: (1) run reset SQL, (2) verify env vars on Vercel, (3) check health endpoint
