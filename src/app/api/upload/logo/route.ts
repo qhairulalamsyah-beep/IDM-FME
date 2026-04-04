@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'node:fs/promises';
-import path from 'node:path';
 import { requireAdmin } from '@/lib/admin-guard';
 import { uploadToStorage, isStorageConfigured } from '@/lib/storage';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'logos');
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB (before compression)
-
-// Python image processor service URL
-const IMAGE_PROCESSOR_URL = process.env.IMAGE_PROCESSOR_URL || 'http://localhost:5005';
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(request: NextRequest) {
   const denied = await requireAdmin(request);
@@ -20,107 +14,102 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File | null;
 
     if (!file) {
-      return NextResponse.json(
-        { success: false, error: 'No file provided' },
-        { status: 400 },
-      );
+      return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
     }
 
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { success: false, error: 'Only JPG, PNG, WebP, and GIF images are allowed' },
+        { success: false, error: 'Format file harus JPG, PNG, WebP, atau GIF' },
         { status: 400 },
       );
     }
 
-    // Validate file size (before compression)
+    // Validate file size
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { success: false, error: 'File size must be under 5MB' },
+        { success: false, error: 'Ukuran file maksimal 5MB' },
         { status: 400 },
       );
     }
 
-    // ── Upload to Supabase Storage (production) ──
-    if (isStorageConfigured()) {
-      try {
-        const result = await uploadToStorage('club-logos', file);
-        return NextResponse.json({
-          success: true,
-          url: result.url,
-          filename: result.path,
-          size: result.size,
-          originalSize: file.size,
-          compressionRatio: file.size > 0 ? (result.size / file.size).toFixed(2) : '1.00',
-          type: file.type,
-          storage: 'supabase',
-        });
-      } catch (error) {
-        console.error('[LOGO UPLOAD] Supabase storage error, falling back to local:', error);
-        // Fall through to local upload
-      }
-    }
-
-    // ── Local file upload (development / fallback) ──
-    await mkdir(UPLOAD_DIR, { recursive: true });
-
-    // Send to Python image processor service if available
-    try {
-      const processorFormData = new FormData();
-      processorFormData.append('file', file);
-
-      const processorResponse = await fetch(
-        `${IMAGE_PROCESSOR_URL}/process-and-save?folder=logos&max_width=512&quality=90`,
-        { method: 'POST', body: processorFormData }
+    // ── Check storage configuration ──
+    if (!isStorageConfigured()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Storage belum dikonfigurasi. Pastikan NEXT_PUBLIC_SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY sudah di-set di Environment Variables.',
+          hint: 'SUPABASE_SERVICE_ROLE_KEY bisa didapat dari Supabase Dashboard → project → Settings → API → service_role key',
+        },
+        { status: 503 },
       );
-
-      if (processorResponse.ok) {
-        const result = await processorResponse.json();
-        const sourcePath = result.filepath;
-        const destFilename = result.filename;
-        const destPath = path.join(UPLOAD_DIR, destFilename);
-        const { copyFile } = await import('node:fs/promises');
-        await copyFile(sourcePath, destPath);
-
-        return NextResponse.json({
-          success: true,
-          url: `/uploads/logos/${destFilename}`,
-          filename: destFilename,
-          size: result.processed_size,
-          originalSize: result.original_size,
-          compressionRatio: result.compression_ratio,
-          width: result.width,
-          height: result.height,
-          type: 'image/webp',
-          storage: 'local',
-        });
-      }
-    } catch {
-      // Processor not available — fall through to direct save
     }
 
-    // Direct file save (no compression)
-    const bytes = await file.arrayBuffer();
-    const ext = file.name.split('.').pop() || 'png';
-    const uniqueName = `logo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const filePath = path.join(UPLOAD_DIR, uniqueName);
-    await writeFile(filePath, Buffer.from(bytes));
+    // ── Upload to Supabase Storage ──
+    const bucket = process.env.SUPABASE_LOGO_BUCKET || 'club-logos';
 
-    return NextResponse.json({
-      success: true,
-      url: `/uploads/logos/${uniqueName}`,
-      filename: uniqueName,
-      size: file.size,
-      type: file.type,
-      fallback: true,
-      storage: 'local',
-    });
+    try {
+      const result = await uploadToStorage(bucket, file);
+      return NextResponse.json({
+        success: true,
+        url: result.url,
+        filename: result.path,
+        size: result.size,
+        originalSize: file.size,
+        type: file.type,
+        storage: 'supabase',
+        bucket,
+      });
+    } catch (storageError) {
+      const msg = storageError instanceof Error ? storageError.message : String(storageError);
+      console.error('[LOGO UPLOAD] Storage error:', msg);
+
+      // Provide helpful error messages
+      if (msg.includes('not found') || msg.includes('does not exist')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Bucket "${bucket}" tidak ditemukan. Buat bucket "${bucket}" di Supabase Dashboard → Storage → New Bucket, lalu set Public.`,
+            detail: msg,
+          },
+          { status: 400 },
+        );
+      }
+
+      if (msg.includes('JWT') || msg.includes('token') || msg.includes('auth') || msg.includes('API key')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'SUPABASE_SERVICE_ROLE_KEY tidak valid. Pastikan key sudah benar di Environment Variables.',
+            detail: msg,
+          },
+          { status: 401 },
+        );
+      }
+
+      if (msg.includes('policy') || msg.includes('RLS') || msg.includes('permission')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Tidak punya akses upload ke bucket "${bucket}". Set bucket sebagai PUBLIC di Supabase Storage.`,
+            detail: msg,
+          },
+          { status: 403 },
+        );
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Gagal upload ke storage: ${msg}`,
+          detail: msg,
+        },
+        { status: 500 },
+      );
+    }
   } catch (error) {
-    console.error('[LOGO UPLOAD] Error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to upload logo' },
-      { status: 500 },
-    );
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('[LOGO UPLOAD] Error:', msg);
+    return NextResponse.json({ success: false, error: `Upload gagal: ${msg}` }, { status: 500 });
   }
 }
