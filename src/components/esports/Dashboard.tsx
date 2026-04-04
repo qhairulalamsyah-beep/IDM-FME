@@ -21,8 +21,6 @@ import {
   Shield,
   Gift,
 } from 'lucide-react';
-import { QualifiedPlayersModal } from './QualifiedPlayersModal';
-import { AllRankingsModal } from './AllRankingsModal';
 import { DonasiSawerModal } from './DonasiSawerModal';
 
 /* ─────────────────────────────────────────────
@@ -311,12 +309,6 @@ export function Dashboard({
   const hasClubs = topClubs !== undefined && topClubs.length > 0;
   const showResults = champion || mvp;
 
-  /* ── Qualified Players Modal State ── */
-  const [qualifiedModalOpen, setQualifiedModalOpen] = useState(false);
-  const qualifiedPlayers = topPlayers.slice(0, 12);
-
-  /* ── All Rankings Modal State ── */
-  const [allRankingsModalOpen, setAllRankingsModalOpen] = useState(false);
 
   /* ── Combined Donation/Sawer Modal State ── */
   const [donasiSawerModalOpen, setDonasiSawerModalOpen] = useState(false);
@@ -1024,192 +1016,6 @@ export function Dashboard({
       </motion.div>
 
       {/* ═══════════════════════════════════════════════════════════
-          TOP 3 PODIUM — Ranking Section with pulsing "Semua Peringkat"
-          ═══════════════════════════════════════════════════════════ */}
-      {hasPlayers && (
-        <motion.div variants={item} className="relative">
-          <div
-            className="relative rounded-2xl overflow-hidden"
-            style={{
-              background: 'linear-gradient(180deg, rgba(24,24,27,0.95) 0%, rgba(18,18,22,0.98) 100%)',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.04)',
-            }}
-          >
-            {/* Top accent line */}
-            <div
-              className="absolute top-0 left-0 right-0 h-[1px]"
-              style={{
-                background: `linear-gradient(90deg, transparent, rgba(${isMale ? '251,191,36' : '192,132,252'},0.3), transparent)`,
-              }}
-            />
-
-            <div className="p-4 lg:p-5">
-              {/* Section Title */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Trophy className={`w-4 h-4 ${accentColor}`} />
-                  <span className="text-[13px] font-bold text-white/80 tracking-tight">
-                    Top 3 Pemain
-                  </span>
-                </div>
-              </div>
-
-              {/* Podium - 3 Cards */}
-              <div className="flex items-end justify-center gap-2 sm:gap-3 lg:gap-4">
-                {/* 2nd Place - Left */}
-                <div className="flex flex-col items-center flex-1 max-w-[90px] sm:max-w-[100px] lg:max-w-[120px]">
-                  {/* Avatar */}
-                  <div className={avatarRingClass}>
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
-                      {topPlayers[1]?.avatar ? (
-                        <img src={topPlayers[1].avatar} alt={topPlayers[1].name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-lg font-bold text-white/70">{topPlayers[1]?.name?.charAt(0) || '?'}</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Rank Badge */}
-                  <div
-                    className="mt-2 w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center text-[11px] sm:text-xs font-black"
-                    style={{
-                      background: 'linear-gradient(135deg, #C7C7CC, #8E8E93)',
-                      color: '#1C1C1E',
-                      boxShadow: '0 2px 8px rgba(199,199,204,0.25)',
-                    }}
-                  >
-                    2
-                  </div>
-                  
-                  {/* Name & Points */}
-                  <p className="text-[11px] sm:text-[12px] font-bold text-white/90 mt-2 truncate w-full text-center">
-                    {topPlayers[1]?.name || '-'}
-                  </p>
-                  <p className={`text-[10px] sm:text-[11px] font-bold ${accentColor} mt-0.5`}>
-                    {topPlayers[1]?.points?.toLocaleString() || 0} PTS
-                  </p>
-                </div>
-
-                {/* 1st Place - Center (Tallest) */}
-                <div className="flex flex-col items-center flex-1 max-w-[100px] sm:max-w-[115px] lg:max-w-[140px] -mt-4 sm:-mt-5">
-                  {/* Crown */}
-                  <motion.div
-                    animate={{ y: [0, -4, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                  >
-                    <Crown className={`w-5 h-5 sm:w-6 sm:h-6 ${accentColor} mb-1.5`} />
-                  </motion.div>
-                  
-                  {/* Avatar */}
-                  <div className={avatarRingClass}>
-                    <div className="w-16 h-16 sm:w-[72px] sm:h-[72px] lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
-                      {topPlayers[0]?.avatar ? (
-                        <img src={topPlayers[0].avatar} alt={topPlayers[0].name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-xl font-bold text-white/70">{topPlayers[0]?.name?.charAt(0) || '?'}</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Rank Badge */}
-                  <div
-                    className="mt-2 w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center text-xs sm:text-sm font-black"
-                    style={{
-                      background: isMale
-                        ? 'linear-gradient(135deg, #FFD60A, #E5A800)'
-                        : 'linear-gradient(135deg, #A78BFA, #8B5CF6)',
-                      color: '#000',
-                      boxShadow: isMale
-                        ? '0 0 16px rgba(255,214,10,0.35)'
-                        : '0 0 16px rgba(167,139,250,0.35)',
-                    }}
-                  >
-                    1
-                  </div>
-                  
-                  {/* Name & Points */}
-                  <p className="text-[12px] sm:text-[13px] lg:text-sm font-bold text-white/90 mt-2 truncate w-full text-center">
-                    {topPlayers[0]?.name || '-'}
-                  </p>
-                  <p className={`text-[11px] sm:text-[12px] font-bold ${accentColor} mt-0.5`}>
-                    {topPlayers[0]?.points?.toLocaleString() || 0} PTS
-                  </p>
-                </div>
-
-                {/* 3rd Place - Right */}
-                <div className="flex flex-col items-center flex-1 max-w-[90px] sm:max-w-[100px] lg:max-w-[120px]">
-                  {/* Avatar */}
-                  <div className={avatarRingClass}>
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
-                      {topPlayers[2]?.avatar ? (
-                        <img src={topPlayers[2].avatar} alt={topPlayers[2].name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-lg font-bold text-white/70">{topPlayers[2]?.name?.charAt(0) || '?'}</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Rank Badge */}
-                  <div
-                    className="mt-2 w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center text-[11px] sm:text-xs font-black"
-                    style={{
-                      background: 'linear-gradient(135deg, #CD7F32, #8B4513)',
-                      color: '#fff',
-                      boxShadow: '0 2px 8px rgba(205,127,50,0.25)',
-                    }}
-                  >
-                    3
-                  </div>
-                  
-                  {/* Name & Points */}
-                  <p className="text-[11px] sm:text-[12px] font-bold text-white/90 mt-2 truncate w-full text-center">
-                    {topPlayers[2]?.name || '-'}
-                  </p>
-                  <p className={`text-[10px] sm:text-[11px] font-bold ${accentColor} mt-0.5`}>
-                    {topPlayers[2]?.points?.toLocaleString() || 0} PTS
-                  </p>
-                </div>
-              </div>
-
-              {/* Pulsing "Semua Peringkat" Button */}
-              <motion.button
-                onClick={() => setAllRankingsModalOpen(true)}
-                className="w-full mt-5 py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer relative overflow-hidden"
-                style={{
-                  background: 'transparent',
-                  border: `1px solid ${isMale ? 'rgba(255,214,10,0.1)' : 'rgba(167,139,250,0.1)'}`,
-                }}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-              >
-                {/* Subtle pulsing glow line - thin only */}
-                <motion.div
-                  className="absolute inset-x-0 top-0 h-[1px]"
-                  style={{
-                    background: isMale
-                      ? 'linear-gradient(90deg, transparent, rgba(255,214,10,0.4), transparent)'
-                      : 'linear-gradient(90deg, transparent, rgba(167,139,250,0.4), transparent)',
-                  }}
-                  animate={{
-                    opacity: [0.3, 0.7, 0.3],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                />
-                <span className={`relative z-10 text-[11px] sm:text-[12px] font-semibold ${accentColor} tracking-wide`}>
-                  Lihat Semua Peringkat
-                </span>
-                <ChevronRight className={`relative z-10 w-3.5 h-3.5 ${accentColor}`} />
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════
           QUICK ACTIONS — 2 Glass-Subtle Cards (+ 2 desktop-only)
           ═══════════════════════════════════════════════════════════ */}
       <motion.div variants={item}>
@@ -1273,7 +1079,7 @@ export function Dashboard({
               <BarChart3 className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-green-400" />
             </div>
             <p className="text-[13px] font-semibold text-white/90 leading-snug">Leaderboard</p>
-            <p className="text-[11px] text-white/40 mt-0.5 font-normal">Pemain terbaik</p>
+            <p className="text-[11px] text-white/40 mt-0.5 font-normal">Ranking peserta</p>
           </motion.button>
 
           {/* Total Donasi */}
@@ -1470,22 +1276,6 @@ export function Dashboard({
           <ChevronRight className="w-4 h-4 text-white/15 shrink-0 lg:w-5 lg:h-5" />
         </div>
       </motion.div>
-
-      {/* Qualified Players Modal */}
-      <QualifiedPlayersModal
-        isOpen={qualifiedModalOpen}
-        onOpenChange={setQualifiedModalOpen}
-        players={qualifiedPlayers}
-        division={division}
-      />
-
-      {/* All Rankings Modal */}
-      <AllRankingsModal
-        isOpen={allRankingsModalOpen}
-        onOpenChange={setAllRankingsModalOpen}
-        players={topPlayers}
-        division={division}
-      />
 
       {/* Combined Donation/Sawer Modal */}
       <DonasiSawerModal

@@ -612,3 +612,20 @@ Stage Summary:
 - Peserta accessible directly from navbar (between Dashboard & Tournament)
 - Dashboard shows only Club Terbaik (cleaner layout)
 - Lint 0 errors, pushed to GitHub (commit 8860480)
+---
+Task ID: 2
+Agent: Main
+Task: Fix build error (Users is not defined) + Remove pemain terbaik section
+
+Work Log:
+- Fixed `ReferenceError: Users is not defined` build error in Navigation.tsx — added `Users` to lucide-react import
+- Verified admin panel edit avatar already fully implemented in PlayerManagementScreen.tsx (camera button overlay per player, upload to /api/upload/avatar, callback onAvatarChange)
+- Verified peserta section already in navbar (Navigation.tsx line 52, ParticipantsByClubModal triggered via useEffect in page.tsx)
+- Removed "Top 3 Pemain" podium section from Dashboard.tsx (was ~185 lines)
+- Updated Leaderboard quick action subtitle from "Pemain terbaik" to "Ranking peserta"
+- Cleaned up dead code: removed AllRankingsModal and QualifiedPlayersModal imports, state, and render calls
+
+Stage Summary:
+- Build error fixed: `Users` icon was used but not imported from lucide-react
+- Dashboard now shows only "Club Terbaik" section (no more Top 3 Pemain podium)
+- All 3 user requests are now complete (edit avatar in admin ✅, peserta in navbar ✅, remove pemain terbaik ✅)

@@ -10,6 +10,7 @@ import {
   Crown,
   Shield,
   Sparkles,
+  Users,
 } from 'lucide-react';
 
 /* ────────────────────────────────────────────
