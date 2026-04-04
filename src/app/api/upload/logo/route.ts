@@ -4,9 +4,10 @@ import path from 'node:path';
 import { requireAdmin } from '@/lib/admin-guard';
 import { uploadToStorage, isStorageConfigured } from '@/lib/storage';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'logos');
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 export async function POST(request: NextRequest) {
   const denied = await requireAdmin(request);
@@ -36,7 +37,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Try Supabase Storage first (production) ──
+    // On production, Supabase Storage is required (Vercel has read-only filesystem)
+    if (IS_PRODUCTION && !isStorageConfigured()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Upload gagal: Supabase Storage belum dikonfigurasi.',
+          hint: 'Di Vercel: Settings → Environment Variables → tambahkan NEXT_PUBLIC_SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY.',
+        },
+        { status: 503 },
+      );
+    }
+
+    // ── Try Supabase Storage ──
     if (isStorageConfigured()) {
       const bucket = process.env.SUPABASE_LOGO_BUCKET || 'club-logos';
 
@@ -56,7 +69,6 @@ export async function POST(request: NextRequest) {
         const msg = storageError instanceof Error ? storageError.message : String(storageError);
         console.error('[LOGO UPLOAD] Supabase storage error:', msg);
 
-        // Provide specific error messages for known issues
         if (msg.includes('not found') || msg.includes('does not exist')) {
           return NextResponse.json(
             {
@@ -91,14 +103,21 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // For other Supabase errors, fall through to local upload
+        // On production, don't fall through to local upload
+        if (IS_PRODUCTION) {
+          return NextResponse.json(
+            { success: false, error: `Upload gagal: ${msg}` },
+            { status: 500 },
+          );
+        }
+
+        // On development, fall through to local upload
         console.warn('[LOGO UPLOAD] Falling back to local upload due to:', msg);
       }
-    } else {
-      console.warn('[LOGO UPLOAD] Supabase not configured, using local upload');
     }
 
-    // ── Local file upload (fallback / development) ──
+    // ── Local file upload (development only) ──
+    const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'logos');
     await mkdir(UPLOAD_DIR, { recursive: true });
 
     const ext = file.name.split('.').pop() || 'jpg';
@@ -108,11 +127,9 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     await writeFile(filePath, Buffer.from(bytes));
 
-    const publicUrl = `/uploads/logos/${uniqueName}`;
-
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: `/uploads/logos/${uniqueName}`,
       filename: uniqueName,
       size: file.size,
       originalSize: file.size,

@@ -4,9 +4,10 @@ import path from 'node:path';
 import { uploadToStorage, isStorageConfigured } from '@/lib/storage';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB for avatars
+
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Upload to Supabase Storage (production) ──
+    // ── Try Supabase Storage ──
     if (isStorageConfigured()) {
       try {
         const result = await uploadToStorage('avatars', file);
@@ -63,13 +64,47 @@ export async function POST(request: NextRequest) {
           type: file.type,
           storage: 'supabase',
         });
-      } catch (error) {
-        console.error('[AVATAR UPLOAD] Supabase storage error, falling back to local:', error);
-        // Fall through to local upload
+      } catch (storageError) {
+        const msg = storageError instanceof Error ? storageError.message : String(storageError);
+        console.error('[AVATAR UPLOAD] Supabase error:', msg);
+
+        // On production, don't fall through to local — Supabase is the only option
+        if (IS_PRODUCTION) {
+          if (msg.includes('JWT') || msg.includes('invalid compact') || msg.includes('jws') || msg.includes('token')) {
+            return NextResponse.json(
+              {
+                success: false,
+                error: 'Upload gagal: SUPABASE_SERVICE_ROLE_KEY tidak valid atau belum di-set.',
+                hint: 'Admin perlu mengatur Environment Variable SUPABASE_SERVICE_ROLE_KEY di Vercel.',
+              },
+              { status: 503 },
+            );
+          }
+          return NextResponse.json(
+            { success: false, error: `Upload gagal: ${msg}` },
+            { status: 500 },
+          );
+        }
+
+        // On development, fall through to local upload
+        console.warn('[AVATAR UPLOAD] Falling back to local upload');
       }
     }
 
-    // ── Local file upload (development / fallback) ──
+    // ── Local file upload (development only) ──
+    if (IS_PRODUCTION) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Upload gagal: Supabase Storage belum dikonfigurasi.',
+          hint: 'Admin perlu mengatur Environment Variables di Vercel: NEXT_PUBLIC_SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY',
+        },
+        { status: 503 },
+      );
+    }
+
+    // Local upload (dev only)
+    const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
     await mkdir(UPLOAD_DIR, { recursive: true });
 
     const ext = file.name.split('.').pop() || 'jpg';
@@ -79,11 +114,9 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     await writeFile(filePath, Buffer.from(bytes));
 
-    const publicUrl = `/uploads/avatars/${uniqueName}`;
-
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: `/uploads/avatars/${uniqueName}`,
       filename: uniqueName,
       size: file.size,
       type: file.type,
