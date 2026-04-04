@@ -17,6 +17,8 @@ import {
   UserRound,
   Shield,
   Trash2,
+  Camera,
+  Loader2,
 } from 'lucide-react';
 
 interface Registration {
@@ -50,6 +52,7 @@ interface PlayerManagementScreenProps {
   onDeleteAllRejected: () => void;
   onSetMVP: (userId: string, mvpScore: number) => void;
   onRemoveMVP: (userId: string) => void;
+  onAvatarChange?: (userId: string, newAvatarUrl: string) => void;
 }
 
 type FilterTab = 'all' | 'pending' | 'approved' | 'rejected';
@@ -65,9 +68,12 @@ export function PlayerManagementScreen({
   onDeleteAllRejected,
   onSetMVP,
   onRemoveMVP,
+  onAvatarChange,
 }: PlayerManagementScreenProps) {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const [avatarUploadingUserId, setAvatarUploadingUserId] = useState<string | null>(null);
+  const avatarInputRefs = useMemo(() => new Map<string, HTMLInputElement | null>(), []);
   // MVP input state per user
   const [mvpInputUserId, setMvpInputUserId] = useState<string | null>(null);
   const [mvpScoreText, setMvpScoreText] = useState('');
@@ -430,7 +436,7 @@ export function PlayerManagementScreen({
                       >
                         {/* Top row: Avatar + Info + Status */}
                         <div className="flex items-start gap-3 mb-3">
-                          {/* Avatar */}
+                          {/* Avatar with edit button */}
                           <div className="relative flex-shrink-0">
                             <div className={avatarRingClass}>
                               <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
@@ -447,6 +453,48 @@ export function PlayerManagementScreen({
                                 )}
                               </div>
                             </div>
+                            {/* Edit avatar button */}
+                            <input
+                              ref={(el) => { avatarInputRefs.set(reg.user.id, el); }}
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                if (file.size > 5 * 1024 * 1024) { alert('Ukuran file maksimal 5MB'); return; }
+                                setAvatarUploadingUserId(reg.user.id);
+                                try {
+                                  const formData = new FormData();
+                                  formData.append('file', file);
+                                  const res = await fetch('/api/upload/avatar', { method: 'POST', body: formData });
+                                  const data = await res.json();
+                                  if (res.ok && data.success) {
+                                    onAvatarChange?.(reg.user.id, data.url);
+                                  } else {
+                                    alert(data.error || 'Gagal mengupload avatar');
+                                  }
+                                } catch {
+                                  alert('Gagal mengupload avatar');
+                                } finally {
+                                  setAvatarUploadingUserId(null);
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
+                            <motion.button
+                              onClick={() => avatarInputRefs.get(reg.user.id)?.click()}
+                              disabled={avatarUploadingUserId === reg.user.id}
+                              className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-white/10 border border-white/15 flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm"
+                              whileTap={{ scale: 0.85 }}
+                              title="Edit avatar"
+                            >
+                              {avatarUploadingUserId === reg.user.id ? (
+                                <Loader2 className="w-3 h-3 text-white/60 animate-spin" />
+                              ) : (
+                                <Camera className="w-3 h-3 text-white/60" />
+                              )}
+                            </motion.button>
                             {/* MVP badge on avatar */}
                             {isMVP && (
                               <motion.div

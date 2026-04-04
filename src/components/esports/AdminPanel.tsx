@@ -107,6 +107,7 @@ interface AdminPanelProps {
   onOpenChange?: (open: boolean) => void;
   mode?: 'sheet' | 'page';
   totalSawer?: number;
+  onRefresh?: () => void;
 }
 
 const STEPS = [
@@ -3555,6 +3556,23 @@ export function AdminPanel({
         onDeleteAllRejected={onDeleteAllRejected}
         onSetMVP={onSetMVP}
         onRemoveMVP={onRemoveMVP}
+        onAvatarChange={async (userId, newAvatarUrl) => {
+          try {
+            const res = await fetch('/api/users', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId, avatar: newAvatarUrl }),
+            });
+            if (res.ok) {
+              storeFetchData(false);
+            } else {
+              const data = await res.json().catch(() => ({}));
+              addToast(data.error || 'Gagal mengubah avatar', 'error');
+            }
+          } catch {
+            addToast('Gagal mengubah avatar', 'error');
+          }
+        }}
       />
     </>
   );

@@ -1302,147 +1302,23 @@ export function Dashboard({
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          TOP PLAYERS / CLUBS — Tabbed leaderboard
+          TOP CLUBS — Club leaderboard only
           ═══════════════════════════════════════════════════════════ */}
-      {(hasPlayers || hasClubs) && (
+      {hasClubs && (
         <motion.div variants={item}>
-          {/* Section header with segmented tab */}
+          {/* Section header */}
           <div className="flex items-center justify-between px-1 mb-3">
-            <div className="flex items-center gap-1 bg-white/[0.06] rounded-lg p-0.5">
-              {([
-                { id: 'players' as const, label: 'PEMAIN TERBAIK', icon: Trophy },
-                ...(hasClubs ? [{ id: 'clubs' as const, label: 'CLUB TERBAIK', icon: Shield }] : []),
-              ]).map((tab) => (
-                <motion.button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold z-10"
-                  whileTap={{ scale: 0.97 }}
-                >
-                  {leaderboardTab === tab.id && (
-                    <motion.div
-                      className="absolute inset-0 rounded-md glass-subtle pointer-events-none"
-                      layoutId="leaderboardTab"
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <span className={`relative z-10 ${leaderboardTab === tab.id ? accentColor : 'text-white/35'}`}>
-                    <tab.icon className="w-3 h-3 inline" />
-                  </span>
-                  <span className={`relative z-10 ${leaderboardTab === tab.id ? 'text-white/90' : 'text-white/35'} hidden sm:inline`}>
-                    {tab.label}
-                  </span>
-                  <span className={`relative z-10 ${leaderboardTab === tab.id ? 'text-white/90' : 'text-white/35'} sm:hidden`}>
-                    {tab.id === 'players' ? 'PEMAIN' : 'CLUB'}
-                  </span>
-                </motion.button>
-              ))}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.06] rounded-lg">
+              <span className={accentColor}>
+                <Shield className="w-3 h-3 inline" />
+              </span>
+              <span className="text-[11px] font-semibold text-white/90 hidden sm:inline">CLUB TERBAIK</span>
+              <span className="text-[11px] font-semibold text-white/90 sm:hidden">CLUB</span>
             </div>
-            {leaderboardTab === 'players' && (
-              <button
-                onClick={onViewPlayers}
-                className="text-[11px] text-white/40 hover:text-white/60 flex items-center gap-0.5 font-medium transition-colors duration-200"
-              >
-                Lihat Semua <ChevronRight className="w-3 h-3" />
-              </button>
-            )}
           </div>
 
-          {/* ── PLAYERS TAB ── */}
-          {leaderboardTab === 'players' && hasPlayers && (
-            <>
-              {/* Desktop table header */}
-              <div className="hidden lg:flex items-center gap-4 px-5 py-2.5 mb-1.5">
-                <div className="w-9 shrink-0" />
-                <div className="w-11 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">Player</span>
-                </div>
-                <div className="w-8 shrink-0" />
-                <div className="flex items-center gap-4 shrink-0">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40 w-7 text-center">Win</span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40 w-7 text-center">Loss</span>
-                </div>
-                <div className="w-16 shrink-0 text-right">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">Points</span>
-                </div>
-              </div>
-
-              {/* Player rows */}
-              <motion.div
-                className="space-y-2"
-                variants={container}
-                initial="hidden"
-                animate="show"
-              >
-                {topPlayers.slice(0, 10).map((player, index) => (
-                  <motion.div
-                    key={player.id}
-                    className={`glass-subtle rounded-xl px-2.5 sm:px-3.5 lg:px-5 py-2.5 sm:py-3 lg:py-4 flex items-center gap-2.5 sm:gap-3 lg:gap-4 group ${index >= 5 ? 'max-lg:hidden' : ''}`}
-                    variants={item}
-                    whileHover={{ scale: 1.015, x: 2 }}
-                    whileTap={{ scale: 0.99 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  >
-                    {/* Rank badge with gradient */}
-                    <div
-                      className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center font-bold text-[11px] sm:text-[12px] shrink-0"
-                      style={
-                        index < 3
-                          ? {
-                              background: `linear-gradient(160deg, ${rankColors[index]} 0%, ${
-                                index === 1 ? '#8E8E93' : index === 2 ? '#A0522D' : '#E5A800'
-                              } 100%)`,
-                              color: index === 1 ? '#1C1C1E' : index === 2 ? '#fff' : '#000',
-                              boxShadow: `0 2px 6px ${rankColors[index]}30, inset 0 1px 0 rgba(255,255,255,${index === 2 ? '0.15' : '0.35'})`,
-                            }
-                          : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.25)' }
-                      }
-                    >
-                      {player.rank}
-                    </div>
-
-                    {/* Avatar with ring */}
-                    <div className={avatarRingClass}>
-                      <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-11 lg:h-11 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
-                        {player.avatar ? (
-                          <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-xs font-semibold text-white/70">{player.name[0]}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Player info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-white/90 truncate leading-snug lg:text-sm">{player.name}</p>
-                    </div>
-
-                    {/* Tier */}
-                    {player.tier && (
-                      <span className={`tier-badge ${tierMap[player.tier] || 'tier-b'} shrink-0`}>
-                        {player.tier}
-                      </span>
-                    )}
-
-                    {/* Wins + Losses — desktop only */}
-                    <div className="hidden lg:flex items-center gap-4 shrink-0">
-                      <span className="text-[12px] font-semibold text-green-400/60 tabular-nums w-7 text-center">{player.wins}W</span>
-                      <span className="text-[12px] font-semibold text-red-400/50 tabular-nums w-7 text-center">{player.losses}L</span>
-                    </div>
-
-                    {/* Points */}
-                    <span className={`text-[13px] font-bold ${accentColor} tabular-nums shrink-0 lg:text-sm lg:w-16 lg:text-right`}>
-                      {player.points.toLocaleString()}
-                    </span>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </>
-          )}
-
-          {/* ── CLUBS TAB ── */}
-          {leaderboardTab === 'clubs' && hasClubs && (
+          {/* ── CLUBS LIST ── */}
+          {hasClubs && (
             <>
               {/* Desktop table header */}
               <div className="hidden lg:flex items-center gap-4 px-5 py-2.5 mb-1.5">

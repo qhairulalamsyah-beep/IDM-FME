@@ -368,6 +368,15 @@ export default function IDOLMETAApp() {
     scrollRef.current?.scrollTo({ top: 0, behavior: 'instant' });
   }, [activeTab]);
 
+  // Open participants modal when 'participants' tab is clicked
+  useEffect(() => {
+    if (activeTab === 'participants') {
+      setParticipantsByClubOpen(true);
+      // Switch back to dashboard so navbar doesn't stay on 'participants'
+      setActiveTab('dashboard');
+    }
+  }, [activeTab, setActiveTab]);
+
   // Compute per-user wins/losses from completed matches
   const userStats = useMemo(() => {
     const stats = new Map<string, { wins: number; losses: number }>();
