@@ -1,32 +1,315 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
+// User Model - Players in the tournament
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  gender       String   @default("male") // male / female
+  tier         String   @default("B")    // S / A / B
+  points       Int      @default(0)
+  avatar       String?
+  phone        String?                     // Normalized phone (digits only)
+  whatsappJid  String?                     // Full WhatsApp JID (e.g., 62812345678@s.whatsapp.net or 10814945763505@lid)
+  discordId    String?
+  role         String   @default("user") // user / admin / super_admin
+  adminPass    String?                       // SHA-256 hash of PIN — only for admin/super_admin
+  permissions   String   @default("{}") // JSON: {tournament, players, bracket, scores, prize, donations, full_reset}
+  isAdmin      Boolean  @default(false)
+  isMVP        Boolean  @default(false)
+  mvpScore     Int      @default(0)   // In-game score recorded when MVP is assigned (display only)
+  clubId       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  registrations Registration[]
+  teamMembers   TeamMember[]
+  rankings      Ranking[]
+  donations     Donation[]
+  mvpMatches    Match[]  @relation("MatchMVP")
+  playerStats   PlayerMatchStat[]
+  club          Club?      @relation(fields: [clubId], references: [id], onDelete: SetNull)
+
+  @@index([gender])
+  @@index([role])
+  @@index([clubId])
 }
 
-model Post {
+// Tournament Model
+model Tournament {
+  id            String   @id @default(cuid())
+  name          String
+  division      String            // male / female
+  type          String            // weekly / grand_final
+  status        String   @default("setup") // setup / registration / ongoing / completed
+  week          Int?
+  bracketType   String?           // single / double / group
+  prizePool     Float    @default(0)
+  basePrizePool Float    @default(0)  // Admin-set prize pool (without sawer)
+  mode          String   @default("GR Arena 3vs3") // game mode
+  bpm           String   @default("130") // BPM or text like 'Random 120-140'
+  lokasi        String   @default("PUB 1") // area / venue
+  startDate     DateTime?
+  endDate       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  registrations Registration[]
+  teams         Team[]
+  matches       Match[]
+  sawers        Sawer[]
+
+  @@index([division])
+  @@index([status])
+}
+
+// Registration Model - User registration for tournament
+model Registration {
+  id           String   @id @default(cuid())
+  userId       String
+  tournamentId String
+  status       String   @default("pending") // pending / approved / rejected
+  tierAssigned String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tournamentId])
+  @@index([tournamentId])
+  @@index([status])
+  @@index([tournamentId, status])
+}
+
+// Team Model
+model Team {
+  id              String   @id @default(cuid())
+  tournamentId    String
+  name            String
+  seed            Int      @default(0)
+  isEliminated    Boolean  @default(false)
+  eliminationType String? // winner / loser (for double elimination)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  tournament     Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  members        TeamMember[]
+  matchesAsTeamA Match[]     @relation("TeamA")
+  matchesAsTeamB Match[]     @relation("TeamB")
+  wonMatches     Match[]     @relation("MatchWinnerTeam")
+
+  @@index([tournamentId])
+}
+
+// TeamMember Model
+model TeamMember {
+  id     String @id @default(cuid())
+  teamId String
+  userId String
+  role   String @default("member") // captain / member
+
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+}
+
+// Match Model
+model Match {
+  id           String    @id @default(cuid())
+  tournamentId String
+  round        Int       @default(1)
+  matchNumber  Int       @default(1)
+  teamAId      String?
+  teamBId      String?
+  scoreA       Int?
+  scoreB       Int?
+  winnerId     String?
+  mvpId        String?
+  status       String    @default("pending") // pending / ongoing / completed
+  bracket      String    @default("winners") // winners / losers / grand_final
+  scheduledAt  DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  tournament  Tournament   @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  teamA       Team?        @relation("TeamA", fields: [teamAId], references: [id], onDelete: SetNull)
+  teamB       Team?        @relation("TeamB", fields: [teamBId], references: [id], onDelete: SetNull)
+  winner      Team?        @relation("MatchWinnerTeam", fields: [winnerId], references: [id], onDelete: SetNull)
+  mvp         User?        @relation("MatchMVP", fields: [mvpId], references: [id], onDelete: SetNull)
+  playerStats PlayerMatchStat[]
+
+  @@index([tournamentId])
+  @@index([status])
+  @@index([tournamentId, bracket])
+}
+
+// Ranking Model - Global leaderboard
+model Ranking {
+  id     String @id @default(cuid())
+  userId String
+  points Int    @default(0)
+  wins   Int    @default(0)
+  losses Int    @default(0)
+  rank   Int?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+}
+
+// Donation Model
+model Donation {
+  id             String    @id @default(cuid())
+  userId         String?
+  donorName      String?   // Custom donor name (for non-logged-in users)
+  amount         Float
+  message        String?
+  anonymous      Boolean   @default(false)
+  paymentMethod  String    @default("qris") // qris / bank_transfer / ewallet
+  paymentStatus  String    @default("pending") // pending / confirmed / rejected
+  proofImageUrl  String?
+  paidAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([paymentStatus])
+  @@index([userId])
+}
+
+// Sawer Model - Live tips during matches (Indonesian streaming culture)
+model Sawer {
+  id               String    @id @default(cuid())
+  tournamentId     String?
+  senderName       String
+  senderAvatar     String?
+  targetPlayerId   String?
+  targetPlayerName String?
+  amount           Float
+  message          String?
+  paymentMethod    String    @default("qris") // qris / bank_transfer / ewallet
+  paymentStatus    String    @default("pending") // pending / confirmed / rejected
+  proofImageUrl    String?
+  paidAt           DateTime?
+  createdAt        DateTime  @default(now())
+
+  tournament      Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+
+  @@index([paymentStatus])
+}
+
+// Club Model - Virtual club/grouping for players
+model Club {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique // lowercase, for case-insensitive matching
+  logoUrl     String?  // AI-generated or uploaded logo
+  totalPlayers Int     @default(0)  // Total player count
+  femaleCount Int     @default(0)  // Female players (F)
+  maleCount   Int     @default(0)  // Male players (M)
+  mpScore     Int     @default(0)  // Male Player Score
+  fpScore     Int     @default(0)  // Female Player Score
+  subtotal1   Int     @default(0)  // MP Score + FP Score
+  mpPoint     Int     @default(0)  // Male Player Points
+  fpPoint     Int     @default(0)  // Female Player Points
+  subtotal2   Int     @default(0)  // MP Point + FP Point
+  rank        Int?              // Club rank
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members User[]
+}
+
+// Settings Model - Global app settings
+model Settings {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  value       String
+  description String?
+}
+
+// Activity Log Model
+model ActivityLog {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  action    String
+  details   String?
+  userId    String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@index([action])
+}
+
+// Player Match Stat - Individual player scores per match (for MVP calculation)
+model PlayerMatchStat {
+  id      String @id @default(cuid())
+  matchId String
+  userId  String
+  score   Int    @default(0) // Individual performance score (e.g., kills)
+
+  // Relations
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, userId])
+}
+
+// Bot Log - Activity log for WhatsApp & Discord bot commands
+model BotLog {
+  id            String   @id @default(cuid())
+  platform      String   // whatsapp / discord
+  command       String   // e.g. !jadwal, /status
+  sender        String?  // phone number or discord username
+  senderId      String?  // unique identifier
+  response      String?  // bot response (truncated)
+  success       Boolean  @default(true)
+  tournamentId  String?
+  createdAt     DateTime @default(now())
+
+  @@index([platform])
+  @@index([command])
+}
+
+// WhatsApp Settings - Configuration for WhatsApp integration
+model WhatsAppSettings {
+  id                     String    @id @default(cuid())
+  provider               String    @default("baileys") // baileys / meta_api / both
+  isActive               Boolean   @default(true)
+
+  // Meta API Credentials
+  metaAccessToken        String?   // Permanent access token from Meta
+  metaPhoneNumberId      String?   // Phone Number ID from Meta
+  metaBusinessAccountId  String?   // WhatsApp Business Account ID
+  metaWebhookVerifyToken String?   // Token for webhook verification
+  metaAppSecret          String?   // App secret for signature verification
+
+  // Status & Stats
+  metaApiEnabled         Boolean   @default(false)
+  baileysEnabled         Boolean   @default(true)
+  lastConnectedAt        DateTime?
+  connectionStatus       String    @default("disconnected") // connected / disconnected / qr_required
+
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 }
