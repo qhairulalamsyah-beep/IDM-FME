@@ -461,7 +461,7 @@ CREATE TRIGGER on_auth_user_created
 -- Default admin email: admin@idm-fme.com
 -- Default admin PIN: 123456 (change immediately after first login!)
 
-INSERT INTO "User" (id, name, email, gender, tier, points, role, "permissions", "isAdmin", adminPass, "createdAt", "updatedAt")
+INSERT INTO "User" (id, name, email, gender, tier, points, role, "permissions", "isAdmin", "adminPass", "createdAt", "updatedAt")
 VALUES (
   'admin-default',
   'Admin',
