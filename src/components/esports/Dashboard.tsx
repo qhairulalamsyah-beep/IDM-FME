@@ -1344,6 +1344,14 @@ export function Dashboard({
               <span className="text-[11px] font-semibold text-white/90 hidden sm:inline">RANK CLUB</span>
               <span className="text-[11px] font-semibold text-white/90 sm:hidden">CLUB</span>
             </div>
+            <motion.button
+              onClick={() => onNavigate && onNavigate('leaderboard')}
+              className="text-[10px] font-semibold text-white/35 hover:text-white/60 flex items-center gap-1 transition-colors"
+              whileTap={{ scale: 0.95 }}
+            >
+              Lihat semua
+              <ChevronRight className="w-3 h-3" />
+            </motion.button>
           </div>
 
           {/* ── CLUBS LIST ── */}

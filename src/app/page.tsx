@@ -1047,6 +1047,7 @@ export default function IDOLMETAApp() {
                 setAdminLoginOpen(true);
               }
             }}
+            onProfileClick={() => setProfileOpen(true)}
           />
 
           {/* Live Match Chat — mobile-only floating button + slide-up panel */}

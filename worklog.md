@@ -791,3 +791,23 @@ Stage Summary:
 - Dashboard.tsx: RANKING section redesigned with podium top 3 style
 - Lint: clean
 
+---
+Task ID: 2
+Agent: Main
+Task: Fix Club CTA + hide Leaderboard navbar + add Profile to navbar
+
+Work Log:
+- Added "Lihat semua" CTA button to Club section header in Dashboard.tsx (was missing)
+- Removed leaderboard from regularNavItems in Navigation.tsx (Dashboard already has ranking section)
+- Cleaned up unused BarChart3 import from Navigation.tsx
+- Added onProfileClick prop to NavigationProps
+- Added Profile button (UserCircle icon + "Profil" label) to mobile bottom nav
+- Wired onProfileClick={() => setProfileOpen(true)} in page.tsx for Navigation component
+
+Stage Summary:
+- Dashboard.tsx: Club section now has "Lihat semua" button visible on all screen sizes
+- Navigation.tsx: Leaderboard removed, Profile button added to mobile bottom nav
+- page.tsx: onProfileClick prop wired to Navigation
+- Mobile bottom nav layout: Dashboard, Peserta | GF (center) | Bracket, Profil
+- Lint: clean
+

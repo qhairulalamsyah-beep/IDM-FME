@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import {
   Home,
   GitBranch,
-  BarChart3,
   Crown,
   Shield,
   Sparkles,
@@ -30,6 +29,7 @@ interface NavigationProps {
   isAdminAuthenticated?: boolean;
   onAdminClick?: () => void;
   adminNotificationCount?: number;
+  onProfileClick?: () => void;
 }
 
 interface TopBarProps {
@@ -51,7 +51,6 @@ const regularNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'participants', label: 'Peserta', icon: Users },
   { id: 'bracket', label: 'Bracket', icon: GitBranch },
-  { id: 'leaderboard', label: 'Leaderboard', icon: BarChart3 },
 ];
 
 /* ────────────────────────────────────────────
@@ -114,7 +113,7 @@ function getDivisionTokens(division: 'male' | 'female') {
    with floating Grand Final center button
    ════════════════════════════════════════════ */
 
-export function Navigation({ activeTab, onTabChange, division, onToggleDivision, isAdminAuthenticated, onAdminClick }: NavigationProps) {
+export function Navigation({ activeTab, onTabChange, division, onToggleDivision, isAdminAuthenticated, onAdminClick, onProfileClick }: NavigationProps) {
   const t = getDivisionTokens(division);
   const isGfActive = activeTab === 'grandfinal';
 
@@ -242,7 +241,7 @@ export function Navigation({ activeTab, onTabChange, division, onToggleDivision,
 
             </motion.button>
 
-            {/* ── Right group: Bracket, Leaderboard ── */}
+            {/* ── Right group: Bracket, Profile ── */}
             {regularNavItems.slice(2).map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -282,6 +281,23 @@ export function Navigation({ activeTab, onTabChange, division, onToggleDivision,
                 </motion.button>
               );
             })}
+
+            {/* ── Profile button ── */}
+            <motion.button
+              onClick={onProfileClick}
+              className="relative flex flex-col items-center justify-center flex-1 min-h-[48px] rounded-xl cursor-pointer outline-none"
+              style={{ touchAction: 'manipulation' }}
+              whileTap={{ scale: 0.92 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            >
+              <UserCircle
+                className="w-[22px] h-[22px] relative z-10 transition-all duration-200 text-white/50"
+                strokeWidth={1.8}
+              />
+              <span className="relative z-10 mt-1 text-[10px] font-semibold tracking-wide transition-all duration-200 text-white/45">
+                Profil
+              </span>
+            </motion.button>
           </div>
         </div>
       </motion.div>
