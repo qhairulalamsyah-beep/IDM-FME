@@ -23,3 +23,24 @@ Stage Summary:
 - Dark theme with gold/pink accent colors for male/female divisions
 - Features: tournament management, bracket system, leaderboard, donations, sawer, live chat, admin panel, WhatsApp bot integration
 - App running on dev server at port 3000, all routes functional
+
+---
+Task ID: 2
+Agent: Main
+Task: Seed database and show participants with their clubs
+
+Work Log:
+- Found database was empty (no users or clubs)
+- Created seed script (scripts/seed-db.ts) based on the original /api/seed route
+- Seeded database with 42 players (1 super admin + 24 male + 17 female) and 7 clubs
+- Clubs: Gymshark, southern, maximous, paranoid, sensei, euphoric, queen
+- Created ParticipantsByClubModal component with search, gender filter, expand/collapse
+- Added "Peserta & Club" button to Dashboard component
+- Integrated modal into page.tsx with state management
+- Verified lint passes and dev server compiles successfully
+
+Stage Summary:
+- Database seeded with complete participant data across 7 clubs
+- ParticipantsByClubModal shows all 41 non-admin participants grouped by club
+- Features: search, gender filter (All/Male/Female), expand/collapse all, tier badges
+- Button accessible from Dashboard as "Peserta & Club" quick action

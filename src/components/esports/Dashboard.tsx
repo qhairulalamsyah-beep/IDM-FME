@@ -86,6 +86,7 @@ interface DashboardProps {
   onViewDonation?: () => void;
   teamsCount?: number;
   onViewTeams?: () => void;
+  onViewParticipantsByClub?: () => void;
   champion?: ChampionData | null;
   mvp?: MVPData | null;
   leaderboardTab?: 'players' | 'clubs';
@@ -268,6 +269,7 @@ export function Dashboard({
   onViewPrize,
   teamsCount,
   onViewTeams,
+  onViewParticipantsByClub,
   onViewDonation,
   champion,
   mvp,
@@ -984,6 +986,39 @@ export function Dashboard({
               </span>
               <ChevronRight className={`w-2.5 h-2.5 rotate-90 ${isMale ? 'text-amber-400/40' : 'text-violet-400/40'}`} />
             </div>
+          </div>
+        </motion.button>
+      </motion.div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          PESERTA & CLUB — Quick action button
+          ═══════════════════════════════════════════════════════════ */}
+      <motion.div variants={item}>
+        <motion.button
+          onClick={() => onViewParticipantsByClub?.()}
+          className="w-full relative glass inner-light rounded-2xl p-3.5 sm:p-4 cursor-pointer group overflow-hidden"
+          whileHover={{ scale: 1.01, y: -1 }}
+          whileTap={{ scale: 0.98 }}
+          transition={springTransition}
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        >
+          <div
+            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-90 transition-opacity duration-500 pointer-events-none"
+            style={{
+              background: isMale
+                ? 'radial-gradient(circle at 50% 30%, rgba(255,214,10,0.06) 0%, transparent 70%)'
+                : 'radial-gradient(circle at 50% 30%, rgba(167,139,250,0.06) 0%, transparent 70%)',
+            }}
+          />
+          <div className="relative z-10 flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${accentSubtleBg}`}>
+              <Shield className={`w-5 h-5 ${accentColor}`} />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-[13px] font-bold text-white/80">Peserta & Club</p>
+              <p className="text-[10px] text-white/30 mt-0.5">Lihat semua peserta yang terdaftar beserta club mereka</p>
+            </div>
+            <ChevronRight className={`w-4 h-4 ${isMale ? 'text-amber-400/30' : 'text-violet-400/30'}`} />
           </div>
         </motion.button>
       </motion.div>

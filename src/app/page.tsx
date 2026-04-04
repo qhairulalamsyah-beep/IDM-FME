@@ -18,6 +18,7 @@ import { PlayerProfileModal } from '@/components/esports/PlayerProfile';
 import { PlayerListModal } from '@/components/esports/PlayerListModal';
 import { PrizeBreakdownModal } from '@/components/esports/PrizeBreakdownModal';
 import { TeamListModal } from '@/components/esports/TeamListModal';
+import { ParticipantsByClubModal } from '@/components/esports/ParticipantsByClubModal';
 
 import { LiveChat } from '@/components/esports/LiveChat';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
@@ -110,6 +111,7 @@ export default function IDOLMETAApp() {
   const [playerListOpen, setPlayerListOpen] = useState(false);
   const [prizeModalOpen, setPrizeModalOpen] = useState(false);
   const [teamListOpen, setTeamListOpen] = useState(false);
+  const [participantsByClubOpen, setParticipantsByClubOpen] = useState(false);
   const [leaderboardTab, setLeaderboardTab] = useState<'players' | 'clubs'>('players');
   const [topClubs, setTopClubs] = useState<Array<{
     id: string;
@@ -778,6 +780,7 @@ export default function IDOLMETAApp() {
                     onViewDonation={() => { setDonationDefaultTab('donasi'); setActiveTab('donation'); }}
                     teamsCount={teams.length}
                     onViewTeams={() => setTeamListOpen(true)}
+                    onViewParticipantsByClub={() => setParticipantsByClubOpen(true)}
                     champion={championOfTheWeek}
                     mvp={mvpOfTheWeek}
                     leaderboardTab={leaderboardTab}
@@ -890,6 +893,12 @@ export default function IDOLMETAApp() {
             onOpenChange={setTeamListOpen}
             teams={teams}
             division={division}
+          />
+
+          {/* Participants by Club Modal */}
+          <ParticipantsByClubModal
+            isOpen={participantsByClubOpen}
+            onOpenChange={setParticipantsByClubOpen}
           />
 
           {/* Prize Breakdown Modal */}
