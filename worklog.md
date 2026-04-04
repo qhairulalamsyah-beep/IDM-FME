@@ -44,3 +44,25 @@ Stage Summary:
 - ParticipantsByClubModal shows all 41 non-admin participants grouped by club
 - Features: search, gender filter (All/Male/Female), expand/collapse all, tier badges
 - Button accessible from Dashboard as "Peserta & Club" quick action
+
+---
+Task ID: 3
+Agent: Main
+Task: Replace local seed with GitHub source data
+
+Work Log:
+- Deleted local seed script (scripts/seed-db.ts) as requested
+- Fetched prisma/seed.ts from GitHub repo (raw.githubusercontent.com/qhairulalamsyah-beep/IDM-FME)
+- Wrote prisma/seed.ts with exact data from GitHub: 22 clubs, 71 players (45M + 26F)
+- Cleaned old database and re-seeded with GitHub source data
+- Verified via /api/users: 70 non-admin players with correct clubs, tiers, points
+- Verified via /api/clubs: 18 active clubs with correct member counts and rankings
+- Lint passes, dev server compiles successfully
+
+Stage Summary:
+- Seed data now matches GitHub repo exactly
+- 22 clubs: SOUTHERN, PARANOID, MAXIMOUS, SALVADOR, EUPHORIC, ALQA, RESTART, MYSTERY, GYMSHARK, SECRETS, ARNBE, JASMINE, YAKUZA, CROWN, QUEEN, PSALM, TOGETHER, ORPHIC, AVENUE, SENSEI, RNB, Plat R
+- 71 players: 45 male + 26 female, TAZOS as super_admin
+- Club rankings calculated: #1 SOUTHERN (2282 pts), #2 MAXIMOUS (1583 pts), #3 EUPHORIC (1067 pts)
+- Top ranked players: #1 Airuen (450), #2 Afroki (421), #3 ziafu (400)
+- Tier system: S (300+), A (100+), B (<100)
