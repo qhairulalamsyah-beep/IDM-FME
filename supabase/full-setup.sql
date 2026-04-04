@@ -508,17 +508,70 @@ ALTER TABLE public."PlayerMatchStat" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."BotLog" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."WhatsAppSettings" ENABLE ROW LEVEL SECURITY;
 
--- 9c. Revoke ALL from anon, authenticated, public, app_user
-DO $$ DECLARE tbl TEXT; BEGIN
-  FOR tbl IN SELECT table_name FROM information_schema.tables
-    WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-  LOOP
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM anon', tbl);
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM authenticated', tbl);
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM public', tbl);
-    EXECUTE format('REVOKE ALL PRIVILEGES ON TABLE public.%I FROM app_user', tbl);
-  END LOOP;
-END $$;
+-- 9c. Revoke ALL from anon, authenticated, public, app_user (explicit per table)
+REVOKE ALL PRIVILEGES ON TABLE public."User" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."Tournament" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."Registration" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."Team" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."TeamMember" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."Match" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."Ranking" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."Donation" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."Sawer" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."Club" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."Settings" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."ActivityLog" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."PlayerMatchStat" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."BotLog" FROM anon;
+REVOKE ALL PRIVILEGES ON TABLE public."WhatsAppSettings" FROM anon;
+
+REVOKE ALL PRIVILEGES ON TABLE public."User" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."Tournament" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."Registration" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."Team" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."TeamMember" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."Match" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."Ranking" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."Donation" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."Sawer" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."Club" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."Settings" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."ActivityLog" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."PlayerMatchStat" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."BotLog" FROM authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public."WhatsAppSettings" FROM authenticated;
+
+REVOKE ALL PRIVILEGES ON TABLE public."User" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."Tournament" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."Registration" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."Team" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."TeamMember" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."Match" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."Ranking" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."Donation" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."Sawer" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."Club" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."Settings" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."ActivityLog" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."PlayerMatchStat" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."BotLog" FROM public;
+REVOKE ALL PRIVILEGES ON TABLE public."WhatsAppSettings" FROM public;
+
+REVOKE ALL PRIVILEGES ON TABLE public."User" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."Tournament" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."Registration" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."Team" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."TeamMember" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."Match" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."Ranking" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."Donation" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."Sawer" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."Club" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."Settings" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."ActivityLog" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."PlayerMatchStat" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."BotLog" FROM app_user;
+REVOKE ALL PRIVILEGES ON TABLE public."WhatsAppSettings" FROM app_user;
 
 -- 9d. Least-privilege GRANTs — anon (read-only public data)
 GRANT SELECT ON TABLE public."Tournament" TO anon;
