@@ -408,3 +408,18 @@ Stage Summary:
 - Code is deployment-ready on GitHub (branch main, commit 682e176)
 - 2 config changes: next.config.ts (no standalone) + package.json (simplified build)
 - User needs to deploy via Vercel Dashboard at vercel.com/new
+
+---
+Task ID: 3
+Agent: main
+Task: Fix admin PIN popup appearing on first visit for non-admin users
+
+Work Log:
+- Identified root cause: `fetchAdmins()` called unconditionally on page load → sends request without auth → API returns 401 → `adminFetch` dispatches `admin-auth-changed` event → popup PIN + toast appear
+- Fix 1 (`src/lib/admin-fetch.ts`): Only call `clearAdminAuth()` and dispatch event when user WAS logged in (`localStorage.getItem('idm_admin_auth') === 'true'`) before the 401 response
+- Fix 2 (`src/app/page.tsx`): Guard `fetchAdmins()` call with `if (isAdminAuthenticated)` check
+- Lint passed, pushed to GitHub (commit 41794f4)
+
+Stage Summary:
+- Two-line fix prevents false 401 from triggering admin logout popup for unauthenticated users
+- Admin session verification still works correctly for logged-in admins
