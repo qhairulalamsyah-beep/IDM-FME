@@ -37,11 +37,11 @@ export async function POST(request: NextRequest) {
     if (permDenied instanceof NextResponse) return permDenied;
 
     // Get authenticated admin via verifyAdmin (works with both JWT and legacy headers)
-    const admin = await verifyAdmin(request);
-    if (!admin) {
+    const requester = await verifyAdmin(request);
+    if (!requester) {
       return NextResponse.json({ success: false, error: 'Akses ditolak' }, { status: 401 });
     }
-    if (admin.role !== 'super_admin') {
+    if (requester.role !== 'super_admin') {
       return NextResponse.json({ success: false, error: 'Akses ditolak — hanya super admin' }, { status: 403 });
     }
 
