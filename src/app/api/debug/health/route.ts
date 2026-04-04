@@ -6,9 +6,9 @@ export async function GET() {
   try {
     const results: Record<string, unknown> = {};
 
-    // 1. Test database connection
+    // 1. Test database connection (use Prisma ORM, not $queryRaw — PgBouncer doesn't support prepared statements)
     const startMs = Date.now();
-    await db.$queryRaw`SELECT 1 as ok`;
+    await db.user.findFirst({ select: { id: true } });
     results.dbConnection = `OK (${Date.now() - startMs}ms)`;
 
     // 2. Count users
