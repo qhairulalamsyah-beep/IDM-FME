@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createHash } from 'crypto';
 import { requireAdmin } from '@/lib/admin-guard';
+import { comparePin, isBcryptHash, hashPin } from '@/lib/auth-helpers';
 
 // PUT - Change admin PIN
 export async function PUT(request: NextRequest) {
@@ -31,27 +31,36 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'PIN baru harus 6 digit angka' }, { status: 400 });
     }
 
-    // Hash current PIN
-    const currentHash = createHash('sha256').update(cleanCurrentPin).digest('hex');
+    if (cleanCurrentPin === cleanNewPin) {
+      return NextResponse.json({ success: false, error: 'PIN baru harus berbeda dari PIN lama' }, { status: 400 });
+    }
 
-    // Find admin matching BOTH the authenticated admin ID and the current PIN hash
-    // This prevents cross-account PIN changes when multiple admins share the same PIN
-    const user = await db.user.findFirst({
-      where: {
-        id: adminId,
-        adminPass: currentHash,
-      },
-      select: {
-        id: true,
-      },
+    // Find admin and verify current PIN (supports both bcrypt and legacy SHA-256)
+    const user = await db.user.findUnique({
+      where: { id: adminId },
+      select: { id: true, adminPass: true },
     });
 
-    if (!user) {
+    if (!user || !user.adminPass) {
+      return NextResponse.json({ success: false, error: 'Akun tidak valid' }, { status: 401 });
+    }
+
+    // Verify current PIN — support both bcrypt and legacy SHA-256
+    let currentPinValid = false;
+    if (isBcryptHash(user.adminPass)) {
+      currentPinValid = await comparePin(cleanCurrentPin, user.adminPass);
+    } else {
+      // Legacy SHA-256
+      const { legacySha256Hash } = await import('@/lib/auth-helpers');
+      currentPinValid = user.adminPass === legacySha256Hash(cleanCurrentPin);
+    }
+
+    if (!currentPinValid) {
       return NextResponse.json({ success: false, error: 'PIN lama salah' }, { status: 401 });
     }
 
-    // Hash new PIN
-    const newHash = createHash('sha256').update(cleanNewPin).digest('hex');
+    // Hash new PIN with bcrypt
+    const newHash = await hashPin(cleanNewPin);
 
     // Update PIN
     await db.user.update({

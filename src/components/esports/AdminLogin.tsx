@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Fingerprint, XCircle, CheckCircle, Settings2, ArrowLeft } from 'lucide-react';
+import { adminFetch } from '@/lib/admin-fetch';
 
 interface AdminLoginProps {
   isOpen: boolean;
@@ -114,7 +115,7 @@ export function AdminLogin({ isOpen, onOpenChange, onLogin }: AdminLoginProps) {
   const verifyCurrentPin = async (pinValue: string) => {
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/admin/verify-pin', {
+      const res = await adminFetch('/api/admin/verify-pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: pinValue }),
@@ -163,7 +164,7 @@ export function AdminLogin({ isOpen, onOpenChange, onLogin }: AdminLoginProps) {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/admin/change-pin', {
+      const res = await adminFetch('/api/admin/change-pin', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPin: current, newPin: newPinVal }),

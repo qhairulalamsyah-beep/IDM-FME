@@ -312,17 +312,31 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   verifyAdminSession: async () => {
     try {
-      const adminHash = typeof localStorage !== 'undefined' ? localStorage.getItem('idm_admin_hash') : null;
       const { adminUser } = get();
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('idm_admin_token') : null;
 
-      if (!adminUser || !adminHash) {
+      if (!adminUser) {
         return false;
+      }
+
+      // Send JWT token for verification (preferred method)
+      const body: Record<string, string> = {};
+      if (token) {
+        body.token = token;
+      } else {
+        // Legacy fallback: send adminId + adminHash
+        const adminHash = typeof localStorage !== 'undefined' ? localStorage.getItem('idm_admin_hash') : null;
+        if (!adminHash) {
+          return false;
+        }
+        body.adminId = adminUser.id;
+        body.adminHash = adminHash;
       }
 
       const res = await fetch('/api/admin/verify-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminId: adminUser.id, adminHash }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
@@ -335,9 +349,10 @@ export const useAppStore = create<AppState>((set, get) => ({
           localStorage.removeItem('idm_admin_auth');
           localStorage.removeItem('idm_admin_user');
           localStorage.removeItem('idm_admin_hash');
+          localStorage.removeItem('idm_admin_token');
         }
         if (data.passwordChanged) {
-          get().addToast('Password admin telah diubah. Silakan login kembali.', 'warning');
+          get().addToast('Session admin telah berakhir. Silakan login kembali.', 'warning');
         } else {
           get().addToast('Session admin tidak valid. Silakan login kembali.', 'warning');
         }
