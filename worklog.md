@@ -770,3 +770,24 @@ Stage Summary:
 - Full CRUD: view profile, edit nickname/WhatsApp/city, upload avatar
 - Profile updates trigger global data refresh via CustomEvent
 - API endpoint `/api/users/profile` is public but restricted to non-admin users
+---
+Task ID: 1
+Agent: Main
+Task: Fix missing Peserta navbar + redesign Dashboard ranking to match Leaderboard modal
+
+Work Log:
+- Added { id: "participants", label: "Peserta", icon: Users } back to regularNavItems in Navigation.tsx
+- Updated mobile bottom nav to show 4 items (Dashboard, Peserta | GF | Bracket, Leaderboard) using .slice(0,2) and .slice(2)
+- Redesigned Dashboard RANKING section with podium-style Top 3 matching Leaderboard modal:
+  - Rank 1: Crown icon with floating animation, card-gold/card-pink, larger avatar, gold rank badge
+  - Rank 2: Silver Medal icon, glass-subtle card, gray gradient rank badge
+  - Rank 3: Bronze Medal icon, glass-subtle card, orange gradient rank badge
+  - Rank 4-8: Compact list rows with subtle badges
+- Added Medal import to Dashboard.tsx
+- Added visual divider between podium and rest list
+
+Stage Summary:
+- Navigation.tsx: Peserta menu restored in navbar (mobile + desktop + tablet)
+- Dashboard.tsx: RANKING section redesigned with podium top 3 style
+- Lint: clean
+

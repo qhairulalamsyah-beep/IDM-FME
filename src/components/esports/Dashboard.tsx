@@ -20,6 +20,7 @@ import {
   MapPin,
   Shield,
   Gift,
+  Medal,
 } from 'lucide-react';
 import { DonasiSawerModal } from './DonasiSawerModal';
 
@@ -981,7 +982,7 @@ export function Dashboard({
       </motion.div>
 
       {/* ═══════════════════════════════════════════════════════════
-          LEADERBOARD — Player Rankings (compact, below Quick Stats)
+          LEADERBOARD — Top 3 Podium + Rest List (modal-style)
           ═══════════════════════════════════════════════════════════ */}
       {hasPlayers && (
         <motion.div variants={item}>
@@ -1003,83 +1004,237 @@ export function Dashboard({
             </motion.button>
           </div>
 
-          {/* Desktop table header */}
-          <div className="hidden lg:flex items-center gap-4 px-5 py-2.5 mb-1.5">
-            <div className="w-8 shrink-0" />
-            <div className="w-10 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">Pemain</span>
+          {/* ── Top 3 Podium (modal Leaderboard style) ── */}
+          {topPlayers.length >= 3 && (
+            <motion.div
+              className="glass rounded-2xl p-3 sm:p-4 lg:p-6 pt-4 sm:pt-5 lg:pt-8 mb-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+            >
+              <div className="flex items-end justify-center gap-2 sm:gap-3 lg:gap-6">
+                {/* 2nd Place (Left) */}
+                {(() => {
+                  const player = topPlayers[1];
+                  return (
+                    <div className="flex-1 max-w-[100px] sm:max-w-[120px] lg:max-w-[160px]">
+                      <div className="flex flex-col items-center">
+                        {/* Medal icon */}
+                        <div className="mb-1.5 sm:mb-2 h-5">
+                          <Medal
+                            className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 mx-auto text-gray-300"
+                            style={{ filter: 'drop-shadow(0 0 8px rgba(209,213,219,0.4))' }}
+                          />
+                        </div>
+                        {/* Avatar */}
+                        <div className={avatarRingClass}>
+                          <div className="w-[44px] h-[44px] sm:w-10 sm:h-10 lg:w-16 lg:h-16 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
+                            {player.avatar ? (
+                              <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-sm lg:text-2xl font-bold text-white/70">{player.name.charAt(0)}</span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Card */}
+                        <div className="glass-subtle rounded-xl w-full mt-2 sm:mt-3 flex flex-col items-center text-center overflow-hidden h-[80px] sm:h-[90px] lg:h-[130px] justify-end">
+                          <div className="px-2 pb-2.5 sm:pb-3 w-full">
+                            <p className="text-[11px] sm:text-xs lg:text-sm font-bold text-white/90 truncate">{player.name}</p>
+                            <span className={`tier-badge ${tierMap[player.tier] || 'tier-b'} mt-1 inline-block`}>{player.tier}</span>
+                            <p className="text-sm sm:text-base lg:text-xl font-black mt-1 tabular-nums text-gray-300">
+                              {player.points.toLocaleString()}
+                              <span className="text-[9px] font-semibold text-white/30 ml-0.5">PTS</span>
+                            </p>
+                            {/* Rank badge */}
+                            <div
+                              className="mx-auto mt-1.5 w-5 h-5 lg:w-7 lg:h-7 rounded-full flex items-center justify-center font-black text-[9px] lg:text-xs bg-gradient-to-br from-gray-100 via-gray-200 to-gray-400 text-gray-800"
+                              style={{ boxShadow: '0 2px 10px rgba(0,0,0,0.4)' }}
+                            >
+                              2
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 1st Place (Center — elevated) */}
+                {(() => {
+                  const player = topPlayers[0];
+                  return (
+                    <div className="flex-1 max-w-[110px] sm:max-w-[130px] lg:max-w-[180px]">
+                      <div className="flex flex-col items-center">
+                        {/* Crown icon */}
+                        <div className="mb-1.5 sm:mb-2 h-6">
+                          <div
+                            className="animate-float"
+                            style={{
+                              filter: isMale
+                                ? 'drop-shadow(0 0 16px rgba(255,214,10,0.6))'
+                                : 'drop-shadow(0 0 16px rgba(167,139,250,0.6))',
+                            }}
+                          >
+                            <Crown className={`w-6 h-6 sm:w-7 sm:h-7 lg:w-9 lg:h-9 ${accentColor}`} />
+                          </div>
+                        </div>
+                        {/* Avatar */}
+                        <div className={avatarRingClass}>
+                          <div className="w-[52px] h-[52px] sm:w-12 sm:h-12 lg:w-20 lg:h-20 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
+                            {player.avatar ? (
+                              <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-base lg:text-3xl font-bold text-white/70">{player.name.charAt(0)}</span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Card */}
+                        <div
+                          className={`rounded-xl w-full mt-2 sm:mt-3 flex flex-col items-center text-center overflow-hidden h-[100px] sm:h-[115px] lg:h-[155px] justify-end ${isMale ? 'card-gold' : 'card-pink'}`}
+                          style={{ transform: 'rotateX(2deg)', transformOrigin: 'bottom center' }}
+                        >
+                          <div className="relative z-10 px-2 pb-3 sm:pb-3.5 w-full">
+                            <p className="text-xs sm:text-sm lg:text-lg font-bold text-white/90 truncate">{player.name}</p>
+                            <span className={`tier-badge ${tierMap[player.tier] || 'tier-b'} mt-1 inline-block`}>{player.tier}</span>
+                            <p className={`text-base sm:text-lg lg:text-2xl font-black mt-1.5 tabular-nums ${accentColor}`}>
+                              {player.points.toLocaleString()}
+                              <span className="text-[9px] font-semibold text-white/30 ml-0.5">PTS</span>
+                            </p>
+                            {/* Rank badge — gold */}
+                            <div
+                              className="mx-auto mt-2 w-5 h-5 lg:w-7 lg:h-7 rounded-full flex items-center justify-center font-black text-[9px] lg:text-xs text-black bg-gradient-to-br from-amber-400 via-yellow-300 to-orange-400"
+                              style={{
+                                boxShadow: isMale
+                                  ? '0 3px 16px rgba(255,214,10,0.5)'
+                                  : '0 3px 16px rgba(167,139,250,0.5)',
+                              }}
+                            >
+                              1
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 3rd Place (Right) */}
+                {(() => {
+                  const player = topPlayers[2];
+                  return (
+                    <div className="flex-1 max-w-[100px] sm:max-w-[120px] lg:max-w-[160px]">
+                      <div className="flex flex-col items-center">
+                        {/* Medal icon */}
+                        <div className="mb-1.5 sm:mb-2 h-5">
+                          <Medal
+                            className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 mx-auto text-orange-400"
+                            style={{ filter: 'drop-shadow(0 0 8px rgba(251,146,60,0.4))' }}
+                          />
+                        </div>
+                        {/* Avatar */}
+                        <div className={avatarRingClass}>
+                          <div className="w-[40px] h-[40px] sm:w-9 sm:h-9 lg:w-14 lg:h-14 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
+                            {player.avatar ? (
+                              <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-xs lg:text-xl font-bold text-white/70">{player.name.charAt(0)}</span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Card */}
+                        <div className="glass-subtle rounded-xl w-full mt-2 sm:mt-3 flex flex-col items-center text-center overflow-hidden h-[70px] sm:h-[80px] lg:h-[115px] justify-end">
+                          <div className="px-2 pb-2.5 sm:pb-3 w-full">
+                            <p className="text-[11px] sm:text-xs lg:text-sm font-bold text-white/90 truncate">{player.name}</p>
+                            <span className={`tier-badge ${tierMap[player.tier] || 'tier-b'} mt-1 inline-block`}>{player.tier}</span>
+                            <p className="text-sm sm:text-base lg:text-xl font-black mt-1 tabular-nums text-orange-400">
+                              {player.points.toLocaleString()}
+                              <span className="text-[9px] font-semibold text-white/30 ml-0.5">PTS</span>
+                            </p>
+                            {/* Rank badge */}
+                            <div
+                              className="mx-auto mt-1.5 w-5 h-5 lg:w-7 lg:h-7 rounded-full flex items-center justify-center font-black text-[9px] lg:text-xs text-orange-950 bg-gradient-to-br from-orange-300 via-amber-400 to-orange-500"
+                              style={{ boxShadow: '0 2px 10px rgba(0,0,0,0.4)' }}
+                            >
+                              3
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Visual divider between podium and rest ── */}
+          {topPlayers.length >= 3 && topPlayers.length > 3 && (
+            <div className="flex items-center gap-3 px-1 mb-2.5">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+              <span className="text-[9px] font-semibold text-white/30 uppercase tracking-[0.15em]">
+                Peringkat Selanjutnya
+              </span>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
             </div>
-            <div className="w-16 shrink-0 text-center">
-              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">Tier</span>
-            </div>
-            <div className="w-20 shrink-0 text-right">
-              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">Points</span>
-            </div>
-          </div>
+          )}
 
-          {/* Player rows */}
-          <motion.div
-            className="space-y-2"
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            {topPlayers.slice(0, 10).map((player, index) => (
-              <motion.div
-                key={player.id}
-                className={`glass-subtle rounded-xl px-2.5 sm:px-3.5 lg:px-5 py-2.5 sm:py-3 lg:py-4 flex items-center gap-2.5 sm:gap-3 lg:gap-4 group ${index >= 5 ? 'max-lg:hidden' : ''}`}
-                variants={item}
-                whileHover={{ scale: 1.015, x: 2 }}
-                whileTap={{ scale: 0.99 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              >
-                {/* Rank badge */}
-                <div
-                  className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center font-bold text-[11px] sm:text-[12px] shrink-0"
-                  style={
-                    index < 3
-                      ? {
-                          background: `linear-gradient(160deg, ${rankColors[index]} 0%, ${
-                            index === 1 ? '#8E8E93' : index === 2 ? '#A0522D' : '#E5A800'
-                          } 100%)`,
-                          color: index === 1 ? '#1C1C1E' : index === 2 ? '#fff' : '#000',
-                          boxShadow: `0 2px 6px ${rankColors[index]}30, inset 0 1px 0 rgba(255,255,255,${index === 2 ? '0.15' : '0.35'})`,
-                        }
-                      : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.25)' }
-                  }
-                >
-                  {index + 1}
-                </div>
+          {/* ── Rest of Rankings (rank 4+) ── */}
+          {topPlayers.length > 3 && (
+            <motion.div
+              className="space-y-2"
+              variants={container}
+              initial="hidden"
+              animate="show"
+            >
+              {topPlayers.slice(3, 8).map((player, index) => {
+                const rank = index + 4;
+                return (
+                  <motion.div
+                    key={player.id}
+                    className="glass-subtle rounded-xl px-2.5 sm:px-3.5 lg:px-5 py-2.5 sm:py-3 flex items-center gap-2.5 sm:gap-3 lg:gap-4 group"
+                    variants={item}
+                    whileHover={{ scale: 1.015, x: 2 }}
+                    whileTap={{ scale: 0.99 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  >
+                    {/* Rank badge */}
+                    <div
+                      className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center font-bold text-[11px] sm:text-[12px] shrink-0"
+                      style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.25)' }}
+                    >
+                      {rank}
+                    </div>
 
-                {/* Player avatar */}
-                <div className={avatarRingClass}>
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-11 lg:h-11 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
-                    {player.avatar ? (
-                      <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-[11px] font-bold text-white/70">{player.name.charAt(0)}</span>
-                    )}
-                  </div>
-                </div>
+                    {/* Avatar */}
+                    <div className={avatarRingClass}>
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-11 lg:h-11 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
+                        {player.avatar ? (
+                          <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[11px] font-bold text-white/70">{player.name.charAt(0)}</span>
+                        )}
+                      </div>
+                    </div>
 
-                {/* Player info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-white/90 truncate leading-snug lg:text-sm">{player.name}</p>
-                </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-white/90 truncate lg:text-sm">{player.name}</p>
+                    </div>
 
-                {/* Tier badge */}
-                <span className={`tier-badge ${tierMap[player.tier] || 'tier-b'} shrink-0 hidden lg:inline-block`}>
-                  {player.tier}
-                </span>
+                    {/* Tier */}
+                    <span className={`tier-badge ${tierMap[player.tier] || 'tier-b'} shrink-0 hidden lg:inline-block`}>
+                      {player.tier}
+                    </span>
 
-                {/* Points */}
-                <span className={`text-[13px] font-bold ${accentColor} tabular-nums shrink-0 lg:text-sm lg:w-16 lg:text-right`}>
-                  {player.points.toLocaleString()}
-                </span>
-              </motion.div>
-            ))}
-          </motion.div>
+                    {/* Points */}
+                    <span className={`text-[13px] font-bold ${accentColor} tabular-nums shrink-0 lg:text-sm lg:w-16 lg:text-right`}>
+                      {player.points.toLocaleString()}
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
         </motion.div>
       )}
 

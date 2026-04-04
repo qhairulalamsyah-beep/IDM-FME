@@ -49,6 +49,7 @@ interface TopBarProps {
 
 const regularNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
+  { id: 'participants', label: 'Peserta', icon: Users },
   { id: 'bracket', label: 'Bracket', icon: GitBranch },
   { id: 'leaderboard', label: 'Leaderboard', icon: BarChart3 },
 ];
@@ -150,7 +151,7 @@ export function Navigation({ activeTab, onTabChange, division, onToggleDivision,
           />
 
           <div className="relative flex items-center justify-around px-2 py-2">
-            {/* ── Left group: Dashboard, Tournament ── */}
+            {/* ── Left group: Dashboard, Peserta ── */}
             {regularNavItems.slice(0, 2).map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -242,7 +243,7 @@ export function Navigation({ activeTab, onTabChange, division, onToggleDivision,
             </motion.button>
 
             {/* ── Right group: Bracket, Leaderboard ── */}
-            {regularNavItems.slice(2, 4).map((item) => {
+            {regularNavItems.slice(2).map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
