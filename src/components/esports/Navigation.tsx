@@ -9,6 +9,7 @@ import {
   Shield,
   Sparkles,
   Users,
+  UserCircle,
 } from 'lucide-react';
 
 /* ────────────────────────────────────────────
@@ -36,6 +37,7 @@ interface TopBarProps {
   onToggleDivision: () => void;
   isAdminAuthenticated?: boolean;
   onAdminClick?: () => void;
+  onProfileClick?: () => void;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   adminNotificationCount?: number;
@@ -299,6 +301,7 @@ export function TopBar({
   onToggleDivision,
   isAdminAuthenticated,
   onAdminClick,
+  onProfileClick,
   activeTab = 'dashboard',
   onTabChange,
   adminNotificationCount = 0,
@@ -396,6 +399,20 @@ export function TopBar({
                     Female
                   </button>
                 </div>
+
+                {/* Profile */}
+                <motion.button
+                  onClick={onProfileClick}
+                  className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer bg-white/[0.04] border border-white/[0.05]`}
+                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <UserCircle
+                    className="w-4 h-4 text-white/40"
+                    strokeWidth={1.8}
+                  />
+                </motion.button>
 
                 {/* Admin */}
                 <motion.button
@@ -533,7 +550,21 @@ export function TopBar({
                     </button>
                   </div>
 
-                  {/* Admin */}
+                  {/* Profile */}
+                <motion.button
+                  onClick={onProfileClick}
+                  className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer bg-white/[0.04] border border-white/[0.05]`}
+                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <UserCircle
+                    className="w-4 h-4 text-white/40"
+                    strokeWidth={1.8}
+                  />
+                </motion.button>
+
+                {/* Admin */}
                   <motion.button
                     onClick={onAdminClick}
                     className={`relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer ${
@@ -670,7 +701,21 @@ export function TopBar({
                     </button>
                   </div>
 
-                  {/* Admin */}
+                  {/* Profile */}
+                <motion.button
+                  onClick={onProfileClick}
+                  className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer bg-white/[0.04] border border-white/[0.05]`}
+                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <UserCircle
+                    className="w-4 h-4 text-white/40"
+                    strokeWidth={1.8}
+                  />
+                </motion.button>
+
+                {/* Admin */}
                   <motion.button
                     onClick={onAdminClick}
                     className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer ${

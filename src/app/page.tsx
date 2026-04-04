@@ -23,6 +23,7 @@ import { PrizeBreakdownModal } from '@/components/esports/PrizeBreakdownModal';
 import { TeamListModal } from '@/components/esports/TeamListModal';
 import { ParticipantsByClubModal } from '@/components/esports/ParticipantsByClubModal';
 import { RegistrationModal } from '@/components/esports/RegistrationModal';
+import { ProfileModal } from '@/components/esports/ProfileModal';
 
 import { LiveChat } from '@/components/esports/LiveChat';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
@@ -137,6 +138,7 @@ export default function IDOLMETAApp() {
   const [teamListOpen, setTeamListOpen] = useState(false);
   const [participantsByClubOpen, setParticipantsByClubOpen] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [leaderboardTab, setLeaderboardTab] = useState<'players' | 'clubs'>('players');
   const [topClubs, setTopClubs] = useState<Array<{
     id: string;
@@ -147,6 +149,13 @@ export default function IDOLMETAApp() {
     memberCount: number;
     rank: number;
   }>>([]);
+
+  // Listen for profile updates (refresh data when user edits their profile)
+  useEffect(() => {
+    const handler = () => fetchData(false);
+    window.addEventListener('profile-updated', handler);
+    return () => window.removeEventListener('profile-updated', handler);
+  }, [fetchData]);
 
   // Listen for admin auth changes (e.g., 401 response triggers logout)
   useEffect(() => {
@@ -733,6 +742,7 @@ export default function IDOLMETAApp() {
             activeTab={activeTab}
             onTabChange={setActiveTab}
             adminNotificationCount={isAdminAuthenticated && !adminOpen ? registrations.filter(r => r.status === 'pending').length : 0}
+            onProfileClick={() => setProfileOpen(true)}
             onAdminClick={() => {
               if (isAdminAuthenticated) {
                 setAdminOpen(true);
@@ -947,6 +957,13 @@ export default function IDOLMETAApp() {
             tournament={tournamentInfo}
             users={users}
             onRegister={registerUser}
+          />
+
+          {/* Profile Modal */}
+          <ProfileModal
+            isOpen={profileOpen}
+            onOpenChange={setProfileOpen}
+            division={division}
           />
 
           {/* Prize Breakdown Modal */}

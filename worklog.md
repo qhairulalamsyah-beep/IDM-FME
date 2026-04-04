@@ -689,3 +689,84 @@ Stage Summary:
 - Form includes: name (with auto-lookup), WhatsApp, club, asal kota, avatar upload
 - Status-aware messaging when tournament not in 'registration' status
 - Lint 0 errors, no push (user requested no push yet)
+
+---
+## Task ID: 3 - ProfileModal
+### Work Task
+Create `/home/z/my-project/src/components/esports/ProfileModal.tsx` — a player profile modal component with search, profile view, and edit mode.
+
+### Work Summary
+Created `ProfileModal.tsx` — a comprehensive player profile modal using shadcn/ui Sheet (side="right") with dark glassmorphism theme.
+
+**Props:** `isOpen`, `onOpenChange`, `division` ('male' | 'female')
+
+**Three screens with AnimatePresence transitions:**
+
+1. **Search Screen** (first visit / no saved profile):
+   - Search input with `Search` icon, debounced 400ms API call to `GET /api/users/profile?q={query}&gender={division}`
+   - Results list: avatar, name, tier badge, club name, points, chevron
+   - Empty state with icon + "Tidak ada pemain ditemukan"
+   - Idle state with "Ketik nama untuk mencari profil" hint
+   - "Belum terdaftar?" footer hint
+
+2. **Profile View** (returning visit / after selection):
+   - Large 80px avatar with `avatar-ring-gold`/`avatar-ring-pink` gradient ring
+   - Gradient glow behind avatar (amber/violet radial)
+   - Tier badge overlaid on avatar corner (S=gold, A=purple, B=cyan)
+   - Name, tier label badge, points count
+   - MVP badge (conditional) with Trophy icon
+   - Club name with logo image fallback to Shield icon
+   - Stats grid (3 columns): Points, Wins, Losses — computed from rankings array
+   - Info rows (glass-subtle): WhatsApp (Phone icon), Asal Kota (MapPin icon), Bergabung (Users icon)
+   - "Edit Profil" primary button (btn-gold/btn-pink, hero-shimmer-btn)
+   - "Ganti Profil" secondary button (LogOut icon, clears localStorage → back to search)
+   - "Tutup" text button
+
+3. **Edit Mode**:
+   - Avatar with camera icon overlay → file picker → POST `/api/upload/avatar` FormData
+   - Nickname input, WhatsApp input, Asal Kota input (glass-heavy container)
+   - Inline success/error messages (AnimatePresence, emerald/red themed)
+   - "Simpan" primary button → PUT `/api/users/profile` with `{ userId, name?, phone?, city?, avatar? }`
+   - "Batal" secondary button → back to profile view
+   - On success: updates profile state, localStorage, dispatches `profile-updated` CustomEvent
+
+**localStorage keys:**
+- `idm_player_profile_id` — stores selected user ID for instant re-open
+- `idm_player_profile_data` — caches full profile for offline display
+
+**On mount behavior:**
+- Checks localStorage for saved profile ID
+- If found with cached data: displays profile immediately, verifies via API in background
+- If found but API returns no match: clears storage, shows search screen
+- If not found: shows search screen
+
+**Styling:** Dark glassmorphism theme matching app: `bg-[#0a0a0f]/95 backdrop-blur-2xl`, `glass-heavy`, `glass-subtle`, `btn-gold`/`btn-pink`, `btn-ios`, `tier-s`/`tier-a`/`tier-b`, `avatar-ring-gold`/`avatar-ring-pink`, `divider`, `hero-shimmer-btn`, framer-motion animations.
+
+**Icons imported from lucide-react:** UserCircle, Search, Edit3, X, Camera, Phone, MapPin, Trophy, Shield, LogOut, Check, Loader2, ChevronRight, Users
+
+**Lint:** 0 errors, 0 warnings.
+
+---
+Task ID: 19
+Agent: Main
+Task: Create player profile feature with modal in navbar
+
+Work Log:
+- Created `/api/users/profile/route.ts` — public API for player self-service:
+  - GET: Search players by name/phone (no auth, returns max 15 results with club and rankings)
+  - PUT: Update own profile fields (name, phone, city, avatar) — no admin auth needed, blocks admin profile edits
+- Created `ProfileModal.tsx` (916 lines) via sub-agent — 3-screen profile modal:
+  - Search screen: debounced name search, result list with avatar/tier/club/points
+  - Profile view: large avatar, tier badge, club, stats grid, info rows, edit/switch/close buttons
+  - Edit mode: avatar upload, nickname/WhatsApp/city inputs, save via PUT API
+  - Offline-first: caches in localStorage for instant return visits
+- Updated Navigation.tsx: added `onProfileClick` prop to TopBar interface, UserCircle icon button in mobile/tablet/desktop headers (before admin button)
+- Updated page.tsx: imported ProfileModal, added profileOpen state, wired onProfileClick, added profile-updated event listener to refresh data
+- Lint 0 errors, no push
+
+Stage Summary:
+- Player profile accessible via UserCircle icon in top bar (all breakpoints)
+- No login required — search by name to find profile, saved in localStorage
+- Full CRUD: view profile, edit nickname/WhatsApp/city, upload avatar
+- Profile updates trigger global data refresh via CustomEvent
+- API endpoint `/api/users/profile` is public but restricted to non-admin users
