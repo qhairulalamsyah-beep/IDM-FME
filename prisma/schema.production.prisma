@@ -2,15 +2,16 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 //
 // Production: Supabase PostgreSQL
-// Development: Can use local SQLite (provider = "sqlite") or Supabase dev DB
+// This file is used for Vercel production deployments via: prisma generate --schema=prisma/schema.production.prisma
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "sqlite"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // User Model - Players in the tournament

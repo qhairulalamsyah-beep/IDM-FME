@@ -17,6 +17,9 @@ node_modules
 /.next/
 /out/
 
+# SQLite database (local dev only)
+db/
+
 # production
 /build
 
@@ -30,9 +33,16 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
+.env
+.env.local
+.env.production
+.env.production.local
+.env*.local
+
+# Keep template files
 !.env.example
+!.env.production.example
 
 # vercel
 .vercel

@@ -185,3 +185,61 @@ Stage Summary:
 - page.tsx optimized with useShallow + individual action selectors
 - All 30+ audit issues now resolved or verified
 - Dev server clean: 0 compilation errors, all endpoints healthy
+
+---
+## Task ID: 5 - deployment-setup
+### Work Task
+Set up production deployment configuration for Vercel with Supabase PostgreSQL. Create production Prisma schema, update build scripts, configure vercel.json, create env templates, write deployment guide, and update .gitignore.
+
+### Work Summary
+
+**Files Created:**
+1. **`prisma/schema.production.prisma`** — Identical to the local SQLite schema but with:
+   - `provider = "postgresql"` (instead of `sqlite`)
+   - `url = env("DATABASE_URL")` (pooled Supavisor connection)
+   - `directUrl = env("DIRECT_DATABASE_URL")` (direct connection for migrations)
+   - All 14 models preserved with identical relations and indexes
+
+2. **`.env.production.example`** — Template with all required environment variables:
+   - Database URLs (pooled + direct) with Supabase placeholder format
+   - Supabase keys (URL, anon key, service role key)
+   - Storage bucket names (avatars, payment-proofs, club-logos)
+   - JWT_SECRET generation instructions
+   - App config and logging settings
+
+3. **`DEPLOYMENT.md`** — Comprehensive deployment guide covering:
+   - Prerequisites (GitHub, Supabase, Vercel accounts)
+   - Supabase setup (verify tables, storage buckets, realtime, connection strings)
+   - Vercel deployment (GitHub import method + CLI method)
+   - Environment variables (required + optional, with table)
+   - Database migration strategy (using Supabase SQL Editor, not Prisma push)
+   - Post-deployment verification (build logs, API endpoints, PWA, admin login)
+   - Troubleshooting (build errors, connection timeouts, CORS, service worker)
+   - Architecture diagram (Browser → Vercel → Supabase, with Pusher/Storage)
+
+**Files Modified:**
+4. **`package.json`** — Added scripts:
+   - `db:generate:prod`: `prisma generate --schema=prisma/schema.production.prisma`
+   - `postinstall`: `prisma generate` (runs automatically on Vercel during `npm install`)
+   - `build`: Updated to include `npx prisma generate &&` prefix
+
+5. **`vercel.json`** — Enhanced configuration:
+   - Build command updated to use production schema: `prisma generate --schema=prisma/schema.production.prisma`
+   - Added HSTS header (`Strict-Transport-Security`) with preload
+   - Added Content-Security-Policy (restricts sources for scripts, styles, fonts, images, connections)
+   - Added cache headers for `/icons/*` (1 year, immutable)
+   - Added cache headers for `/avatars/*` (1 day)
+   - Added no-cache headers for `/api/*` routes
+   - Kept existing service worker and manifest headers
+
+6. **`.gitignore`** — Updated:
+   - Explicit listing of `.env`, `.env.local`, `.env.production`, `.env.production.local`
+   - Added `db/` directory (SQLite database files — local dev only)
+   - Added exceptions for `.env.example` and `.env.production.example` template files
+
+**Schema Switching Mechanism:**
+- Local dev: `prisma/schema.prisma` → SQLite (unchanged)
+- Vercel build: `prisma generate --schema=prisma/schema.production.prisma` → PostgreSQL
+- Both schemas have identical models; only the datasource block differs
+
+**Verification:** `npm run lint` passes with 0 errors.
