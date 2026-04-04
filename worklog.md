@@ -494,3 +494,36 @@ Stage Summary:
 - ALL other admin operations (payment settings, bracket management, etc.) also benefit from auto-reauth
 - No more "logout and login again" workaround needed — seamless session recovery
 - Lint passes cleanly, pushed to GitHub (commit aa370d4)
+
+---
+Task ID: 14
+Agent: Main
+Task: Fix avatar and logo upload 500 errors — Supabase Storage REST API binary upload
+
+Work Log:
+- Investigated avatar upload 500 error: `POST /api/upload/avatar 500` on Vercel
+- Root cause: `src/lib/storage.ts` `uploadToStorage()` was using `FormData` to upload files, but Supabase Storage REST API expects **raw binary body** with the file's MIME type as `Content-Type` header
+- FormData sets `Content-Type: multipart/form-data` which Supabase Storage API doesn't handle, causing upload failures
+- Fixed `src/lib/storage.ts`:
+  - Changed from FormData to raw binary body (`file.arrayBuffer()`) with proper `Content-Type` header
+  - Added `x-upsert: true` header to overwrite if same path exists
+  - Improved error parsing: checks `error.error`, `error.message`, `error.errorMsg` (Supabase varies response format)
+  - Added specific error detection: auth failures, bucket not found, RLS/policy, invalid JWT
+  - Each error type maps to actionable Indonesian error messages with hints for admin
+- Fixed `src/app/api/upload/avatar/route.ts`:
+  - Now uses `getConfig().supabase.avatarBucket` (from env `SUPABASE_AVATAR_BUCKET`) instead of hardcoded 'avatars'
+  - Better error messages for each failure type (bucket missing, RLS, auth)
+  - Production-only Supabase mode (no local fallback on Vercel)
+  - Rate limiting unchanged (10 uploads/min/IP)
+- Fixed `src/app/api/upload/logo/route.ts`:
+  - Same improvements as avatar route
+  - Uses `getConfig().supabase.logoBucket` (from env `SUPABASE_LOGO_BUCKET`)
+  - Better error handling with Indonesian messages and admin hints
+- ESLint passes cleanly (0 errors)
+
+Stage Summary:
+- **Root cause**: Supabase Storage REST API requires raw binary body, not FormData
+- **Fix**: Changed uploadToStorage() to use ArrayBuffer with proper Content-Type header
+- **Impact**: All upload routes benefit (avatar, logo, payment proofs) since they all use uploadToStorage()
+- **User action needed**: Ensure "avatars" bucket exists in Supabase Storage (Dashboard → Storage → New Bucket → name: "avatars" → Public)
+- Files modified: src/lib/storage.ts, src/app/api/upload/avatar/route.ts, src/app/api/upload/logo/route.ts

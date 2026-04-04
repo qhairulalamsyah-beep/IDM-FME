@@ -3,6 +3,7 @@ import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { uploadToStorage, isStorageConfigured } from '@/lib/storage';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
+import { getConfig } from '@/lib/config';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB for avatars
@@ -52,10 +53,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Try Supabase Storage ──
+    // ── Try Supabase Storage first ──
     if (isStorageConfigured()) {
+      const bucket = getConfig().supabase.avatarBucket;
+
       try {
-        const result = await uploadToStorage('avatars', file);
+        const result = await uploadToStorage(bucket, file);
         return NextResponse.json({
           success: true,
           url: result.url,
@@ -63,6 +66,7 @@ export async function POST(request: NextRequest) {
           size: result.size,
           type: file.type,
           storage: 'supabase',
+          bucket,
         });
       } catch (storageError) {
         const msg = storageError instanceof Error ? storageError.message : String(storageError);
@@ -70,16 +74,39 @@ export async function POST(request: NextRequest) {
 
         // On production, don't fall through to local — Supabase is the only option
         if (IS_PRODUCTION) {
-          if (msg.includes('JWT') || msg.includes('invalid compact') || msg.includes('jws') || msg.includes('token')) {
+          // Map specific errors to user-friendly messages
+          if (msg.includes('auth failed') || msg.includes('SERVICE_ROLE_KEY')) {
             return NextResponse.json(
               {
                 success: false,
                 error: 'Upload gagal: SUPABASE_SERVICE_ROLE_KEY tidak valid atau belum di-set.',
-                hint: 'Admin perlu mengatur Environment Variable SUPABASE_SERVICE_ROLE_KEY di Vercel.',
+                hint: 'Admin: Vercel → Settings → Environment Variables → tambahkan SUPABASE_SERVICE_ROLE_KEY.',
               },
               { status: 503 },
             );
           }
+          if (msg.includes('tidak ditemukan') || msg.includes('not found') || msg.includes('does not exist')) {
+            return NextResponse.json(
+              {
+                success: false,
+                error: `Bucket "${bucket}" belum ada di Supabase Storage.`,
+                hint: `Admin: Supabase Dashboard → Storage → New Bucket → nama: "${bucket}", set Public.`,
+              },
+              { status: 503 },
+            );
+          }
+          if (msg.includes('RLS') || msg.includes('policy') || msg.includes('permission')) {
+            return NextResponse.json(
+              {
+                success: false,
+                error: `Bucket "${bucket}" belum diset Public.`,
+                hint: 'Admin: Supabase Dashboard → Storage → pilih bucket → Edit → toggle Public.',
+              },
+              { status: 403 },
+            );
+          }
+
+          // Generic error
           return NextResponse.json(
             { success: false, error: `Upload gagal: ${msg}` },
             { status: 500 },
@@ -87,7 +114,7 @@ export async function POST(request: NextRequest) {
         }
 
         // On development, fall through to local upload
-        console.warn('[AVATAR UPLOAD] Falling back to local upload');
+        console.warn('[AVATAR UPLOAD] Supabase failed, falling back to local upload:', msg);
       }
     }
 
@@ -97,13 +124,12 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: 'Upload gagal: Supabase Storage belum dikonfigurasi.',
-          hint: 'Admin perlu mengatur Environment Variables di Vercel: NEXT_PUBLIC_SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY',
+          hint: 'Admin: Vercel → Settings → Environment Variables → tambahkan NEXT_PUBLIC_SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY.',
         },
         { status: 503 },
       );
     }
 
-    // Local upload (dev only)
     const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
     await mkdir(UPLOAD_DIR, { recursive: true });
 
@@ -123,7 +149,7 @@ export async function POST(request: NextRequest) {
       storage: 'local',
     });
   } catch (error) {
-    console.error('[AVATAR UPLOAD] Error:', error);
+    console.error('[AVATAR UPLOAD] Unhandled error:', error);
     return NextResponse.json(
       { success: false, error: 'Gagal mengupload gambar' },
       { status: 500 },

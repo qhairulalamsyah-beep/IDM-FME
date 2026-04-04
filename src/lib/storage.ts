@@ -1,57 +1,83 @@
 import { getConfig } from '@/lib/config'
 
 /**
- * Upload a file to Supabase Storage.
+ * Upload a file to Supabase Storage using the REST API.
  *
- * @param bucket - Storage bucket name (e.g., 'avatars', 'payment-proofs', 'club-logos')
+ * Uses raw binary body (not FormData) — the officially documented approach.
+ * See: https://supabase.com/docs/guides/storage/api#upload-file
+ *
+ * @param bucket - Storage bucket name (e.g., 'avatars', 'sources')
  * @param file - The file to upload
- * @param path - Optional subdirectory within the bucket
- * @returns Public URL of the uploaded file
+ * @param subPath - Optional subdirectory within the bucket
+ * @returns Public URL and metadata of the uploaded file
  */
 export async function uploadToStorage(
   bucket: string,
   file: File | Blob,
-  path?: string
+  subPath?: string
 ): Promise<{ url: string; path: string; size: number }> {
   const config = getConfig()
 
   if (!config.supabase.url || !config.supabase.serviceRoleKey) {
-    throw new Error('Supabase storage is not configured')
+    throw new Error('Supabase storage is not configured (missing URL or service role key)')
   }
 
   const ext = file instanceof File
     ? file.name.split('.').pop() || 'bin'
     : 'bin'
 
-  const uniquePath = [
-    path || '',
-    `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`,
-  ].filter(Boolean).join('/')
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+  const uniquePath = [subPath || '', fileName].filter(Boolean).join('/')
 
-  // Use Supabase REST API for upload (server-side)
-  const formData = new FormData()
-  formData.append('file', file)
+  // Convert file to ArrayBuffer for raw binary upload
+  const fileBuffer = await file.arrayBuffer()
 
+  // Supabase Storage REST API expects raw binary body with proper Content-Type
+  // Do NOT use FormData — that sets multipart/form-data which the API doesn't handle correctly
   const response = await fetch(
     `${config.supabase.url}/storage/v1/object/${bucket}/${uniquePath}`,
     {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${config.supabase.serviceRoleKey}`,
-        // Prefer upload via multipart if possible
+        'Content-Type': file.type || 'application/octet-stream',
+        // Prefer to overwrite if same path exists
+        'x-upsert': 'true',
       },
-      body: formData,
+      body: fileBuffer,
     }
   )
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(`Storage upload failed: ${error.message || response.statusText}`)
+    // Parse Supabase error response — format varies:
+    // - { "statusCode": "4XX", "error": "...", "message": "..." }
+    // - { "errorMsg": "..." }
+    const errorBody = await response.json().catch(() => null)
+    const errorMsg = errorBody?.error
+      || errorBody?.message
+      || errorBody?.errorMsg
+      || response.statusText
+      || `HTTP ${response.status}`
+
+    // Map common errors to actionable messages
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(`Storage auth failed: ${errorMsg}. Check SUPABASE_SERVICE_ROLE_KEY.`)
+    }
+    if (errorMsg.includes('not found') || errorMsg.includes('does not exist') || errorMsg.includes('bucket')) {
+      throw new Error(`Bucket "${bucket}" tidak ditemukan. Buat di Supabase Dashboard → Storage → New Bucket, set Public. Detail: ${errorMsg}`)
+    }
+    if (errorMsg.includes('policy') || errorMsg.includes('RLS') || errorMsg.includes('permission')) {
+      throw new Error(`Tidak punya akses upload ke bucket "${bucket}". Set bucket sebagai PUBLIC. Detail: ${errorMsg}`)
+    }
+    if (errorMsg.includes('JWT') || errorMsg.includes('invalid compact') || errorMsg.includes('jws')) {
+      throw new Error(`SUPABASE_SERVICE_ROLE_KEY tidak valid. Detail: ${errorMsg}`)
+    }
+
+    throw new Error(`Storage upload failed (${response.status}): ${errorMsg}`)
   }
 
-  // Construct public URL
-  // Supabase Storage URL format: {supabase_url}/storage/v1/object/public/{bucket}/{path}
-  const publicUrl = `${config.supabase.url.replace('/co', '/co')}/storage/v1/object/public/${bucket}/${uniquePath}`
+  // Construct public URL for the uploaded file
+  const publicUrl = `${config.supabase.url}/storage/v1/object/public/${bucket}/${uniquePath}`
 
   return {
     url: publicUrl,
@@ -61,7 +87,7 @@ export async function uploadToStorage(
 }
 
 /**
- * Delete a file from Supabase Storage.
+ * Delete files from Supabase Storage.
  *
  * @param bucket - Storage bucket name
  * @param paths - Array of file paths to delete
@@ -89,8 +115,9 @@ export async function deleteFromStorage(
   )
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(`Storage delete failed: ${error.message || response.statusText}`)
+    const errorBody = await response.json().catch(() => null)
+    const errorMsg = errorBody?.error || errorBody?.message || response.statusText
+    throw new Error(`Storage delete failed: ${errorMsg}`)
   }
 }
 
@@ -107,7 +134,7 @@ export function getStoragePublicUrl(bucket: string, path: string): string {
 }
 
 /**
- * Check if Supabase Storage is configured and available.
+ * Check if Supabase Storage is configured (URL and service role key are set).
  */
 export function isStorageConfigured(): boolean {
   const config = getConfig()
