@@ -3,15 +3,15 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 
 /**
- * usePusher - Client-side Pusher-compatible real-time hook
+ * useRealtime - Unified real-time hook supporting both Pusher and Supabase Realtime.
  *
- * Connects to the local Pusher server via WebSocket through the Caddy gateway.
- * Implements the Pusher protocol (subscribe, events, ping/pong) natively.
+ * In production (Supabase): Uses Supabase Realtime channels via Broadcast.
+ * In development: Uses Pusher-compatible WebSocket through the Caddy gateway.
  */
 
 // ── Types ───────────────────────────────────────────────────────────────
 
-interface PusherEventMap {
+interface RealtimeEventMap {
   'match-score': { matchId: string; scoreA: number; scoreB: number; tournamentId: string };
   'match-result': { matchId: string; winnerId: string; tournamentId: string };
   'announcement': { message: string; type: string; tournamentId?: string };
@@ -22,10 +22,10 @@ interface PusherEventMap {
   'new-sawer': { amount: number; senderName: string; tournamentId?: string };
 }
 
-type EventName = keyof PusherEventMap;
-type EventHandler<T extends EventName> = (data: PusherEventMap[T]) => void;
+type EventName = keyof RealtimeEventMap;
+type EventHandler<T extends EventName> = (data: RealtimeEventMap[T]) => void;
 
-interface UsePusherConfig {
+interface UseRealtimeConfig {
   onMatchScore?: EventHandler<'match-score'>;
   onMatchResult?: EventHandler<'match-result'>;
   onAnnouncement?: EventHandler<'announcement'>;
@@ -36,11 +36,10 @@ interface UsePusherConfig {
   onNewSawer?: EventHandler<'new-sawer'>;
 }
 
-interface UsePusherReturn {
+interface UseRealtimeReturn {
   isConnected: boolean;
   joinTournament: (tournamentId: string) => void;
   leaveTournament: () => void;
-  // Legacy socket.io compatible names
   sendMatchUpdate: (tournamentId: string, matchId: string, scoreA: number, scoreB: number) => void;
   sendMatchComplete: (tournamentId: string, matchId: string, winnerId: string, mvpId?: string) => void;
   sendAnnouncement: (tournamentId: string, message: string, type: 'info' | 'warning' | 'success') => void;
@@ -49,17 +48,26 @@ interface UsePusherReturn {
 
 // ── Constants ───────────────────────────────────────────────────────────
 
-const APP_KEY = 'local-dev-key';
+const PUSHER_APP_KEY = 'local-dev-key';
 const PUSHER_PORT = '6001';
 const RECONNECT_BASE_DELAY = 1000;
 const RECONNECT_MAX_DELAY = 30000;
 const MAX_RECONNECT_ATTEMPTS = 10;
-const PING_INTERVAL = 120000; // 2 minutes
+const PING_INTERVAL = 120000;
+
+// ── Detect mode ─────────────────────────────────────────────────────────
+
+const isSupabaseMode = () => {
+  if (typeof window === 'undefined') return false;
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+};
 
 // ── Hook ────────────────────────────────────────────────────────────────
 
-export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
+export function usePusher(config: UseRealtimeConfig = {}): UseRealtimeReturn {
   const [isConnected, setIsConnected] = useState(false);
+  const supabaseChannelRef = useRef<any>(null);
+  const globalChannelRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const configRef = useRef(config);
   const currentTournamentRef = useRef<string | null>(null);
@@ -74,22 +82,96 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
     configRef.current = config;
   }, [config]);
 
-  // ── Build WebSocket URL through Caddy gateway ──
+  // ── Dispatch incoming event to config handlers ──
+  const dispatchEvent = useCallback((event: string, data: unknown) => {
+    const c = configRef.current;
+    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+
+    switch (event) {
+      case 'match-score':
+        c.onMatchScore?.(parsed);
+        break;
+      case 'match-result':
+        c.onMatchResult?.(parsed);
+        break;
+      case 'announcement':
+        c.onAnnouncement?.(parsed);
+        break;
+      case 'new-donation':
+        c.onNewDonation?.(parsed);
+        break;
+      case 'prize-pool-update':
+        c.onPrizePoolUpdate?.(parsed);
+        break;
+      case 'tournament-update':
+        c.onTournamentUpdate?.(parsed);
+        break;
+      case 'registration-update':
+        c.onRegistrationUpdate?.(parsed);
+        break;
+      case 'new-sawer':
+        c.onNewSawer?.(parsed);
+        break;
+    }
+  }, []);
+
+  // ── Supabase Realtime (production) ──
+  const connectSupabase = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+
+      // Subscribe to global channel
+      globalChannelRef.current = supabase
+        .channel('global-updates', {
+          config: {
+            broadcast: { self: true },
+          },
+        })
+        .on('broadcast', { event: '*' }, (payload: any) => {
+          dispatchEvent(payload.event || payload.payload?.type, payload.payload || payload);
+        })
+        .subscribe((status: string) => {
+          if (status === 'SUBSCRIBED' && mountedRef.current) {
+            setIsConnected(true);
+            console.log('[Supabase RT] Subscribed to global-updates');
+          }
+        });
+
+      console.log('[Supabase RT] Connecting...');
+    } catch (error) {
+      console.error('[Supabase RT] Connection error:', error);
+    }
+  }, [dispatchEvent]);
+
+  const disconnectSupabase = useCallback(() => {
+    if (globalChannelRef.current) {
+      globalChannelRef.current.unsubscribe();
+      globalChannelRef.current = null;
+    }
+    if (supabaseChannelRef.current) {
+      supabaseChannelRef.current.unsubscribe();
+      supabaseChannelRef.current = null;
+    }
+    setIsConnected(false);
+  }, []);
+
+  // ── Pusher WebSocket (development) ──
   const buildWsUrl = useCallback(() => {
     if (typeof window === 'undefined') return '';
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
-    return `${protocol}//${host}/app/${APP_KEY}?protocol=7&client=idol-meta&version=1.0.0&XTransformPort=${PUSHER_PORT}`;
+    return `${protocol}//${host}/app/${PUSHER_APP_KEY}?protocol=7&client=idol-meta&version=1.0.0&XTransformPort=${PUSHER_PORT}`;
   }, []);
 
-  // ── Send a message (JSON) ──
   const send = useCallback((msg: Record<string, unknown>) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(msg));
     }
   }, []);
 
-  // ── Ping control (stopPing must be declared BEFORE startPing) ──
   const stopPing = useCallback(() => {
     if (pingTimerRef.current) {
       clearInterval(pingTimerRef.current);
@@ -104,7 +186,6 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
     }, PING_INTERVAL);
   }, [send, stopPing]);
 
-  // ── Subscribe / Unsubscribe ──
   const subscribe = useCallback((channel: string, channelData?: string) => {
     const data: Record<string, unknown> = { channel };
     if (channelData) data.channel_data = channelData;
@@ -115,44 +196,6 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
     send({ event: 'pusher:unsubscribe', data: JSON.stringify({ channel }) });
   }, [send]);
 
-  // ── Dispatch incoming event to config handlers ──
-  const dispatchEvent = useCallback((event: string, rawData: string) => {
-    try {
-      const data = JSON.parse(rawData);
-      const c = configRef.current;
-
-      switch (event) {
-        case 'match-score':
-          c.onMatchScore?.(data);
-          break;
-        case 'match-result':
-          c.onMatchResult?.(data);
-          break;
-        case 'announcement':
-          c.onAnnouncement?.(data);
-          break;
-        case 'new-donation':
-          c.onNewDonation?.(data);
-          break;
-        case 'prize-pool-update':
-          c.onPrizePoolUpdate?.(data);
-          break;
-        case 'tournament-update':
-          c.onTournamentUpdate?.(data);
-          break;
-        case 'registration-update':
-          c.onRegistrationUpdate?.(data);
-          break;
-        case 'new-sawer':
-          c.onNewSawer?.(data);
-          break;
-      }
-    } catch (e) {
-      console.error('[Pusher] Error dispatching event:', event, e);
-    }
-  }, []);
-
-  // ── Reconnect with exponential backoff (uses connectFnRef to avoid circular dep) ──
   const scheduleReconnect = useCallback(() => {
     if (reconnectAttemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
       console.warn('[Pusher] Max reconnect attempts reached');
@@ -165,7 +208,6 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
     );
 
     reconnectAttemptRef.current++;
-    console.log(`[Pusher] Reconnecting in ${delay}ms (attempt ${reconnectAttemptRef.current})`);
 
     reconnectTimerRef.current = setTimeout(() => {
       if (!mountedRef.current) return;
@@ -173,12 +215,10 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
     }, delay);
   }, []);
 
-  // ── Connect ──
-  const connect = useCallback(() => {
+  const connectPusher = useCallback(() => {
     const url = buildWsUrl();
     if (!url) return;
 
-    // Clean up existing connection
     if (wsRef.current) {
       wsRef.current.onclose = null;
       wsRef.current.onerror = null;
@@ -195,19 +235,13 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
 
       ws.onopen = () => {
         if (!mountedRef.current) return;
-        console.log('[Pusher] Connected');
         reconnectAttemptRef.current = 0;
         setIsConnected(true);
         startPing();
 
-        // Re-subscribe to current tournament if any
         if (currentTournamentRef.current) {
           subscribe(`private-tournament-${currentTournamentRef.current}`);
-          subscribe(`presence-tournament-${currentTournamentRef.current}`,
-            JSON.stringify({ user_id: 'demo-user', user_info: '{}' })
-          );
         }
-        // Subscribe to global channel
         subscribe('global-updates');
       };
 
@@ -216,21 +250,10 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
         try {
           const msg = JSON.parse(event.data as string);
 
-          if (msg.event === 'pusher:connection_established') {
-            // Connection established - handled in onopen
-            return;
-          }
+          if (msg.event === 'pusher:connection_established') return;
+          if (msg.event === 'pusher:subscription_succeeded') return;
+          if (msg.event === 'pusher:pong' || msg.event === 'pusher:ping') return;
 
-          if (msg.event === 'pusher:subscription_succeeded') {
-            console.log(`[Pusher] Subscribed to: ${msg.channel}`);
-            return;
-          }
-
-          if (msg.event === 'pusher:pong' || msg.event === 'pusher:ping') {
-            return;
-          }
-
-          // Dispatch custom events
           if (msg.event && msg.data) {
             dispatchEvent(msg.event, msg.data);
           }
@@ -241,14 +264,13 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
 
       ws.onclose = () => {
         if (!mountedRef.current) return;
-        console.log('[Pusher] Disconnected');
         setIsConnected(false);
         stopPing();
         scheduleReconnect();
       };
 
       ws.onerror = () => {
-        // Error is followed by onclose, so we handle reconnection there
+        // Error is followed by onclose, reconnection handled there
       };
     } catch (e) {
       console.error('[Pusher] Connection error:', e);
@@ -256,15 +278,19 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
     }
   }, [buildWsUrl, startPing, stopPing, scheduleReconnect, subscribe, dispatchEvent]);
 
-  // Keep connect function ref updated for scheduleReconnect
   useEffect(() => {
-    connectFnRef.current = connect;
-  }, [connect]);
+    connectFnRef.current = connectPusher;
+  }, [connectPusher]);
 
   // ── Connect on mount ──
   useEffect(() => {
     mountedRef.current = true;
-    connect();
+
+    if (isSupabaseMode()) {
+      connectSupabase();
+    } else {
+      connectPusher();
+    }
 
     return () => {
       mountedRef.current = false;
@@ -274,6 +300,7 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
         clearTimeout(reconnectTimerRef.current);
       }
 
+      // Disconnect Pusher
       if (wsRef.current) {
         wsRef.current.onclose = null;
         wsRef.current.onerror = null;
@@ -282,37 +309,74 @@ export function usePusher(config: UsePusherConfig = {}): UsePusherReturn {
           wsRef.current.close();
         }
       }
-
       wsRef.current = null;
+
+      // Disconnect Supabase
+      disconnectSupabase();
     };
-  }, [connect, stopPing]);
+  }, [connectPusher, connectSupabase, stopPing, disconnectSupabase]);
+
+  // ── Join tournament (Supabase) ──
+  const joinTournamentSupabase = useCallback(async (tournamentId: string) => {
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const channelName = `tournament-${tournamentId}`;
+
+      // Leave previous tournament channel
+      if (supabaseChannelRef.current) {
+        await supabaseChannelRef.current.unsubscribe();
+      }
+
+      currentTournamentRef.current = tournamentId;
+
+      supabaseChannelRef.current = supabase
+        .channel(channelName, {
+          config: {
+            broadcast: { self: true },
+          },
+        })
+        .on('broadcast', { event: '*' }, (payload: any) => {
+          dispatchEvent(payload.event || payload.payload?.type, payload.payload || payload);
+        })
+        .subscribe((status: string) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`[Supabase RT] Subscribed to ${channelName}`);
+          }
+        });
+    } catch (error) {
+      console.error('[Supabase RT] Error joining tournament:', error);
+    }
+  }, [dispatchEvent]);
 
   // ── joinTournament ──
   const joinTournament = useCallback((tournamentId: string) => {
     currentTournamentRef.current = tournamentId;
 
-    // Leave previous tournament channels
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      // Subscribe to private + presence channels
+    if (isSupabaseMode()) {
+      joinTournamentSupabase(tournamentId);
+    } else if (wsRef.current?.readyState === WebSocket.OPEN) {
       subscribe(`private-tournament-${tournamentId}`);
-      subscribe(`presence-tournament-${tournamentId}`,
-        JSON.stringify({ user_id: 'demo-user', user_info: '{}' })
-      );
     }
-    // If not connected, onopen will auto-subscribe via currentTournamentRef
-  }, [subscribe]);
+  }, [subscribe, joinTournamentSupabase]);
 
   // ── leaveTournament ──
   const leaveTournament = useCallback(() => {
     const id = currentTournamentRef.current;
     if (id) {
-      unsubscribe(`private-tournament-${id}`);
-      unsubscribe(`presence-tournament-${id}`);
+      if (isSupabaseMode()) {
+        if (supabaseChannelRef.current) {
+          supabaseChannelRef.current.unsubscribe();
+          supabaseChannelRef.current = null;
+        }
+      } else {
+        unsubscribe(`private-tournament-${id}`);
+      }
     }
     currentTournamentRef.current = null;
   }, [unsubscribe]);
 
-  // ── Legacy socket.io compatible methods ──
+  // ── Legacy API methods ──
   const sendMatchUpdate = useCallback(
     (tournamentId: string, matchId: string, scoreA: number, scoreB: number) => {
       fetch('/api/matches', {

@@ -20,6 +20,18 @@ export interface DatabaseConfig {
   isPostgreSQL: boolean;
 }
 
+export interface SupabaseConfig {
+  url: string;
+  anonKey: string;
+  serviceRoleKey: string;
+  /** Supabase Storage bucket name for avatars */
+  avatarBucket: string;
+  /** Supabase Storage bucket name for payment proofs */
+  proofBucket: string;
+  /** Supabase Storage bucket name for club logos */
+  logoBucket: string;
+}
+
 export interface AppConfig {
   name: string;
   url: string;
@@ -38,6 +50,8 @@ export interface PusherConfig {
   key: string;
   secret: string;
   cluster: string;
+  host: string;
+  port: number;
 }
 
 export interface BotConfig {
@@ -49,6 +63,7 @@ export interface BotConfig {
 }
 
 export interface SecurityConfig {
+  jwtSecret: string;
   nextAuthSecret: string;
   nextAuthUrl: string;
   apiInternalSecret: string;
@@ -57,6 +72,7 @@ export interface SecurityConfig {
 export interface Config {
   env: Environment;
   database: DatabaseConfig;
+  supabase: SupabaseConfig;
   app: AppConfig;
   log: LogConfig;
   pusher: PusherConfig;
@@ -125,12 +141,25 @@ function buildConfig(): Config {
   const databaseUrl = getEnv('DATABASE_URL', 'file:./dev.db');
   const directUrl = getEnvOptional('DIRECT_DATABASE_URL');
 
+  // Supabase config — required for production
+  const supabaseUrl = getEnvOptional('NEXT_PUBLIC_SUPABASE_URL');
+  const supabaseAnonKey = getEnvOptional('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  const supabaseServiceRoleKey = getEnvOptional('SUPABASE_SERVICE_ROLE_KEY');
+
   return {
     env,
     database: {
       url: databaseUrl,
       directUrl,
       isPostgreSQL: databaseUrl.startsWith('postgresql://'),
+    },
+    supabase: {
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
+      serviceRoleKey: supabaseServiceRoleKey,
+      avatarBucket: getEnvOptional('SUPABASE_AVATAR_BUCKET', 'avatars'),
+      proofBucket: getEnvOptional('SUPABASE_PROOF_BUCKET', 'payment-proofs'),
+      logoBucket: getEnvOptional('SUPABASE_LOGO_BUCKET', 'club-logos'),
     },
     app: {
       name: getEnv('NEXT_PUBLIC_APP_NAME', 'IDOL META Tournament'),
@@ -144,10 +173,12 @@ function buildConfig(): Config {
       format: parseLogFormat(process.env.LOG_FORMAT),
     },
     pusher: {
-      appId: getEnvOptional('NEXT_PUBLIC_PUSHER_APP_ID'),
-      key: getEnvOptional('NEXT_PUBLIC_PUSHER_KEY'),
-      secret: getEnvOptional('NEXT_PUBLIC_PUSHER_SECRET'),
-      cluster: getEnvOptional('NEXT_PUBLIC_PUSHER_CLUSTER', 'ap1'),
+      appId: getEnvOptional('PUSHER_APP_ID', ''),
+      key: getEnvOptional('PUSHER_KEY', 'local-dev-key'),
+      secret: getEnvOptional('PUSHER_SECRET', ''),
+      cluster: getEnvOptional('PUSHER_CLUSTER', 'ap1'),
+      host: getEnvOptional('PUSHER_HOST', 'localhost'),
+      port: parseInt(getEnvOptional('PUSHER_PORT', '6001')),
     },
     bot: {
       whatsappUrl: getEnvOptional('WHATSAPP_BOT_URL', 'http://localhost:3001'),
@@ -157,6 +188,7 @@ function buildConfig(): Config {
       discordChannelId: getEnvOptional('DISCORD_CHANNEL_ID'),
     },
     security: {
+      jwtSecret: getEnvOptional('JWT_SECRET', 'idm-fme-jwt-secret-change-in-production'),
       nextAuthSecret: getEnvOptional('NEXTAUTH_SECRET'),
       nextAuthUrl: getEnvOptional('NEXTAUTH_URL', 'http://localhost:3000'),
       apiInternalSecret: getEnvOptional('API_INTERNAL_SECRET'),
@@ -187,3 +219,4 @@ export const config = new Proxy({} as Config, {
 // Quick access helpers
 export const isProduction = () => getConfig().app.isProduction;
 export const isDevelopment = () => getConfig().app.isDevelopment;
+export const useSupabase = () => Boolean(getConfig().supabase.url);

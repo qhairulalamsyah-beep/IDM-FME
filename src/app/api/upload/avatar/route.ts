@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { requireAdmin } from '@/lib/admin-guard';
+import { uploadToStorage, isStorageConfigured } from '@/lib/storage';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -39,15 +40,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure upload directory exists
+    // ── Upload to Supabase Storage (production) ──
+    if (isStorageConfigured()) {
+      try {
+        const result = await uploadToStorage('avatars', file);
+        return NextResponse.json({
+          success: true,
+          url: result.url,
+          filename: result.path,
+          size: result.size,
+          type: file.type,
+          storage: 'supabase',
+        });
+      } catch (error) {
+        console.error('[AVATAR UPLOAD] Supabase storage error, falling back to local:', error);
+        // Fall through to local upload
+      }
+    }
+
+    // ── Local file upload (development / fallback) ──
     await mkdir(UPLOAD_DIR, { recursive: true });
 
-    // Generate unique filename
     const ext = file.name.split('.').pop() || 'jpg';
     const uniqueName = `avatar-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const filePath = path.join(UPLOAD_DIR, uniqueName);
 
-    // Write file to disk
     const bytes = await file.arrayBuffer();
     await writeFile(filePath, Buffer.from(bytes));
 
@@ -59,6 +76,7 @@ export async function POST(request: NextRequest) {
       filename: uniqueName,
       size: file.size,
       type: file.type,
+      storage: 'local',
     });
   } catch (error) {
     console.error('[AVATAR UPLOAD] Error:', error);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { requireAdmin } from '@/lib/admin-guard';
+import { uploadToStorage, isStorageConfigured } from '@/lib/storage';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'logos');
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -13,6 +14,7 @@ const IMAGE_PROCESSOR_URL = process.env.IMAGE_PROCESSOR_URL || 'http://localhost
 export async function POST(request: NextRequest) {
   const denied = await requireAdmin(request);
   if (denied) return denied;
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -40,65 +42,79 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure upload directory exists
-    await mkdir(UPLOAD_DIR, { recursive: true });
-
-    // Send to Python image processor service
-    const processorFormData = new FormData();
-    processorFormData.append('file', file);
-
-    // Use smaller max width for logos (512px) and higher quality (90)
-    const processorResponse = await fetch(`${IMAGE_PROCESSOR_URL}/process-and-save?folder=logos&max_width=512&quality=90`, {
-      method: 'POST',
-      body: processorFormData,
-    });
-
-    if (!processorResponse.ok) {
-      const error = await processorResponse.json().catch(() => ({ detail: 'Unknown error' }));
-      console.error('[LOGO UPLOAD] Processor error:', error);
-      
-      // Fallback: save original file if processor fails
-      console.log('[LOGO UPLOAD] Falling back to original file save...');
-      const bytes = await file.arrayBuffer();
-      const ext = file.name.split('.').pop() || 'png';
-      const uniqueName = `logo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const filePath = path.join(UPLOAD_DIR, uniqueName);
-      await writeFile(filePath, Buffer.from(bytes));
-      
-      return NextResponse.json({
-        success: true,
-        url: `/uploads/logos/${uniqueName}`,
-        filename: uniqueName,
-        size: file.size,
-        type: file.type,
-        fallback: true,
-      });
+    // ── Upload to Supabase Storage (production) ──
+    if (isStorageConfigured()) {
+      try {
+        const result = await uploadToStorage('club-logos', file);
+        return NextResponse.json({
+          success: true,
+          url: result.url,
+          filename: result.path,
+          size: result.size,
+          originalSize: file.size,
+          compressionRatio: file.size > 0 ? (result.size / file.size).toFixed(2) : '1.00',
+          type: file.type,
+          storage: 'supabase',
+        });
+      } catch (error) {
+        console.error('[LOGO UPLOAD] Supabase storage error, falling back to local:', error);
+        // Fall through to local upload
+      }
     }
 
-    const result = await processorResponse.json();
+    // ── Local file upload (development / fallback) ──
+    await mkdir(UPLOAD_DIR, { recursive: true });
 
-    // Copy from processor uploads to public uploads
-    const sourcePath = result.filepath;
-    const destFilename = result.filename;
-    const destPath = path.join(UPLOAD_DIR, destFilename);
+    // Send to Python image processor service if available
+    try {
+      const processorFormData = new FormData();
+      processorFormData.append('file', file);
 
-    // Read from processor and write to public
-    const { copyFile } = await import('node:fs/promises');
-    await copyFile(sourcePath, destPath);
+      const processorResponse = await fetch(
+        `${IMAGE_PROCESSOR_URL}/process-and-save?folder=logos&max_width=512&quality=90`,
+        { method: 'POST', body: processorFormData }
+      );
 
-    // Return public URL path
-    const publicUrl = `/uploads/logos/${destFilename}`;
+      if (processorResponse.ok) {
+        const result = await processorResponse.json();
+        const sourcePath = result.filepath;
+        const destFilename = result.filename;
+        const destPath = path.join(UPLOAD_DIR, destFilename);
+        const { copyFile } = await import('node:fs/promises');
+        await copyFile(sourcePath, destPath);
+
+        return NextResponse.json({
+          success: true,
+          url: `/uploads/logos/${destFilename}`,
+          filename: destFilename,
+          size: result.processed_size,
+          originalSize: result.original_size,
+          compressionRatio: result.compression_ratio,
+          width: result.width,
+          height: result.height,
+          type: 'image/webp',
+          storage: 'local',
+        });
+      }
+    } catch {
+      // Processor not available — fall through to direct save
+    }
+
+    // Direct file save (no compression)
+    const bytes = await file.arrayBuffer();
+    const ext = file.name.split('.').pop() || 'png';
+    const uniqueName = `logo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const filePath = path.join(UPLOAD_DIR, uniqueName);
+    await writeFile(filePath, Buffer.from(bytes));
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
-      filename: destFilename,
-      size: result.processed_size,
-      originalSize: result.original_size,
-      compressionRatio: result.compression_ratio,
-      width: result.width,
-      height: result.height,
-      type: 'image/webp',
+      url: `/uploads/logos/${uniqueName}`,
+      filename: uniqueName,
+      size: file.size,
+      type: file.type,
+      fallback: true,
+      storage: 'local',
     });
   } catch (error) {
     console.error('[LOGO UPLOAD] Error:', error);
