@@ -535,9 +535,9 @@ GRANT SELECT (id, name, gender, tier, points, avatar, "isMVP", "mvpScore", "club
 GRANT SELECT ON TABLE public."Registration" TO anon;
 
 -- 9e. Least-privilege GRANTs — authenticated
-GRANT SELECT (id, name, gender, tier, points, avatar, phone, discordId, "isMVP", "mvpScore", "clubId", "createdAt", "updatedAt") ON TABLE public."User" TO authenticated;
-GRANT INSERT (name, email, gender, tier, points, avatar, phone, "whatsappJid", discordId, "isAdmin", "clubId") ON TABLE public."User" TO authenticated;
-GRANT UPDATE (name, avatar, phone, discordId, "whatsappJid") ON TABLE public."User" TO authenticated;
+GRANT SELECT (id, name, gender, tier, points, avatar, "discordId", "isMVP", "mvpScore", "clubId", "createdAt", "updatedAt") ON TABLE public."User" TO authenticated;
+GRANT INSERT (name, email, gender, tier, points, avatar, phone, "whatsappJid", "discordId", "isAdmin", "clubId") ON TABLE public."User" TO authenticated;
+GRANT UPDATE (name, avatar, phone, "discordId", "whatsappJid") ON TABLE public."User" TO authenticated;
 GRANT SELECT ON TABLE public."Tournament" TO authenticated;
 GRANT SELECT ON TABLE public."Registration" TO authenticated;
 GRANT INSERT ON TABLE public."Registration" TO authenticated;

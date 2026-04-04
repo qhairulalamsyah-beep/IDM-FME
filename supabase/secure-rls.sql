@@ -85,9 +85,9 @@ GRANT SELECT ON TABLE public."Registration" TO anon;
 -- Authenticated users = logged-in via Supabase Auth
 
 -- User: read all public fields, insert own, update own
-GRANT SELECT (id, name, gender, tier, points, avatar, phone, discordId, "isMVP", "mvpScore", "clubId", "createdAt", "updatedAt") ON TABLE public."User" TO authenticated;
-GRANT INSERT (name, email, gender, tier, points, avatar, phone, "whatsappJid", discordId, "isAdmin", "clubId") ON TABLE public."User" TO authenticated;
-GRANT UPDATE (name, avatar, phone, discordId, "whatsappJid") ON TABLE public."User" TO authenticated;
+GRANT SELECT (id, name, gender, tier, points, avatar, phone, "discordId", "isMVP", "mvpScore", "clubId", "createdAt", "updatedAt") ON TABLE public."User" TO authenticated;
+GRANT INSERT (name, email, gender, tier, points, avatar, phone, "whatsappJid", "discordId", "isAdmin", "clubId") ON TABLE public."User" TO authenticated;
+GRANT UPDATE (name, avatar, phone, "discordId", "whatsappJid") ON TABLE public."User" TO authenticated;
 
 -- Tournament: read only
 GRANT SELECT ON TABLE public."Tournament" TO authenticated;
