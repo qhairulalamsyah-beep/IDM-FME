@@ -350,3 +350,23 @@ Stage Summary:
 - 1 new club created (SENSEI), total clubs now 22
 - TAZOS super_admin updated with GYMSHARK club and 106 points
 - Male division fully populated: 44 players + 1 super_admin
+
+---
+Task ID: 11
+Agent: Main
+Task: Create SQL data seed script for Supabase production deployment
+
+Work Log:
+- Generated comprehensive SQL seed script (supabase/seed-data-v2.sql) with:
+  - 22 clubs with correct member counts (male/female breakdown)
+  - 71 users: 1 super_admin (TAZOS, bcrypt hash, GYMSHARK, 106pts) + 44 male + 26 female
+  - 71 rankings with correct points
+- SQL is idempotent (ON CONFLICT DO NOTHING), wrapped in BEGIN/COMMIT
+- Verified no duplicate club IDs
+- Production Prisma schema confirmed matching (schema.production.prisma = PostgreSQL)
+- .env.production.example has all required vars documented
+- Lint passes 0 errors
+
+Stage Summary:
+- supabase/seed-data-v2.sql ready for Supabase SQL Editor
+- Deployment flow: full-setup.sql (schema+RLS) → seed-data-v2.sql (data) → Vercel deploy
