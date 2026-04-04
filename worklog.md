@@ -560,3 +560,30 @@ Stage Summary:
 - Two bugs fixed: avatar DB save + logo rendering in ParticipantsByClubModal
 - All display components now properly show uploaded images when available
 - Lint 0 errors, pushed to GitHub (commit de4b2ab)
+
+---
+Task ID: 16
+Agent: Main
+Task: Fix avatar peserta tidak muncul di profil/tournament tab
+
+Work Log:
+- User reported: club logo OK, but participant avatars still not showing
+- Traced avatar data flow: upload → store.registerUser → POST /api/users → DB → GET /api/tournaments → store.registrations → TournamentTab
+
+Root cause found:
+- Tournament.tsx defined Registration interface with FLAT fields: { avatar, name, tier, ... }
+- But actual data from store is NESTED: { user: { avatar, name, tier, ... }, status, tierAssigned }
+- So reg.avatar was always undefined → letter fallback always shown
+- Team members already worked correctly because they used member.user.avatar
+
+Fix:
+- Updated Registration interface to match actual data shape (nested user object)
+- Updated 4 rendering locations in Tournament.tsx:
+  1. Pending registrations: reg.user.avatar, reg.user.name, reg.tierAssigned||reg.user.tier
+  2. Approved registrations: same pattern
+- Also fixed in previous commit (Task 15): POST /api/users now saves avatar for existing users
+
+Stage Summary:
+- Avatar now displays correctly in Tournament tab (pending + approved registrations)
+- Avatar also works in Peserta & Club tab, Dashboard, Leaderboard, QualifiedPlayersModal
+- Lint 0 errors, pushed to GitHub (commit 249a0e8)
