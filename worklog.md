@@ -629,3 +629,63 @@ Stage Summary:
 - Build error fixed: `Users` icon was used but not imported from lucide-react
 - Dashboard now shows only "Club Terbaik" section (no more Top 3 Pemain podium)
 - All 3 user requests are now complete (edit avatar in admin ✅, peserta in navbar ✅, remove pemain terbaik ✅)
+
+---
+## Task ID: 2 - RegistrationModal extraction
+### Work Task
+Extract the registration form from Tournament.tsx into a standalone modal component (RegistrationModal.tsx) using shadcn/ui Sheet for mobile-friendly bottom sheet.
+
+### Work Summary
+Created `/src/components/esports/RegistrationModal.tsx` — a standalone registration modal component that extracts the full registration form logic from Tournament.tsx (lines 104-207 for state/logic, lines 315-487 for UI) into a reusable Sheet-based bottom sheet modal.
+
+**Props interface** matches the spec:
+- `isOpen`, `onOpenChange` for Sheet control
+- `division` ('male' | 'female') for accent color tokens
+- `tournament` with id, name, status, week, prizePool
+- `users` array for debounced name lookup (auto-fill phone, city, club, avatar)
+- `onRegister` callback
+
+**Features implemented:**
+1. **shadcn/ui Sheet** (side="bottom") — mobile-friendly bottom sheet with dark glassmorphism theme, drag handle, rounded-t-3xl
+2. **Full registration form** when `tournament?.status === 'registration'`:
+   - Name input with debounced 400ms user lookup (Loader2 spinner → UserCheck icon)
+   - "Pemain ditemukan — data otomatis terisi" hint with AnimatePresence
+   - WhatsApp number + Club side-by-side grid inputs
+   - Asal Kota input
+   - Divider
+   - AvatarUpload component integration with division prop
+   - "GABUNG TURNAMEN" submit button with btn-gold/btn-pink + hero-shimmer-btn
+   - Disabled state hint when no avatar uploaded
+3. **Status-aware messaging** when NOT in 'registration' status:
+   - "Pendaftaran Belum Dibuka" (default/setup)
+   - "Turnamen Sedang Berlangsung" (live) with ShieldCheck icon
+   - "Turnamen Sudah Selesai" (completed)
+   - Shows current status pill
+4. **Form reset on close** — uses `handleSheetOpenChange` wrapper instead of useEffect to avoid `react-hooks/set-state-in-effect` lint error
+5. **Division-based accent colors** — amber for male, violet for female (same tokens as Tournament.tsx)
+6. **Prize pool display** in registration status area
+
+**Styling matches existing app:** `glass-heavy`, `btn-gold`/`btn-pink`, `btn-ios`, `hero-shimmer-btn`, `divider`, `status-pill`, `status-registration`, `status-live`, `bg-white/[0.04] border border-white/[0.06] rounded-xl` input pattern, framer-motion animations with spring physics.
+
+**Lint:** 0 errors, 0 warnings.
+
+---
+Task ID: 18
+Agent: Main
+Task: Extract registration form into separate modal + hide Tournament from navbar
+
+Work Log:
+- Created RegistrationModal.tsx (via sub-agent) — bottom sheet modal with full registration form
+- Removed 'tournament' entry from regularNavItems in Navigation.tsx
+- Removed unused Swords/Trophy imports from Navigation.tsx
+- Added registrationOpen state in page.tsx
+- Changed Dashboard onRegister from setActiveTab('tournament') to setRegistrationOpen(true)
+- Added RegistrationModal component in page.tsx JSX (between ParticipantsByClubModal and PrizeBreakdownModal)
+- Wired RegistrationModal with division, tournamentInfo, users, and registerUser props
+
+Stage Summary:
+- Tournament tab completely removed from navbar (mobile bottom nav + desktop top bar)
+- Registration form accessible via modal from Dashboard "GABUNG TURNAMEN" button and "Daftar" quick action
+- Form includes: name (with auto-lookup), WhatsApp, club, asal kota, avatar upload
+- Status-aware messaging when tournament not in 'registration' status
+- Lint 0 errors, no push (user requested no push yet)

@@ -22,6 +22,7 @@ import { PlayerListModal } from '@/components/esports/PlayerListModal';
 import { PrizeBreakdownModal } from '@/components/esports/PrizeBreakdownModal';
 import { TeamListModal } from '@/components/esports/TeamListModal';
 import { ParticipantsByClubModal } from '@/components/esports/ParticipantsByClubModal';
+import { RegistrationModal } from '@/components/esports/RegistrationModal';
 
 import { LiveChat } from '@/components/esports/LiveChat';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
@@ -135,6 +136,7 @@ export default function IDOLMETAApp() {
   const [prizeModalOpen, setPrizeModalOpen] = useState(false);
   const [teamListOpen, setTeamListOpen] = useState(false);
   const [participantsByClubOpen, setParticipantsByClubOpen] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
   const [leaderboardTab, setLeaderboardTab] = useState<'players' | 'clubs'>('players');
   const [topClubs, setTopClubs] = useState<Array<{
     id: string;
@@ -808,7 +810,7 @@ export default function IDOLMETAApp() {
                     division={division}
                     tournament={tournamentInfo}
                     topPlayers={topPlayers}
-                    onRegister={() => setActiveTab('tournament')}
+                    onRegister={() => setRegistrationOpen(true)}
                     onNavigate={(tab) => setActiveTab(tab)}
                     onViewPlayers={() => setPlayerListOpen(true)}
                     registeredCount={registrations.length}
@@ -936,6 +938,16 @@ export default function IDOLMETAApp() {
           <ParticipantsByClubModal
             isOpen={participantsByClubOpen}
             onOpenChange={setParticipantsByClubOpen}
+          />
+
+          {/* Registration Modal */}
+          <RegistrationModal
+            isOpen={registrationOpen}
+            onOpenChange={setRegistrationOpen}
+            division={division}
+            tournament={tournamentInfo}
+            users={users}
+            onRegister={registerUser}
           />
 
           {/* Prize Breakdown Modal */}
