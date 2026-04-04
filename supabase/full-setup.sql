@@ -623,138 +623,328 @@ GRANT SELECT, INSERT, UPDATE ON TABLE public."WhatsAppSettings" TO app_user;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
 
 -- ── 10. RLS Policies ─────────────────────────────────────────────
+-- All wrapped with DO $$ ... EXCEPTION for idempotent re-runs
 
 -- User: anon reads non-admin only, authenticated reads non-admin + own profile
-CREATE POLICY "anon_read_public_users" ON public."User"
-  FOR SELECT TO anon USING ("isAdmin" = false);
-CREATE POLICY "authenticated_read_public_users" ON public."User"
-  FOR SELECT TO authenticated USING ("isAdmin" = false);
-CREATE POLICY "authenticated_read_own_profile" ON public."User"
-  FOR SELECT TO authenticated USING (auth.uid()::text = id);
-CREATE POLICY "authenticated_insert_user" ON public."User"
-  FOR INSERT TO authenticated WITH CHECK (auth.uid()::text = id);
-CREATE POLICY "authenticated_update_own_profile" ON public."User"
-  FOR UPDATE TO authenticated USING (auth.uid()::text = id) WITH CHECK (auth.uid()::text = id);
-CREATE POLICY "app_user_all_user" ON public."User"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_public_users" ON public."User"
+    FOR SELECT TO anon USING ("isAdmin" = false);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_public_users" ON public."User"
+    FOR SELECT TO authenticated USING ("isAdmin" = false);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_own_profile" ON public."User"
+    FOR SELECT TO authenticated USING (auth.uid()::text = id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_insert_user" ON public."User"
+    FOR INSERT TO authenticated WITH CHECK (auth.uid()::text = id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_update_own_profile" ON public."User"
+    FOR UPDATE TO authenticated USING (auth.uid()::text = id) WITH CHECK (auth.uid()::text = id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_user" ON public."User"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Tournament: anon + authenticated read, app_user full
-CREATE POLICY "anon_read_tournaments" ON public."Tournament"
-  FOR SELECT TO anon USING (true);
-CREATE POLICY "authenticated_read_tournaments" ON public."Tournament"
-  FOR SELECT TO authenticated USING (true);
-CREATE POLICY "app_user_all_tournament" ON public."Tournament"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_tournaments" ON public."Tournament"
+    FOR SELECT TO anon USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_tournaments" ON public."Tournament"
+    FOR SELECT TO authenticated USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_tournament" ON public."Tournament"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Registration: anon + authenticated read, authenticated insert own, app_user full
-CREATE POLICY "anon_read_registrations" ON public."Registration"
-  FOR SELECT TO anon USING (true);
-CREATE POLICY "authenticated_read_registrations" ON public."Registration"
-  FOR SELECT TO authenticated USING (true);
-CREATE POLICY "authenticated_insert_own_registration" ON public."Registration"
-  FOR INSERT TO authenticated WITH CHECK (auth.uid()::text = "userId");
-CREATE POLICY "app_user_all_registration" ON public."Registration"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_registrations" ON public."Registration"
+    FOR SELECT TO anon USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_registrations" ON public."Registration"
+    FOR SELECT TO authenticated USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_insert_own_registration" ON public."Registration"
+    FOR INSERT TO authenticated WITH CHECK (auth.uid()::text = "userId");
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_registration" ON public."Registration"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Team
-CREATE POLICY "anon_read_teams" ON public."Team"
-  FOR SELECT TO anon USING (true);
-CREATE POLICY "authenticated_read_teams" ON public."Team"
-  FOR SELECT TO authenticated USING (true);
-CREATE POLICY "app_user_all_team" ON public."Team"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_teams" ON public."Team"
+    FOR SELECT TO anon USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_teams" ON public."Team"
+    FOR SELECT TO authenticated USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_team" ON public."Team"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- TeamMember
-CREATE POLICY "anon_read_team_members" ON public."TeamMember"
-  FOR SELECT TO anon USING (true);
-CREATE POLICY "authenticated_read_team_members" ON public."TeamMember"
-  FOR SELECT TO authenticated USING (true);
-CREATE POLICY "app_user_all_team_member" ON public."TeamMember"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_team_members" ON public."TeamMember"
+    FOR SELECT TO anon USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_team_members" ON public."TeamMember"
+    FOR SELECT TO authenticated USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_team_member" ON public."TeamMember"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Match
-CREATE POLICY "anon_read_matches" ON public."Match"
-  FOR SELECT TO anon USING (true);
-CREATE POLICY "authenticated_read_matches" ON public."Match"
-  FOR SELECT TO authenticated USING (true);
-CREATE POLICY "app_user_all_match" ON public."Match"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_matches" ON public."Match"
+    FOR SELECT TO anon USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_matches" ON public."Match"
+    FOR SELECT TO authenticated USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_match" ON public."Match"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- PlayerMatchStat
-CREATE POLICY "anon_read_player_stats" ON public."PlayerMatchStat"
-  FOR SELECT TO anon USING (true);
-CREATE POLICY "authenticated_read_player_stats" ON public."PlayerMatchStat"
-  FOR SELECT TO authenticated USING (true);
-CREATE POLICY "app_user_all_player_stat" ON public."PlayerMatchStat"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_player_stats" ON public."PlayerMatchStat"
+    FOR SELECT TO anon USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_player_stats" ON public."PlayerMatchStat"
+    FOR SELECT TO authenticated USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_player_stat" ON public."PlayerMatchStat"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Ranking
-CREATE POLICY "anon_read_rankings" ON public."Ranking"
-  FOR SELECT TO anon USING (true);
-CREATE POLICY "authenticated_read_rankings" ON public."Ranking"
-  FOR SELECT TO authenticated USING (true);
-CREATE POLICY "app_user_all_ranking" ON public."Ranking"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_rankings" ON public."Ranking"
+    FOR SELECT TO anon USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_rankings" ON public."Ranking"
+    FOR SELECT TO authenticated USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_ranking" ON public."Ranking"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Donation: anon reads confirmed only, authenticated reads own + confirmed
-CREATE POLICY "anon_read_confirmed_donations" ON public."Donation"
-  FOR SELECT TO anon USING ("paymentStatus" = 'confirmed');
-CREATE POLICY "authenticated_read_own_donations" ON public."Donation"
-  FOR SELECT TO authenticated USING ("paymentStatus" = 'confirmed' OR auth.uid()::text = "userId");
-CREATE POLICY "authenticated_insert_donation" ON public."Donation"
-  FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "app_user_all_donation" ON public."Donation"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_confirmed_donations" ON public."Donation"
+    FOR SELECT TO anon USING ("paymentStatus" = 'confirmed');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_own_donations" ON public."Donation"
+    FOR SELECT TO authenticated USING ("paymentStatus" = 'confirmed' OR auth.uid()::text = "userId");
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_insert_donation" ON public."Donation"
+    FOR INSERT TO authenticated WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_donation" ON public."Donation"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Sawer: anon reads confirmed only
-CREATE POLICY "anon_read_confirmed_sawers" ON public."Sawer"
-  FOR SELECT TO anon USING ("paymentStatus" = 'confirmed');
-CREATE POLICY "authenticated_read_all_sawers" ON public."Sawer"
-  FOR SELECT TO authenticated USING (true);
-CREATE POLICY "authenticated_insert_sawer" ON public."Sawer"
-  FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "app_user_all_sawer" ON public."Sawer"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_confirmed_sawers" ON public."Sawer"
+    FOR SELECT TO anon USING ("paymentStatus" = 'confirmed');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_all_sawers" ON public."Sawer"
+    FOR SELECT TO authenticated USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_insert_sawer" ON public."Sawer"
+    FOR INSERT TO authenticated WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_sawer" ON public."Sawer"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Club
-CREATE POLICY "anon_read_clubs" ON public."Club"
-  FOR SELECT TO anon USING (true);
-CREATE POLICY "authenticated_read_clubs" ON public."Club"
-  FOR SELECT TO authenticated USING (true);
-CREATE POLICY "app_user_all_club" ON public."Club"
-  FOR ALL TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "anon_read_clubs" ON public."Club"
+    FOR SELECT TO anon USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_clubs" ON public."Club"
+    FOR SELECT TO authenticated USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_all_club" ON public."Club"
+    FOR ALL TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Settings: anon/authenticated read safe keys only
-CREATE POLICY "anon_read_public_settings" ON public."Settings"
-  FOR SELECT TO anon USING ("key" IN ('site_name', 'app_version', 'maintenance_mode', 'public_notice'));
-CREATE POLICY "authenticated_read_public_settings" ON public."Settings"
-  FOR SELECT TO authenticated USING ("key" IN ('site_name', 'app_version', 'maintenance_mode', 'public_notice'));
-CREATE POLICY "app_user_read_settings" ON public."Settings"
-  FOR SELECT TO app_user USING (true);
-CREATE POLICY "app_user_write_safe_settings" ON public."Settings"
-  FOR INSERT TO app_user WITH CHECK ("key" NOT IN ('jwt_secret', 'admin_password'));
-CREATE POLICY "app_user_update_safe_settings" ON public."Settings"
-  FOR UPDATE TO app_user USING ("key" NOT IN ('jwt_secret', 'admin_password')) WITH CHECK ("key" NOT IN ('jwt_secret', 'admin_password'));
+DO $$ BEGIN
+  CREATE POLICY "anon_read_public_settings" ON public."Settings"
+    FOR SELECT TO anon USING ("key" IN ('site_name', 'app_version', 'maintenance_mode', 'public_notice'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "authenticated_read_public_settings" ON public."Settings"
+    FOR SELECT TO authenticated USING ("key" IN ('site_name', 'app_version', 'maintenance_mode', 'public_notice'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_read_settings" ON public."Settings"
+    FOR SELECT TO app_user USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_write_safe_settings" ON public."Settings"
+    FOR INSERT TO app_user WITH CHECK ("key" NOT IN ('jwt_secret', 'admin_password'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_update_safe_settings" ON public."Settings"
+    FOR UPDATE TO app_user USING ("key" NOT IN ('jwt_secret', 'admin_password')) WITH CHECK ("key" NOT IN ('jwt_secret', 'admin_password'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ActivityLog: no anon/authenticated access, app_user read+insert only
-CREATE POLICY "app_user_read_activity_log" ON public."ActivityLog"
-  FOR SELECT TO app_user USING (true);
-CREATE POLICY "app_user_insert_activity_log" ON public."ActivityLog"
-  FOR INSERT TO app_user WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "app_user_read_activity_log" ON public."ActivityLog"
+    FOR SELECT TO app_user USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_insert_activity_log" ON public."ActivityLog"
+    FOR INSERT TO app_user WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- BotLog: no anon/authenticated access, app_user read+insert only
-CREATE POLICY "app_user_read_bot_log" ON public."BotLog"
-  FOR SELECT TO app_user USING (true);
-CREATE POLICY "app_user_insert_bot_log" ON public."BotLog"
-  FOR INSERT TO app_user WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "app_user_read_bot_log" ON public."BotLog"
+    FOR SELECT TO app_user USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_insert_bot_log" ON public."BotLog"
+    FOR INSERT TO app_user WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- WhatsAppSettings: no anon/authenticated access, app_user read+insert+update
-CREATE POLICY "app_user_read_whatsapp_settings" ON public."WhatsAppSettings"
-  FOR SELECT TO app_user USING (true);
-CREATE POLICY "app_user_insert_whatsapp_settings" ON public."WhatsAppSettings"
-  FOR INSERT TO app_user WITH CHECK (true);
-CREATE POLICY "app_user_update_whatsapp_settings" ON public."WhatsAppSettings"
-  FOR UPDATE TO app_user USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY "app_user_read_whatsapp_settings" ON public."WhatsAppSettings"
+    FOR SELECT TO app_user USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_insert_whatsapp_settings" ON public."WhatsAppSettings"
+    FOR INSERT TO app_user WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "app_user_update_whatsapp_settings" ON public."WhatsAppSettings"
+    FOR UPDATE TO app_user USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ── DONE! ───────────────────────────────────────────────────────
 -- Tables created: User, Tournament, Registration, Team, TeamMember, Match, Ranking, Donation, Sawer, Club, Settings, ActivityLog, PlayerMatchStat, BotLog, WhatsAppSettings
