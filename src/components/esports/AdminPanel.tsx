@@ -469,9 +469,12 @@ export function AdminPanel({
       verifyAdminSession();
       fetchPaymentSettings();
       setPaySettingsSaved(false);
-      // Fetch admins for RBAC tab
-      fetch('/api/admin/auth').then(r => r.json()).then(data => {
-        if (data.success) setAdminList(data.admins.map((a: any) => ({ ...a, permissions: JSON.parse(a.permissions || '{}') })));
+      // Fetch admins for RBAC tab (use adminFetch for proper auth headers)
+      adminFetch('/api/admin/auth').then(r => {
+        if (!r.ok) return;
+        return r.json();
+      }).then(data => {
+        if (data?.success) setAdminList(data.admins.map((a: any) => ({ ...a, permissions: JSON.parse(a.permissions || '{}') })));
       }).catch(() => {});
     }
   }, [showPanel, fetchPaymentSettings, verifyAdminSession]);

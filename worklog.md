@@ -282,3 +282,49 @@ Stage Summary:
 - 2 SQL files created/updated: secure-rls.sql (migration) + full-setup.sql (fresh install)
 - No app code changes needed (Prisma superuser pattern is correct)
 - User needs to run secure-rls.sql in Supabase SQL Editor to apply
+
+---
+Task ID: 8
+Agent: Main
+Task: Fix double-login bug (verifyAdminSession race condition)
+
+Work Log:
+- Investigated the double-login bug: admin must enter PIN twice to access admin panel
+- Traced full auth flow: AdminLogin.tsx → store.loginAdmin() → /api/admin/auth → AdminPanel → verifyAdminSession()
+- Identified root cause: Race condition in verifyAdminSession()
+  1. App loads with OLD expired JWT token → isAdminAuthenticated = true (from localStorage)
+  2. User clicks admin → AdminPanel opens → verifyAdminSession() starts with old token (async)
+  3. Concurrently, fetchPaymentSettings() via adminFetch() gets 401 → clearAdminAuth() → logout + login modal opens
+  4. User enters PIN → login succeeds → NEW token stored → isAdminAuthenticated = true
+  5. BUT the verifyAdminSession() from step 2 COMPLETES AFTER login → old token expired → passwordChanged: true → LOGS OUT THE NEW SESSION!
+  6. User has to enter PIN again
+- Fixed verifyAdminSession() in store.ts: Before applying logout, check if the token/hash we sent is still the current one in localStorage. If changed, a new login happened during flight → skip logout
+- Fixed fetchAdmins() in store.ts: Changed from plain fetch() to adminFetch() for proper auth headers
+- Fixed AdminPanel line 473: Changed from plain fetch('/api/admin/auth') to adminFetch('/api/admin/auth') for proper auth headers
+- Lint passes with 0 errors
+
+Stage Summary:
+- Race condition fixed: verifyAdminSession() now guards against stale async responses overwriting new sessions
+- Three stale-fetch issues fixed: all admin API calls now use adminFetch() with proper auth headers
+- No more double-login required — single PIN entry is sufficient
+
+---
+Task ID: 9
+Agent: Main
+Task: Seed female player leaderboard data from user-provided table
+
+Work Log:
+- User provided updated female leaderboard data: 26 players with nicknames, clubs, and points
+- Created 2 missing clubs: RNB, Plat R (mapped user's "SECRET" to existing "SECRETS" club)
+- Created all 26 female players with correct club assignments, points, and auto-calculated tiers
+- Tier calculation: S (300+), A (100+), B (<100)
+- Created rankings (upsert) for all 26 female players
+- Top 3: AiTan (495/S/PARANOID), reptil (470/S/SOUTHERN), dysa (305/S/RESTART)
+- Total: 4101 points across 13 clubs
+- Verified via /api/users?gender=female: 26 users returned correctly
+- Lint passes with 0 errors
+
+Stage Summary:
+- 26 female players seeded with exact data from user's table
+- 2 new clubs created (RNB, Plat R), total clubs now 21
+- Female division fully populated and accessible in the app

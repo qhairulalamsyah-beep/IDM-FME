@@ -296,7 +296,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   fetchAdmins: async () => {
     try {
-      const res = await fetch('/api/admin/auth');
+      // Use adminFetch (not plain fetch) so expired sessions trigger proper logout
+      const res = await adminFetch('/api/admin/auth');
+      if (!res.ok) return; // 401 handled by adminFetch (clearAdminAuth)
       const data = await res.json();
       if (data.success) {
         // Update local adminUser if still logged in
@@ -342,6 +344,30 @@ export const useAppStore = create<AppState>((set, get) => ({
       const data = await res.json();
 
       if (!data.valid) {
+        // CRITICAL FIX: Race condition guard
+        // A new login may have occurred while this async request was in-flight.
+        // If the stored token/hash no longer matches what we sent, a new session
+        // was established — do NOT logout the new session.
+        const currentToken = typeof localStorage !== 'undefined' ? localStorage.getItem('idm_admin_token') : null;
+        const currentHash = typeof localStorage !== 'undefined' ? localStorage.getItem('idm_admin_hash') : null;
+        const currentAuth = typeof localStorage !== 'undefined' ? localStorage.getItem('idm_admin_auth') : null;
+
+        if (token && currentToken !== token) {
+          // Token changed since we sent the request → new login happened → skip logout
+          console.log('[Store] verifyAdminSession: token changed during flight, skipping logout');
+          return true;
+        }
+        if (!token && currentHash !== body.adminHash) {
+          // Hash changed since we sent the request → new login happened → skip logout
+          console.log('[Store] verifyAdminSession: hash changed during flight, skipping logout');
+          return true;
+        }
+        if (currentAuth !== 'true') {
+          // Auth was already cleared (by another concurrent check) → skip
+          console.log('[Store] verifyAdminSession: auth already cleared, skipping logout');
+          return false;
+        }
+
         // Session invalid - logout
         console.warn('[Store] Admin session invalid:', data.error);
         set({ isAdminAuthenticated: false, adminUser: null });
