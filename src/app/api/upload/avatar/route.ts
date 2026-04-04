@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { requireAdmin } from '@/lib/admin-guard';
 import { uploadToStorage, isStorageConfigured } from '@/lib/storage';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -10,9 +10,20 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB for avatars
 
 export async function POST(request: NextRequest) {
   try {
-    // Auth guard — only authenticated admin can upload avatars
-    const denied = await requireAdmin(request);
-    if (denied) return denied;
+    // Rate limit: max 10 uploads per minute per IP (prevent abuse)
+    const clientIp = getClientIp(request);
+    const rl = rateLimit(`avatar-upload:${clientIp}`, 10, 60_000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Terlalu banyak upload. Coba lagi nanti.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil(rl.resetMs / 1000)),
+          },
+        },
+      );
+    }
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
