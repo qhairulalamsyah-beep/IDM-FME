@@ -23,7 +23,7 @@ INSERT INTO "Club" ("id", "name", "slug", "totalPlayers", "femaleCount", "maleCo
   ('cmnkdebas000fo0ax7re6ps86', 'PSALM', 'psalm', 1, 1, 0, NOW(), NOW()),
   ('a3ts1o2yv0d76fzrp9yych8ei', 'Plat R', 'platr', 1, 1, 0, NOW(), NOW()),
   ('cmnkdebar000eo0ax0ionjqrl', 'QUEEN', 'queen', 1, 1, 0, NOW(), NOW()),
-  ('cmnkdebam0010o0axvp7s76z2', 'RESTART', 'restart', 3, 1, 2, NOW(), NOW()),
+  ('cmnkdebam0006o0axvp7s76z1', 'RESTART', 'restart', 3, 1, 2, NOW(), NOW()),
   ('yrhfpcgzw4tjha08fmmv6wz41', 'RNB', 'rnb', 1, 1, 0, NOW(), NOW()),
   ('cmnkdebak0003o0axmeyi3fex', 'SALVADOR', 'salvador', 3, 0, 3, NOW(), NOW()),
   ('cmnkdeban0009o0ax0qk7g71p', 'SECRETS', 'secrets', 2, 1, 1, NOW(), NOW()),
@@ -32,6 +32,32 @@ INSERT INTO "Club" ("id", "name", "slug", "totalPlayers", "femaleCount", "maleCo
   ('cmnkdebas000go0ax1c752xmf', 'TOGETHER', 'together', 1, 1, 0, NOW(), NOW()),
   ('cmnkdebaq000co0axtdz9imre', 'YAKUZA', 'yakuza', 3, 3, 0, NOW(), NOW())
 ON CONFLICT ("id") DO NOTHING;
+
+-- Handle name conflicts too (in case club name exists with different id)
+INSERT INTO "Club" ("id", "name", "slug", "totalPlayers", "femaleCount", "maleCount", "createdAt", "updatedAt") VALUES
+  ('cmnkdebal0005o0ax6v2jy4so', 'ALQA', 'alqa', 2, 0, 2, NOW(), NOW()),
+  ('cmnkdebao000ao0axgybgoqs1', 'ARNBE', 'arnbe', 0, 0, 0, NOW(), NOW()),
+  ('cmnkdebau000io0ax0g71kfqu', 'AVENUE', 'avenue', 3, 0, 3, NOW(), NOW()),
+  ('cmnkdebar000do0axbde242e3', 'CROWN', 'crown', 1, 0, 1, NOW(), NOW()),
+  ('cmnkdebak0004o0axbiq8hy4x', 'EUPHORIC', 'euphoric', 8, 3, 5, NOW(), NOW()),
+  ('cmnkdeban0008o0axsnrex8v3', 'GYMSHARK', 'gymshark', 4, 1, 3, NOW(), NOW()),
+  ('cmnkdebap000bo0axnuquf16a', 'JASMINE', 'jasmine', 1, 0, 1, NOW(), NOW()),
+  ('cmnkdebaj0002o0axbw44eis2', 'MAXIMOUS', 'maximous', 14, 3, 11, NOW(), NOW()),
+  ('cmnkdebam0007o0axbmswcwy6', 'MYSTERY', 'mystery', 1, 0, 1, NOW(), NOW()),
+  ('cmnkdebat000ho0axcx5hey19', 'ORPHIC', 'orphic', 1, 0, 1, NOW(), NOW()),
+  ('cmnkdebai0001o0axqlnvnxsq', 'PARANOID', 'paranoid', 8, 5, 3, NOW(), NOW()),
+  ('cmnkdebas000fo0ax7re6ps86', 'PSALM', 'psalm', 1, 1, 0, NOW(), NOW()),
+  ('a3ts1o2yv0d76fzrp9yych8ei', 'Plat R', 'platr', 1, 1, 0, NOW(), NOW()),
+  ('cmnkdebar000eo0ax0ionjqrl', 'QUEEN', 'queen', 1, 1, 0, NOW(), NOW()),
+  ('cmnkdebam0006o0axvp7s76z1', 'RESTART', 'restart', 3, 1, 2, NOW(), NOW()),
+  ('yrhfpcgzw4tjha08fmmv6wz41', 'RNB', 'rnb', 1, 1, 0, NOW(), NOW()),
+  ('cmnkdebak0003o0axmeyi3fex', 'SALVADOR', 'salvador', 3, 0, 3, NOW(), NOW()),
+  ('cmnkdeban0009o0ax0qk7g71p', 'SECRETS', 'secrets', 2, 1, 1, NOW(), NOW()),
+  ('op5wt9mm545jc9t8r83xqvk0m', 'SENSEI', 'sensei', 2, 0, 2, NOW(), NOW()),
+  ('cmnkdebah0000o0axr02pd6h0', 'SOUTHERN', 'southern', 9, 4, 5, NOW(), NOW()),
+  ('cmnkdebas000go0ax1c752xmf', 'TOGETHER', 'together', 1, 1, 0, NOW(), NOW()),
+  ('cmnkdebaq000co0axtdz9imre', 'YAKUZA', 'yakuza', 3, 3, 0, NOW(), NOW())
+ON CONFLICT ON CONSTRAINT "Club_name_key" DO NOTHING;
 
 -- Users (71)
 INSERT INTO "User" ("id", "name", "email", "gender", "tier", "points", "role", "permissions", "isAdmin", "adminPass", "clubId", "createdAt", "updatedAt") VALUES
@@ -50,7 +76,7 @@ INSERT INTO "User" ("id", "name", "email", "gender", "tier", "points", "role", "
   ('nl8xcl65zoillu0tk6lnzjc6m', 'cheeyaqq', 'cheeyaqq_f@idm.local', 'female', 'A', 110, 'user', '{}', false, NULL, 'cmnkdeban0009o0ax0qk7g71p', NOW(), NOW()),
   ('02zk3zywbn8m3fo9qfteumzes', 'ciki_w', 'cikiw_f@idm.local', 'female', 'B', 80, 'user', '{}', false, NULL, 'cmnkdebas000go0ax1c752xmf', NOW(), NOW()),
   ('uu8rpfv2psjx8r2h5zht6nbg8', 'damncil', 'damncil_f@idm.local', 'female', 'B', 37, 'user', '{}', false, NULL, 'cmnkdebak0004o0axbiq8hy4x', NOW(), NOW()),
-  ('lccadhz3ix6dofetkj6dnxahs', 'dysa', 'dysa_f@idm.local', 'female', 'S', 305, 'user', '{}', false, NULL, 'cmnkdebam0010o0axvp7s76z2', NOW(), NOW()),
+  ('lccadhz3ix6dofetkj6dnxahs', 'dysa', 'dysa_f@idm.local', 'female', 'S', 305, 'user', '{}', false, NULL, 'cmnkdebam0006o0axvp7s76z1', NOW(), NOW()),
   ('i741zpt7pljs0x3r1ldnsbi3j', 'irazz', 'irazz_f@idm.local', 'female', 'A', 130, 'user', '{}', false, NULL, 'cmnkdebai0001o0axqlnvnxsq', NOW(), NOW()),
   ('4w66fmzyjuketp80kdz67lydp', 'kacee', 'kacee_f@idm.local', 'female', 'A', 178, 'user', '{}', false, NULL, 'cmnkdebaj0002o0axbw44eis2', NOW(), NOW()),
   ('hg159rta7k852farf2hycx7wu', 'meatry', 'meatry_f@idm.local', 'female', 'A', 201, 'user', '{}', false, NULL, 'cmnkdebaq000co0axtdz9imre', NOW(), NOW()),
