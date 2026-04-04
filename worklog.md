@@ -328,3 +328,25 @@ Stage Summary:
 - 26 female players seeded with exact data from user's table
 - 2 new clubs created (RNB, Plat R), total clubs now 21
 - Female division fully populated and accessible in the app
+
+---
+Task ID: 10
+Agent: Main
+Task: Seed male player leaderboard data from user-provided table
+
+Work Log:
+- User provided updated male leaderboard data: 45 players with nicknames, clubs, and points
+- Created missing SENSEI club (total clubs now 22)
+- Fixed typo: user's "ORPIC" mapped to existing "ORPHIC" club
+- Updated existing super_admin TAZOS: club=GYMSHARK, points=106, tier=A
+- Created 44 male user accounts with correct club assignments, points, and tiers
+- Created rankings (upsert) for all 45 male users (including TAZOS)
+- Top 5: Airuen (450/S/AVENUE), Afroki (421/S/SOUTHERN), ziafu (400/S/MYSTERY), zmz (390/S/ALQA), Armors (363/S/SOUTHERN)
+- Verified via /api/users?gender=male: 44 non-admin users returned correctly
+- Lint passes with 0 errors
+
+Stage Summary:
+- 45 male players seeded with exact data from user's table
+- 1 new club created (SENSEI), total clubs now 22
+- TAZOS super_admin updated with GYMSHARK club and 106 points
+- Male division fully populated: 44 players + 1 super_admin
