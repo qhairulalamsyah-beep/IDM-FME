@@ -470,3 +470,27 @@ Stage Summary:
 - **CSP fix**: Vercel feedback scripts no longer blocked
 - User action needed: Update SUPABASE_LOGO_BUCKET=sources in Vercel Environment Variables
 - User action needed: Get SUPABASE_SERVICE_ROLE_KEY from Supabase → Settings → API → "Legacy anon, service_role API keys" tab → service_role key
+
+---
+Task ID: 13
+Agent: Main
+Task: Fix expired JWT causing change-pin and create-admin to fail — add auto re-authentication
+
+Work Log:
+- Identified root cause: verifyAdmin() rejects ALL admin operations when JWT is expired (even valid PIN check never runs)
+- This means after 7 days, admin cannot change PIN, create admin, or do anything — deadlock
+- Created /api/admin/reauth endpoint: accepts { pin }, validates PIN (same as login), returns new JWT + admin data. No existing JWT needed. Rate limited 5/min/IP.
+- Added reauthAdmin(pin) to Zustand store: calls reauth endpoint, stores new JWT + admin data in localStorage
+- Enhanced admin-fetch.ts: when 401 is received and user was logged in, triggers reauth flow (dispatches admin-reauth-required event), waits for reauth Promise to resolve, then auto-retries the original request with new JWT token
+- Created ReAuthModal component: global modal (z-[100]) that listens for admin-reauth-required event, shows PIN input, validates via reauth endpoint, on success dispatches admin-auth-changed event and resolves reauth Promise
+- Modified AdminLogin.tsx change-pin flow: verifyCurrentPin now uses reauthAdmin() directly (not verify-pin via adminFetch), so it works even when JWT is expired and avoids showing two modals at once
+- Updated store's admin-auth-changed listener to handle reauth success (authenticated: true + admin data)
+- Added ReAuthModal to page.tsx (always mounted, invisible until triggered)
+
+Stage Summary:
+- Auto re-authentication system implemented: when JWT expires during any admin operation, a modal pops up asking for PIN, validates it, gets new JWT, and automatically retries the failed operation
+- change-pin: uses reauth directly for current PIN verification — works even with expired JWT
+- create-admin: uses adminFetch which auto-triggers reauth and retries on 401
+- ALL other admin operations (payment settings, bracket management, etc.) also benefit from auto-reauth
+- No more "logout and login again" workaround needed — seamless session recovery
+- Lint passes cleanly, pushed to GitHub (commit aa370d4)
