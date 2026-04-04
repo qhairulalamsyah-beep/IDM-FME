@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   Home,
   Trophy,
-  Users,
+  Swords,
   GitBranch,
   BarChart3,
   Crown,
@@ -48,7 +48,7 @@ interface TopBarProps {
 
 const regularNavItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
-  { id: 'tournament', label: 'Peserta & Club', icon: Users },
+  { id: 'tournament', label: 'Tournament', icon: Swords },
   { id: 'bracket', label: 'Bracket', icon: GitBranch },
   { id: 'leaderboard', label: 'Leaderboard', icon: BarChart3 },
 ];

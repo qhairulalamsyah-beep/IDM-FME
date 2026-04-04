@@ -156,7 +156,7 @@ const rankColors = ['#FFD60A', '#C7C7CC', '#CD7F32'];
 function getStatusInfo(status: string) {
   switch (status) {
     case 'registration':
-      return { cls: 'status-registration', label: 'PENDAFTARAN', desc: 'Pendaftaran turnamen dibuka!' };
+      return { cls: 'status-registration', label: 'PENDAFTARAN', desc: 'Daftar sekarang untuk bertanding!' };
     case 'ongoing':
       return { cls: 'status-live', label: '● LIVE', desc: 'Turnamen sedang berlangsung' };
     case 'completed':
@@ -621,7 +621,7 @@ export function Dashboard({
                     >
                       <span className="relative z-[2] flex items-center gap-2.5">
                         <UserPlus className="w-[18px] h-[18px]" />
-                        LIHAT PESERTA & CLUB
+                        GABUNG TURNAMEN
                         <ArrowRight className="w-[18px] h-[18px]" />
                       </span>
                     </motion.button>
@@ -1214,7 +1214,7 @@ export function Dashboard({
           ═══════════════════════════════════════════════════════════ */}
       <motion.div variants={item}>
         <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4 lg:gap-4">
-          {/* Peserta & Club */}
+          {/* Daftar */}
           <motion.button
             onClick={onRegister}
             className="glass-subtle inner-light rounded-2xl p-3 sm:p-4 text-left group"
@@ -1232,8 +1232,8 @@ export function Dashboard({
             >
               <UserPlus className={`w-4 h-4 sm:w-[18px] sm:h-[18px] ${accentColor}`} />
             </div>
-            <p className="text-[13px] font-semibold text-white/90 leading-snug">Peserta & Club</p>
-            <p className="text-[11px] text-white/40 mt-0.5 font-normal">Lihat peserta turnamen</p>
+            <p className="text-[13px] font-semibold text-white/90 leading-snug">Daftar</p>
+            <p className="text-[11px] text-white/40 mt-0.5 font-normal">Gabung turnamen</p>
           </motion.button>
 
           {/* Bracket */}

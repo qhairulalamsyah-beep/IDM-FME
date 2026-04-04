@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { Navigation, TopBar } from '@/components/esports/Navigation';
 import { GradientBackground, Premium3DEffects } from '@/components/effects/ParticleField';
 import { Dashboard } from '@/components/esports/Dashboard';
+import { TournamentTab } from '@/components/esports/Tournament';
 import { ParticipantsClubTab } from '@/components/esports/ParticipantsClubTab';
 import { Bracket } from '@/components/esports/Bracket';
 import { Leaderboard } from '@/components/esports/Leaderboard';
@@ -817,7 +818,19 @@ export default function IDOLMETAApp() {
                 )}
 
                 {activeTab === 'tournament' && (
-                  <ParticipantsClubTab division={division} />
+                  <TournamentTab
+                    division={division}
+                    tournament={tournamentInfo}
+                    registrations={registrations}
+                    teams={teams}
+                    users={users}
+                    isAdmin={isAdminAuthenticated}
+                    onRegister={registerUser}
+                    onApprove={approveRegistration}
+                    onGenerateTeams={generateTeams}
+                    onResetTeams={resetTeams}
+                    onGenerateBracket={generateBracket}
+                  />
                 )}
 
                 {activeTab === 'bracket' && (
