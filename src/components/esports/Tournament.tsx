@@ -20,12 +20,18 @@ import { AvatarUpload } from '@/components/esports/AvatarUpload';
 
 interface Registration {
   id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  tier: string;
-  gender: string;
+  userId: string;
+  tournamentId: string;
   status: string;
+  tierAssigned: string;
+  user: {
+    id: string;
+    name: string;
+    avatar?: string | null;
+    tier: string;
+    gender: string;
+    phone?: string | null;
+  };
 }
 
 interface Team {
@@ -478,17 +484,17 @@ export function TournamentTab({
                     <div className="flex items-center gap-3">
                       <div className={avatarRingClass}>
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
-                          {reg.avatar ? (
-                            <img src={reg.avatar} alt={reg.name} className="w-full h-full object-cover" />
+                          {reg.user.avatar ? (
+                            <img src={reg.user.avatar} alt={reg.user.name} className="w-full h-full object-cover" />
                           ) : (
-                            <span className="font-semibold text-white/70 text-sm">{reg.name[0]}</span>
+                            <span className="font-semibold text-white/70 text-sm">{reg.user.name[0]}</span>
                           )}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white/90 text-sm truncate">{reg.name}</p>
+                        <p className="font-semibold text-white/90 text-sm truncate">{reg.user.name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className={`tier-badge ${getTierBadgeClass(reg.tier)}`}>{reg.tier}</span>
+                          <span className={`tier-badge ${getTierBadgeClass(reg.tierAssigned || reg.user.tier)}`}>{reg.tierAssigned || reg.user.tier}</span>
                           <span className="status-pill status-registration">Menunggu</span>
                         </div>
                       </div>
@@ -532,17 +538,17 @@ export function TournamentTab({
                     <div className="flex items-center gap-3">
                       <div className={avatarRingClass}>
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
-                          {reg.avatar ? (
-                            <img src={reg.avatar} alt={reg.name} className="w-full h-full object-cover" />
+                          {reg.user.avatar ? (
+                            <img src={reg.user.avatar} alt={reg.user.name} className="w-full h-full object-cover" />
                           ) : (
-                            <span className="font-semibold text-white/70 text-xs">{reg.name[0]}</span>
+                            <span className="font-semibold text-white/70 text-xs">{reg.user.name[0]}</span>
                           )}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white/90 text-sm truncate">{reg.name}</p>
+                        <p className="font-medium text-white/90 text-sm truncate">{reg.user.name}</p>
                       </div>
-                      <span className={`tier-badge ${getTierBadgeClass(reg.tier)}`}>{reg.tier}</span>
+                      <span className={`tier-badge ${getTierBadgeClass(reg.tierAssigned || reg.user.tier)}`}>{reg.tierAssigned || reg.user.tier}</span>
                       <Check className="w-4 h-4 text-[--ios-green]" />
                     </div>
                   </motion.div>
