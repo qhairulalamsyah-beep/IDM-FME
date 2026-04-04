@@ -587,3 +587,28 @@ Stage Summary:
 - Avatar now displays correctly in Tournament tab (pending + approved registrations)
 - Avatar also works in Peserta & Club tab, Dashboard, Leaderboard, QualifiedPlayersModal
 - Lint 0 errors, pushed to GitHub (commit 249a0e8)
+
+---
+Task ID: 17
+Agent: Main
+Task: Admin avatar edit, Peserta navbar, club-only leaderboard
+
+Work Log:
+1. Admin Panel - Kelola Peserta: Added camera icon button overlay on each player's avatar in PlayerManagementScreen.tsx. Clicking opens file picker → uploads to /api/upload/avatar → saves via PUT /api/users with admin auth → auto-refreshes data via storeFetchData(). Shows loading spinner during upload.
+
+2. Peserta moved to navbar: Added 'Peserta' tab with Users icon to Navigation.tsx between Dashboard and Tournament. In page.tsx, added useEffect that watches activeTab — when 'participants' is selected, opens ParticipantsByClubModal and switches tab back to dashboard.
+
+3. Dashboard club-only leaderboard: Removed "PEMAIN TERBAIK" tab and entire players list from Dashboard.tsx. Section now shows only "CLUB TERBAIK" header with Shield icon and top 10 clubs list (no tab switcher needed).
+
+Files changed:
+- src/components/esports/PlayerManagementScreen.tsx — camera button + upload handler
+- src/components/esports/AdminPanel.tsx — onAvatarChange handler with storeFetchData
+- src/components/esports/Navigation.tsx — added 'peserta' nav item
+- src/components/esports/Dashboard.tsx — removed players tab, clubs only
+- src/app/page.tsx — participants tab → modal effect
+
+Stage Summary:
+- Admin can now edit player avatars from Kelola Peserta
+- Peserta accessible directly from navbar (between Dashboard & Tournament)
+- Dashboard shows only Club Terbaik (cleaner layout)
+- Lint 0 errors, pushed to GitHub (commit 8860480)
