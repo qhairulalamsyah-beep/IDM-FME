@@ -24,8 +24,6 @@ export function isBcryptHash(hash: string): boolean {
   return hash.startsWith('$2');
 }
 
-import crypto from 'crypto';
-
 /**
  * Legacy SHA-256 hash function for migration support
  */

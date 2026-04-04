@@ -162,3 +162,26 @@ Stage Summary:
 - Auth system upgraded: JWT tokens with 24h expiry + bcrypt PIN hashing
 - All critical security vulnerabilities patched
 - All race conditions eliminated with atomic transactions
+
+---
+Task ID: 6
+Agent: Main
+Task: Post-audit verification and remaining fixes
+
+Work Log:
+- Verified all 16 previous audit fixes intact (PASS — comprehensive sub-agent verification)
+- Fixed critical regression: duplicate `import crypto from 'crypto'` in auth-helpers.ts (lines 1 + 27) causing /api/payment-settings 500 error
+- Created `/src/lib/rate-limit.ts` — in-memory sliding window rate limiter with auto-cleanup
+- Applied rate limiting to admin login endpoint: 5 attempts/minute per IP (429 + Retry-After header)
+- Applied rate limiting to verify-pin endpoint: 10 attempts/minute per IP (requires auth first)
+- Verified chat bridge already uses env var CHAT_BRIDGE_SECRET (no hardcoded secret)
+- Verified change-password already enforces 6-digit PIN validation (not 4 chars)
+- Optimized page.tsx store subscription: separated data selectors (useShallow) from action selectors (stable refs) to reduce unnecessary re-renders
+- All endpoints verified returning 200, lint 0 errors
+
+Stage Summary:
+- Auth-helpers duplicate import regression fixed (payment-settings 500 → 200)
+- Rate limiting implemented: admin login (5/min/IP), verify-pin (10/min/IP)
+- page.tsx optimized with useShallow + individual action selectors
+- All 30+ audit issues now resolved or verified
+- Dev server clean: 0 compilation errors, all endpoints healthy

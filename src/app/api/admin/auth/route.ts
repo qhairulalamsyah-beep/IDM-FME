@@ -3,10 +3,27 @@ import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-guard';
 import { comparePin, isBcryptHash, legacySha256Hash, hashPin } from '@/lib/auth-helpers';
 import { createAdminToken } from '@/lib/jwt';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 // POST - Admin login with PIN
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: max 5 login attempts per minute per IP
+    const clientIp = getClientIp(request);
+    const rl = rateLimit(`login:${clientIp}`, 5, 60_000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Terlalu banyak percobaan login. Coba lagi dalam beberapa detik.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil(rl.resetMs / 1000)),
+            'X-RateLimit-Remaining': '0',
+          },
+        },
+      );
+    }
+
     const body = await request.json();
     const { pin } = body;
 

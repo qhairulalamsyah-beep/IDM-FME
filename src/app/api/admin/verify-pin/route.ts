@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-guard';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 // POST - Verify current PIN for the authenticated admin (for change PIN flow)
 export async function POST(request: NextRequest) {
@@ -8,6 +9,21 @@ export async function POST(request: NextRequest) {
     // Auth guard — must be an authenticated admin
     const denied = await requireAdmin(request);
     if (denied) return denied;
+
+    // Rate limit: max 10 verify attempts per minute per IP
+    const clientIp = getClientIp(request);
+    const rl = rateLimit(`verify-pin:${clientIp}`, 10, 60_000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { valid: false, error: 'Terlalu banyak percobaan. Coba lagi nanti.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil(rl.resetMs / 1000)),
+          },
+        },
+      );
+    }
 
     // Get the authenticated admin's ID from headers
     const adminId = request.headers.get('x-admin-id')!;

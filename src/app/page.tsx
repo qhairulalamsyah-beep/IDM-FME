@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
+import { useShallow } from 'zustand/react/shallow';
 import { Navigation, TopBar } from '@/components/esports/Navigation';
 import { GradientBackground, Premium3DEffects } from '@/components/effects/ParticleField';
 import { Dashboard } from '@/components/esports/Dashboard';
@@ -45,6 +46,9 @@ export default function IDOLMETAApp() {
 
   // Default to mobile styles during SSR and initial render
   const isMobileStyle = isMobile ?? true;
+
+  // ── State selectors with useShallow for shallow comparison ──
+  // This prevents re-renders when only unrelated state changes
   const {
     activeTab,
     division,
@@ -60,34 +64,51 @@ export default function IDOLMETAApp() {
     totalSawer,
     toasts,
     tournaments,
-    setActiveTab,
-    setDivision,
-    fetchData,
-    registerUser,
-    approveRegistration,
-    rejectRegistration,
-    deleteRegistration,
-    deleteAllRejected,
-    updateTournamentStatus,
-    updatePrizePool,
-    generateTeams,
-    resetTeams,
-    generateBracket,
-    updateMatchScore,
-    setMVP,
-    removeMVP,
-    finalizeTournament,
-    donate,
-    sawer,
-    removeToast,
-    seedDatabase,
-    resetSeason,
-    createTournament,
-    addToast,
-    loginAdmin,
-    logoutAdmin,
-    fetchAdmins,
-  } = useAppStore();
+  } = useAppStore(useShallow((state) => ({
+    activeTab: state.activeTab,
+    division: state.division,
+    isLoading: state.isLoading,
+    isAdminAuthenticated: state.isAdminAuthenticated,
+    users: state.users,
+    currentTournament: state.currentTournament,
+    registrations: state.registrations,
+    teams: state.teams,
+    matches: state.matches,
+    donations: state.donations,
+    totalDonation: state.totalDonation,
+    totalSawer: state.totalSawer,
+    toasts: state.toasts,
+    tournaments: state.tournaments,
+  })));
+
+  // ── Action selectors (stable references, won't cause re-renders) ──
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const setDivision = useAppStore((s) => s.setDivision);
+  const fetchData = useAppStore((s) => s.fetchData);
+  const registerUser = useAppStore((s) => s.registerUser);
+  const approveRegistration = useAppStore((s) => s.approveRegistration);
+  const rejectRegistration = useAppStore((s) => s.rejectRegistration);
+  const deleteRegistration = useAppStore((s) => s.deleteRegistration);
+  const deleteAllRejected = useAppStore((s) => s.deleteAllRejected);
+  const updateTournamentStatus = useAppStore((s) => s.updateTournamentStatus);
+  const updatePrizePool = useAppStore((s) => s.updatePrizePool);
+  const generateTeams = useAppStore((s) => s.generateTeams);
+  const resetTeams = useAppStore((s) => s.resetTeams);
+  const generateBracket = useAppStore((s) => s.generateBracket);
+  const updateMatchScore = useAppStore((s) => s.updateMatchScore);
+  const setMVP = useAppStore((s) => s.setMVP);
+  const removeMVP = useAppStore((s) => s.removeMVP);
+  const finalizeTournament = useAppStore((s) => s.finalizeTournament);
+  const donate = useAppStore((s) => s.donate);
+  const sawer = useAppStore((s) => s.sawer);
+  const removeToast = useAppStore((s) => s.removeToast);
+  const seedDatabase = useAppStore((s) => s.seedDatabase);
+  const resetSeason = useAppStore((s) => s.resetSeason);
+  const createTournament = useAppStore((s) => s.createTournament);
+  const addToast = useAppStore((s) => s.addToast);
+  const loginAdmin = useAppStore((s) => s.loginAdmin);
+  const logoutAdmin = useAppStore((s) => s.logoutAdmin);
+  const fetchAdmins = useAppStore((s) => s.fetchAdmins);
 
   const [selectedPlayer, setSelectedPlayer] = useState<{
     id: string;
