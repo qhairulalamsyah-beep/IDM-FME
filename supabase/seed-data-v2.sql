@@ -33,7 +33,7 @@ INSERT INTO "Club" ("id", "name", "slug", "totalPlayers", "femaleCount", "maleCo
   ('cmnkdebaq000co0axtdz9imre', 'YAKUZA', 'yakuza', 3, 3, 0, NOW(), NOW())
 ON CONFLICT ("id") DO NOTHING;
 
--- Handle name conflicts too (in case club name exists with different id)
+-- Handle name conflicts (for clubs already in DB with different id)
 INSERT INTO "Club" ("id", "name", "slug", "totalPlayers", "femaleCount", "maleCount", "createdAt", "updatedAt") VALUES
   ('cmnkdebal0005o0ax6v2jy4so', 'ALQA', 'alqa', 2, 0, 2, NOW(), NOW()),
   ('cmnkdebao000ao0axgybgoqs1', 'ARNBE', 'arnbe', 0, 0, 0, NOW(), NOW()),
@@ -57,7 +57,7 @@ INSERT INTO "Club" ("id", "name", "slug", "totalPlayers", "femaleCount", "maleCo
   ('cmnkdebah0000o0axr02pd6h0', 'SOUTHERN', 'southern', 9, 4, 5, NOW(), NOW()),
   ('cmnkdebas000go0ax1c752xmf', 'TOGETHER', 'together', 1, 1, 0, NOW(), NOW()),
   ('cmnkdebaq000co0axtdz9imre', 'YAKUZA', 'yakuza', 3, 3, 0, NOW(), NOW())
-ON CONFLICT ON CONSTRAINT "Club_name_key" DO NOTHING;
+ON CONFLICT (name) DO NOTHING;
 
 -- Users (71)
 INSERT INTO "User" ("id", "name", "email", "gender", "tier", "points", "role", "permissions", "isAdmin", "adminPass", "clubId", "createdAt", "updatedAt") VALUES
