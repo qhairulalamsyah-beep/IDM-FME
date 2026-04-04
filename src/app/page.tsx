@@ -819,7 +819,6 @@ export default function IDOLMETAApp() {
                     onViewDonation={() => { setDonationDefaultTab('donasi'); setActiveTab('donation'); }}
                     teamsCount={teams.length}
                     onViewTeams={() => setTeamListOpen(true)}
-                    onViewParticipantsByClub={() => setParticipantsByClubOpen(true)}
                     champion={championOfTheWeek}
                     mvp={mvpOfTheWeek}
                     leaderboardTab={leaderboardTab}

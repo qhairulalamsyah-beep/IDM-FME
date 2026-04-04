@@ -84,7 +84,6 @@ interface DashboardProps {
   onViewDonation?: () => void;
   teamsCount?: number;
   onViewTeams?: () => void;
-  onViewParticipantsByClub?: () => void;
   champion?: ChampionData | null;
   mvp?: MVPData | null;
   leaderboardTab?: 'players' | 'clubs';
@@ -267,7 +266,6 @@ export function Dashboard({
   onViewPrize,
   teamsCount,
   onViewTeams,
-  onViewParticipantsByClub,
   onViewDonation,
   champion,
   mvp,
@@ -983,37 +981,107 @@ export function Dashboard({
       </motion.div>
 
       {/* ═══════════════════════════════════════════════════════════
-          PESERTA & CLUB — Quick action button
+          LEADERBOARD — Player Rankings (compact, below Quick Stats)
           ═══════════════════════════════════════════════════════════ */}
-      <motion.div variants={item}>
-        <motion.button
-          onClick={() => onViewParticipantsByClub?.()}
-          className="w-full relative glass inner-light rounded-2xl p-3.5 sm:p-4 cursor-pointer group overflow-hidden"
-          whileHover={{ scale: 1.01, y: -1 }}
-          whileTap={{ scale: 0.98 }}
-          transition={springTransition}
-          style={{ WebkitTapHighlightColor: 'transparent' }}
-        >
-          <div
-            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-90 transition-opacity duration-500 pointer-events-none"
-            style={{
-              background: isMale
-                ? 'radial-gradient(circle at 50% 30%, rgba(255,214,10,0.06) 0%, transparent 70%)'
-                : 'radial-gradient(circle at 50% 30%, rgba(167,139,250,0.06) 0%, transparent 70%)',
-            }}
-          />
-          <div className="relative z-10 flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${accentSubtleBg}`}>
-              <Shield className={`w-5 h-5 ${accentColor}`} />
+      {hasPlayers && (
+        <motion.div variants={item}>
+          {/* Section header */}
+          <div className="flex items-center justify-between px-1 mb-3">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.06] rounded-lg">
+              <span className={accentColor}>
+                <BarChart3 className="w-3 h-3 inline" />
+              </span>
+              <span className="text-[11px] font-semibold text-white/90">RANKING</span>
             </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-[13px] font-bold text-white/80">Peserta & Club</p>
-              <p className="text-[10px] text-white/30 mt-0.5">Lihat semua peserta yang terdaftar beserta club mereka</p>
-            </div>
-            <ChevronRight className={`w-4 h-4 ${isMale ? 'text-amber-400/30' : 'text-violet-400/30'}`} />
+            <motion.button
+              onClick={() => onNavigate && onNavigate('leaderboard')}
+              className="text-[10px] font-semibold text-white/35 hover:text-white/60 flex items-center gap-1 transition-colors"
+              whileTap={{ scale: 0.95 }}
+            >
+              Lihat semua
+              <ChevronRight className="w-3 h-3" />
+            </motion.button>
           </div>
-        </motion.button>
-      </motion.div>
+
+          {/* Desktop table header */}
+          <div className="hidden lg:flex items-center gap-4 px-5 py-2.5 mb-1.5">
+            <div className="w-8 shrink-0" />
+            <div className="w-10 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">Pemain</span>
+            </div>
+            <div className="w-16 shrink-0 text-center">
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">Tier</span>
+            </div>
+            <div className="w-20 shrink-0 text-right">
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-white/40">Points</span>
+            </div>
+          </div>
+
+          {/* Player rows */}
+          <motion.div
+            className="space-y-2"
+            variants={container}
+            initial="hidden"
+            animate="show"
+          >
+            {topPlayers.slice(0, 10).map((player, index) => (
+              <motion.div
+                key={player.id}
+                className={`glass-subtle rounded-xl px-2.5 sm:px-3.5 lg:px-5 py-2.5 sm:py-3 lg:py-4 flex items-center gap-2.5 sm:gap-3 lg:gap-4 group ${index >= 5 ? 'max-lg:hidden' : ''}`}
+                variants={item}
+                whileHover={{ scale: 1.015, x: 2 }}
+                whileTap={{ scale: 0.99 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              >
+                {/* Rank badge */}
+                <div
+                  className="w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9 rounded-lg flex items-center justify-center font-bold text-[11px] sm:text-[12px] shrink-0"
+                  style={
+                    index < 3
+                      ? {
+                          background: `linear-gradient(160deg, ${rankColors[index]} 0%, ${
+                            index === 1 ? '#8E8E93' : index === 2 ? '#A0522D' : '#E5A800'
+                          } 100%)`,
+                          color: index === 1 ? '#1C1C1E' : index === 2 ? '#fff' : '#000',
+                          boxShadow: `0 2px 6px ${rankColors[index]}30, inset 0 1px 0 rgba(255,255,255,${index === 2 ? '0.15' : '0.35'})`,
+                        }
+                      : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.25)' }
+                  }
+                >
+                  {index + 1}
+                </div>
+
+                {/* Player avatar */}
+                <div className={avatarRingClass}>
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-11 lg:h-11 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden">
+                    {player.avatar ? (
+                      <img src={player.avatar} alt={player.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[11px] font-bold text-white/70">{player.name.charAt(0)}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Player info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-white/90 truncate leading-snug lg:text-sm">{player.name}</p>
+                </div>
+
+                {/* Tier badge */}
+                <span className={`tier-badge ${tierMap[player.tier] || 'tier-b'} shrink-0 hidden lg:inline-block`}>
+                  {player.tier}
+                </span>
+
+                {/* Points */}
+                <span className={`text-[13px] font-bold ${accentColor} tabular-nums shrink-0 lg:text-sm lg:w-16 lg:text-right`}>
+                  {player.points.toLocaleString()}
+                </span>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           QUICK ACTIONS — 2 Glass-Subtle Cards (+ 2 desktop-only)
