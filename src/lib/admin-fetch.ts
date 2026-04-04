@@ -2,10 +2,59 @@
  * Client-side helper: wraps fetch() to include admin auth headers.
  * Supports both JWT token (preferred) and legacy ID+Hash (backward compatible).
  *
+ * Includes automatic re-authentication: when a 401 is received and the user
+ * was logged in, a reauth modal is triggered. If re-auth succeeds, the
+ * original request is retried with the new JWT token.
+ *
  * Usage:
  *   import { adminFetch } from '@/lib/admin-fetch';
  *   const res = await adminFetch('/api/tournaments', { method: 'POST', body: ... });
  */
+
+// ═══════════════════════════════════════════════════════════
+// Re-authentication state management
+// ═══════════════════════════════════════════════════════════
+
+let pendingReauthPromise: Promise<boolean> | null = null;
+let pendingReauthResolve: ((success: boolean) => void) | null = null;
+
+/**
+ * Trigger re-authentication flow. Shows a modal for the user to enter their PIN.
+ * Multiple concurrent 401s share the same promise to avoid duplicate modals.
+ */
+function triggerReauth(): Promise<boolean> {
+  if (pendingReauthPromise) return pendingReauthPromise;
+
+  pendingReauthPromise = new Promise<boolean>((resolve) => {
+    pendingReauthResolve = resolve;
+    // Dispatch event to show ReAuthModal
+    window.dispatchEvent(new CustomEvent('admin-reauth-required'));
+  });
+
+  return pendingReauthPromise;
+}
+
+/**
+ * Called by ReAuthModal when re-auth succeeds or fails.
+ */
+export function resolveReauth(success: boolean): void {
+  if (pendingReauthResolve) {
+    pendingReauthResolve(success);
+    pendingReauthResolve = null;
+    pendingReauthPromise = null;
+  }
+}
+
+/**
+ * Cancel pending re-auth (e.g. when user closes the modal without entering PIN).
+ */
+export function cancelReauth(): void {
+  resolveReauth(false);
+}
+
+// ═══════════════════════════════════════════════════════════
+// Auth helpers
+// ═══════════════════════════════════════════════════════════
 
 export function getAdminAuthHeaders(): Record<string, string> {
   if (typeof window === 'undefined') return {};
@@ -77,15 +126,15 @@ export function clearAdminAuth(): void {
   window.dispatchEvent(new CustomEvent('admin-auth-changed', { detail: { authenticated: false } }));
 }
 
+// ═══════════════════════════════════════════════════════════
+// Main adminFetch with auto re-auth and retry
+// ═══════════════════════════════════════════════════════════
+
 export function adminFetch(
   url: string,
   options: RequestInit = {},
 ): Promise<Response> {
   const adminHeaders = getAdminAuthHeaders();
-  if (Object.keys(adminHeaders).length === 0) {
-    // No auth available — still send request, let server return 401
-    // Only log at debug level since this is expected for non-authenticated requests
-  }
 
   // Build headers object
   const headers: Record<string, string> = {};
@@ -113,12 +162,42 @@ export function adminFetch(
   return fetch(url, {
     ...options,
     headers,
-  }).then((response) => {
-    // If 401 Unauthorized, clear admin auth and dispatch event
-    // BUT only if the user was actually logged in before this request
+  }).then(async (response) => {
+    // If 401 Unauthorized and user was logged in, try re-auth + retry
     if (response.status === 401) {
       const wasLoggedIn = localStorage.getItem('idm_admin_auth') === 'true';
       if (wasLoggedIn) {
+        // Don't clear auth immediately — try re-auth first
+        const reauthed = await triggerReauth();
+
+        if (reauthed) {
+          // Re-auth succeeded — retry the original request with new token
+          const newHeaders = getAdminAuthHeaders();
+          const retryHeaders: Record<string, string> = {};
+
+          // Re-add original headers
+          if (options.headers) {
+            const existingHeaders = options.headers as Record<string, string>;
+            Object.entries(existingHeaders).forEach(([key, value]) => {
+              retryHeaders[key] = value;
+            });
+          }
+
+          // Add new auth headers
+          if (newHeaders['x-admin-token']) {
+            retryHeaders['x-admin-token'] = newHeaders['x-admin-token'];
+          } else if (newHeaders['x-admin-id']) {
+            retryHeaders['x-admin-id'] = newHeaders['x-admin-id'];
+            retryHeaders['x-admin-hash'] = newHeaders['x-admin-hash'];
+          }
+
+          return fetch(url, {
+            ...options,
+            headers: retryHeaders,
+          });
+        }
+
+        // Re-auth failed — clear auth and dispatch logout
         clearAdminAuth();
       }
     }

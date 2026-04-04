@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Fingerprint, XCircle, CheckCircle, Settings2, ArrowLeft } from 'lucide-react';
 import { adminFetch } from '@/lib/admin-fetch';
+import { useAppStore } from '@/lib/store';
 
 interface AdminLoginProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface AdminLoginProps {
 }
 
 export function AdminLogin({ isOpen, onOpenChange, onLogin }: AdminLoginProps) {
+  const reauthAdmin = useAppStore((s) => s.reauthAdmin);
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
@@ -115,26 +117,14 @@ export function AdminLogin({ isOpen, onOpenChange, onLogin }: AdminLoginProps) {
   const verifyCurrentPin = async (pinValue: string) => {
     setIsSubmitting(true);
     try {
-      const res = await adminFetch('/api/admin/verify-pin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: pinValue }),
-      });
+      // Use reauth instead of verify-pin — works even when JWT is expired
+      // reauth validates the PIN AND returns a new JWT token
+      const reauthed = await reauthAdmin(pinValue);
 
-      // If session expired (401 from requireAdmin), show clear message
-      if (res.status === 401) {
-        setError('Session kedaluwarsa. Silakan logout dan login kembali.');
-        setCurrentPin('');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const data = await res.json();
-
-      if (res.ok && data.valid) {
+      if (reauthed) {
+        // PIN is valid and session is refreshed
         setStep('new');
         setError('');
-        // Focus input after step change with a small delay to ensure render is complete
         setIsSubmitting(false);
         requestAnimationFrame(() => {
           inputRef.current?.focus();
@@ -173,15 +163,20 @@ export function AdminLogin({ isOpen, onOpenChange, onLogin }: AdminLoginProps) {
 
     setIsSubmitting(true);
     try {
+      // adminFetch handles auto-reauth if JWT expired — will show ReAuthModal if needed
       const res = await adminFetch('/api/admin/change-pin', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPin: current, newPin: newPinVal }),
       });
 
-      // If session expired
+      // If reauth failed (user closed ReAuthModal), res will be 401
       if (res.status === 401) {
-        setError('Session kedaluwarsa. Silakan logout dan login kembali.');
+        setError('Session tidak valid. Coba lagi.');
+        setConfirmPin('');
+        setCurrentPin('');
+        setNewPin('');
+        setStep('current');
         setIsSubmitting(false);
         return;
       }

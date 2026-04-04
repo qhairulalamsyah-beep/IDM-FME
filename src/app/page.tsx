@@ -15,6 +15,7 @@ import { DonasiSawerTab } from '@/components/esports/DonasiSawerTab';
 import { GrandFinal } from '@/components/esports/GrandFinal';
 import { AdminPanel } from '@/components/esports/AdminPanel';
 import { AdminLogin } from '@/components/esports/AdminLogin';
+import { ReAuthModal } from '@/components/esports/ReAuthModal';
 import { TournamentHistory } from '@/components/esports/TournamentHistory';
 import { PlayerProfileModal } from '@/components/esports/PlayerProfile';
 import { PlayerListModal } from '@/components/esports/PlayerListModal';
@@ -736,6 +737,9 @@ export default function IDOLMETAApp() {
             onOpenChange={setAdminLoginOpen}
             onLogin={loginAdmin}
           />
+
+          {/* ReAuthModal — shown when JWT expires during admin operations */}
+          <ReAuthModal />
 
           {/* Admin Panel — full-screen page mode when open */}
           {isAdminAuthenticated && adminOpen && (

@@ -130,6 +130,7 @@ interface AppState {
   setDivision: (division: 'male' | 'female') => void;
   setLoading: (loading: boolean) => void;
   loginAdmin: (pin: string) => Promise<boolean>;
+  reauthAdmin: (pin: string) => Promise<boolean>;
   logoutAdmin: () => void;
   fetchAdmins: () => Promise<void>;
   verifyAdminSession: () => Promise<boolean>;
@@ -282,6 +283,41 @@ export const useAppStore = create<AppState>((set, get) => ({
       return false;
     } catch (err) {
       console.error('[Store] loginAdmin network error:', err);
+      return false;
+    }
+  },
+  reauthAdmin: async (pin: string): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/admin/reauth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (data.success && data.admin) {
+        set({
+          isAdminAuthenticated: true,
+          adminUser: data.admin,
+        });
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('idm_admin_auth', 'true');
+          localStorage.setItem('idm_admin_user', JSON.stringify(data.admin));
+          if (data.token) {
+            localStorage.setItem('idm_admin_token', data.token);
+          }
+          // Update legacy hash too
+          const encoder = new TextEncoder();
+          const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(pin));
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+          localStorage.setItem('idm_admin_hash', hashHex);
+        }
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('[Store] reauthAdmin network error:', err);
       return false;
     }
   },
@@ -1035,7 +1071,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 // Listen for admin auth changes from other parts of the app
 if (typeof window !== 'undefined') {
   window.addEventListener('admin-auth-changed', ((event: CustomEvent) => {
-    if (!event.detail?.authenticated) {
+    if (event.detail?.authenticated && event.detail?.admin) {
+      // Re-auth success — update store with new admin data
+      useAppStore.setState({
+        isAdminAuthenticated: true,
+        adminUser: event.detail.admin,
+      });
+    } else if (!event.detail?.authenticated) {
       // Admin was logged out elsewhere (e.g., 401 response)
       useAppStore.getState().logoutAdmin();
     }
