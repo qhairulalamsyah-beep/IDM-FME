@@ -4,7 +4,7 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'idm-fme-jwt-secret-change-in-production'
 );
 
-const JWT_EXPIRY = '24h'; // Token expires after 24 hours
+const JWT_EXPIRY = '7d'; // Token expires after 7 days
 
 export interface AdminJwtPayload {
   adminId: string;

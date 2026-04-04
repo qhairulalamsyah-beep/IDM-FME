@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest) {
     }
 
     if (!currentPinValid) {
-      return NextResponse.json({ success: false, error: 'PIN lama salah' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'PIN lama salah' }, { status: 403 });
     }
 
     // Hash new PIN with bcrypt

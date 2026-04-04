@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest) {
     }
 
     if (!currentPinValid) {
-      return NextResponse.json({ success: false, error: 'PIN saat ini salah' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'PIN saat ini salah' }, { status: 403 });
     }
 
     // Hash new PIN with bcrypt

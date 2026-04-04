@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!pinValid) {
-      return NextResponse.json({ valid: false, error: 'PIN salah' }, { status: 401 });
+      return NextResponse.json({ valid: false, error: 'PIN salah' }, { status: 403 });
     }
 
     return NextResponse.json({ valid: true });
