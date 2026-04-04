@@ -66,3 +66,21 @@ Stage Summary:
 - Club rankings calculated: #1 SOUTHERN (2282 pts), #2 MAXIMOUS (1583 pts), #3 EUPHORIC (1067 pts)
 - Top ranked players: #1 Airuen (450), #2 Afroki (421), #3 ziafu (400)
 - Tier system: S (300+), A (100+), B (<100)
+
+---
+Task ID: 4
+Agent: Main
+Task: Change navbar "Tournament" tab to "Peserta & Club" with club names display
+
+Work Log:
+- Updated Navigation.tsx: Changed nav item from `{ id: 'tournament', label: 'Tournament', icon: Swords }` to `{ id: 'tournament', label: 'Peserta & Club', icon: Users }`
+- Replaced `Swords` import with `Users` from lucide-react
+- Created new component `ParticipantsClubTab.tsx` — inline (non-modal) version of ParticipantsByClubModal
+- Features: club list sorted by total points, expandable/collapsible clubs, search, gender filter (defaults to current division), member details with tier badges, unassigned players section
+- Updated `page.tsx`: replaced `TournamentTab` import with `ParticipantsClubTab`, changed activeTab==='tournament' render block to use new component
+- Verified: dev server returns HTTP 200, lint passes with 0 errors
+
+Stage Summary:
+- Navbar tab renamed from "Tournament" to "Peserta & Club" with Users icon
+- Tab content now shows all participants grouped by club with club names, logos, member counts, total points, and individual player stats
+- Gender filter defaults to current division context

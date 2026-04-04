@@ -6,7 +6,7 @@ import { useAppStore } from '@/lib/store';
 import { Navigation, TopBar } from '@/components/esports/Navigation';
 import { GradientBackground, Premium3DEffects } from '@/components/effects/ParticleField';
 import { Dashboard } from '@/components/esports/Dashboard';
-import { TournamentTab } from '@/components/esports/Tournament';
+import { ParticipantsClubTab } from '@/components/esports/ParticipantsClubTab';
 import { Bracket } from '@/components/esports/Bracket';
 import { Leaderboard } from '@/components/esports/Leaderboard';
 import { DonasiSawerTab } from '@/components/esports/DonasiSawerTab';
@@ -794,19 +794,7 @@ export default function IDOLMETAApp() {
                 )}
 
                 {activeTab === 'tournament' && (
-                  <TournamentTab
-                    division={division}
-                    tournament={currentTournament}
-                    registrations={registrationList}
-                    teams={teams}
-                    users={users}
-                    isAdmin={isAdminAuthenticated}
-                    onRegister={registerUser}
-                    onApprove={approveRegistration}
-                    onGenerateTeams={generateTeams}
-                    onResetTeams={resetTeams}
-                    onGenerateBracket={generateBracket}
-                  />
+                  <ParticipantsClubTab division={division} />
                 )}
 
                 {activeTab === 'bracket' && (
