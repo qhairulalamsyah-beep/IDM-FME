@@ -149,7 +149,7 @@ export function ParticipantsClubTab({ division }: ParticipantsClubTabProps) {
 
       setClubs(sortedClubs);
       setUnassigned(unassignedPlayers);
-      setExpandedClubs(new Set(sortedClubs.map(c => c.id)));
+      setExpandedClubs(new Set());
     } catch (error) {
       console.error('Error fetching participants:', error);
     } finally {
