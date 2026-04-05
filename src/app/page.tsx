@@ -8,7 +8,6 @@ import { Navigation, TopBar } from '@/components/esports/Navigation';
 import { GradientBackground, Premium3DEffects } from '@/components/effects/ParticleField';
 import { Dashboard } from '@/components/esports/Dashboard';
 import { TournamentTab } from '@/components/esports/Tournament';
-import { ParticipantsClubTab } from '@/components/esports/ParticipantsClubTab';
 import { Bracket } from '@/components/esports/Bracket';
 import { Leaderboard } from '@/components/esports/Leaderboard';
 import { DonasiSawerTab } from '@/components/esports/DonasiSawerTab';
@@ -17,7 +16,6 @@ import { AdminPanel } from '@/components/esports/AdminPanel';
 import { AdminLogin } from '@/components/esports/AdminLogin';
 import { ReAuthModal } from '@/components/esports/ReAuthModal';
 import { TournamentHistory } from '@/components/esports/TournamentHistory';
-import { PlayerProfileModal } from '@/components/esports/PlayerProfile';
 import { PlayerListModal } from '@/components/esports/PlayerListModal';
 import { PrizeBreakdownModal } from '@/components/esports/PrizeBreakdownModal';
 import { TeamListModal } from '@/components/esports/TeamListModal';
@@ -113,17 +111,6 @@ export default function IDOLMETAApp() {
   const loginAdmin = useAppStore((s) => s.loginAdmin);
   const logoutAdmin = useAppStore((s) => s.logoutAdmin);
   const fetchAdmins = useAppStore((s) => s.fetchAdmins);
-
-  const [selectedPlayer, setSelectedPlayer] = useState<{
-    id: string;
-    name: string;
-    email: string;
-    gender: string;
-    tier: string;
-    points: number;
-    avatar: string | null;
-    createdAt: string;
-  } | null>(null);
 
   // Track which sub-tab to show when donation tab opens
   const [donationDefaultTab, setDonationDefaultTab] = useState<'sawer' | 'donasi'>('sawer');
@@ -499,17 +486,6 @@ export default function IDOLMETAApp() {
     lokasi: currentTournament.lokasi || undefined,
     startDate: currentTournament.startDate || null,
   } : null, [currentTournament, registrations]);
-
-  const registrationList = useMemo(() => registrations.map(r => ({
-    id: r.id,
-    name: r.user.name,
-    email: r.user.email,
-    avatar: r.user.avatar || '',
-    tier: r.tierAssigned || r.user.tier,
-    gender: r.user.gender,
-    status: r.status,
-    phone: '',
-  })), [registrations]);
 
   const playerListData = useMemo(() => registrations.map(r => ({
     id: r.id,
@@ -972,52 +948,6 @@ export default function IDOLMETAApp() {
             onOpenChange={setPrizeModalOpen}
             prizePool={currentTournament?.prizePool || 0}
             division={division}
-          />
-
-          {/* Player Profile Modal */}
-          <PlayerProfileModal
-            player={selectedPlayer ? {
-              ...selectedPlayer,
-              stats: {
-                wins: userStats.get(selectedPlayer.id)?.wins ?? 0,
-                losses: userStats.get(selectedPlayer.id)?.losses ?? 0,
-                totalMatches: (userStats.get(selectedPlayer.id)?.wins ?? 0) + (userStats.get(selectedPlayer.id)?.losses ?? 0),
-                winRate: (() => {
-                  const w = userStats.get(selectedPlayer.id)?.wins ?? 0;
-                  const l = userStats.get(selectedPlayer.id)?.losses ?? 0;
-                  const total = w + l;
-                  return total > 0 ? Math.round((w / total) * 100) : 0;
-                })(),
-                averageScore: (() => {
-                  const playerTeamIds = new Set<string>();
-                  for (const team of teams) {
-                    if (team.members.some(m => m.user.id === selectedPlayer.id)) {
-                      playerTeamIds.add(team.id);
-                    }
-                  }
-                  let totalScore = 0;
-                  let matchCount = 0;
-                  for (const match of matches) {
-                    if (match.status === 'completed' && match.teamAId && match.teamBId) {
-                      if (playerTeamIds.has(match.teamAId)) {
-                        totalScore += match.scoreA ?? 0;
-                        matchCount++;
-                      } else if (playerTeamIds.has(match.teamBId)) {
-                        totalScore += match.scoreB ?? 0;
-                        matchCount++;
-                      }
-                    }
-                  }
-                  return matchCount > 0 ? Math.round(totalScore / matchCount) : 0;
-                })(),
-                mvpCount: users.find(u => u.id === selectedPlayer.id && u.isMVP) ? 1 : 0,
-                championCount: championOfTheWeek?.members.some(m => m.userId === selectedPlayer.id) ? 1 : 0,
-              },
-              recentMatches: [],
-              achievements: [],
-            } : null}
-            division={division}
-            onClose={() => setSelectedPlayer(null)}
           />
 
           {/* Desktop Footer — branding bar */}

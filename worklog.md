@@ -811,3 +811,23 @@ Stage Summary:
 - Mobile bottom nav layout: Dashboard, Peserta | GF (center) | Bracket, Profil
 - Lint: clean
 
+---
+Task ID: 3
+Agent: Main
+Task: Comprehensive audit and cleanup of unused code
+
+Work Log:
+- Audited page.tsx: removed ParticipantsClubTab import, PlayerProfileModal import, selectedPlayer state (dead - never set to real player), registrationList useMemo (dead), 44-line PlayerProfileModal JSX block
+- Deleted 7 unused component files: AllRankingsModal.tsx, DonationModal.tsx, QualifiedPlayersModal.tsx, SawerModal.tsx, Trophy.tsx, PlayerProfile.tsx, ParticipantsClubTab.tsx
+- Deleted 2 unused API route directories: api/debug (health + upload-test), api/seed-participants
+- Verified all remaining imports in page.tsx, Dashboard.tsx, Navigation.tsx are used
+- Verified store state/actions, hooks, and lib files are properly referenced
+- Final lint: clean, dev server compiles successfully (GET / 200)
+
+Stage Summary:
+- Removed ~100+ lines of dead code from page.tsx
+- Deleted 7 unused component files (reduced bundle size)
+- Deleted 2 unused API route directories
+- All logic integrations verified correct
+- Lint clean, compile clean
+
