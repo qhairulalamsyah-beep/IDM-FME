@@ -3510,7 +3510,7 @@ export function AdminPanel({
         onRemoveMVP={onRemoveMVP}
         onAvatarChange={async (userId, newAvatarUrl) => {
           try {
-            const res = await fetch('/api/users', {
+            const res = await adminFetch('/api/users', {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ userId, avatar: newAvatarUrl }),

@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
+import { adminFetch } from '@/lib/admin-fetch';
 import {
   XCircle,
   Search,
@@ -467,7 +468,7 @@ export function PlayerManagementScreen({
                                 try {
                                   const formData = new FormData();
                                   formData.append('file', file);
-                                  const res = await fetch('/api/upload/avatar', { method: 'POST', body: formData });
+                                  const res = await adminFetch('/api/upload/avatar', { method: 'POST', body: formData });
                                   const data = await res.json();
                                   if (res.ok && data.success) {
                                     onAvatarChange?.(reg.user.id, data.url);

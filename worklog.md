@@ -848,3 +848,23 @@ Stage Summary:
 - Contextual messaging adapts to tournament status (registration/ongoing/setup/null)
 - Registration CTA appears in empty ranking state when registration is open
 - Hero card gracefully handles null tournament data
+
+---
+Task ID: 20
+Agent: Main
+Task: Fix admin avatar upload "Hanya admin yang dapat melakukan ini" error
+
+Work Log:
+- User reported: clicking camera icon in Admin Panel > Kelola Peserta shows "Hanya admin yang dapat melakukan ini" toast
+- Root cause: Two places used plain `fetch()` instead of `adminFetch()`:
+  1. PlayerManagementScreen.tsx line 470: `fetch('/api/upload/avatar')` — no auth headers sent
+  2. AdminPanel.tsx line 3513: `fetch('/api/users', { method: 'PUT' })` — no auth headers sent
+- PUT /api/users has requireAdmin() guard that checks for x-admin-token or x-admin-id/x-admin-hash headers
+- Without auth headers, requireAdmin returns 401 "Hanya admin yang dapat melakukan ini"
+- Fix 1: Added `import { adminFetch } from '@/lib/admin-fetch'` to PlayerManagementScreen.tsx, changed fetch to adminFetch
+- Fix 2: Changed fetch to adminFetch in AdminPanel.tsx onAvatarChange handler
+- Lint passes with 0 errors
+
+Stage Summary:
+- Avatar upload now sends proper admin auth headers via adminFetch()
+- adminFetch includes auto-reauth: if JWT expired, PIN modal appears, retries request automatically
