@@ -541,7 +541,9 @@ export function Dashboard({
 
               {/* Dynamic Greeting */}
               <p className="text-[13px] text-white/40 mb-4 leading-relaxed font-normal md:text-sm lg:text-[15px]">
-                {greeting}! {statusInfo.desc}
+                {!tournament
+                  ? `${greeting}! Data turnamen sedang dimuat...`
+                  : `${greeting}! ${statusInfo.desc}`}
               </p>
               </div>{/* end left column */}
 
@@ -635,7 +637,7 @@ export function Dashboard({
                   {!isRegistration && !isOngoing && (
                     <div className="flex items-center gap-2.5 text-white/35 text-[13px] font-medium">
                       <Clock className="w-4 h-4" />
-                      <span>Menunggu dimulai...</span>
+                      <span>{!tournament ? 'Turnamen belum tersedia' : 'Menunggu dimulai...'}</span>
                     </div>
                   )}
                 </>
@@ -1005,15 +1007,44 @@ export function Dashboard({
 
           {!hasPlayers && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="glass rounded-2xl p-6 flex flex-col items-center text-center"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+              className="glass rounded-2xl p-8 sm:p-10 flex flex-col items-center text-center relative overflow-hidden"
             >
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${accentSubtleBg}`}>
-                <Users className={`w-6 h-6 ${accentColor} opacity-40`} />
-              </div>
-              <p className="text-[13px] text-white/40 font-medium">Belum ada peserta</p>
-              <p className="text-[11px] text-white/20 mt-1">Pemain akan muncul setelah mendaftar</p>
+              {/* Decorative glow behind icon */}
+              <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-[60px] pointer-events-none"
+                style={{ background: isMale ? 'rgba(255,214,10,0.06)' : 'rgba(167,139,250,0.06)' }}
+              />
+              {/* Animated trophy icon */}
+              <motion.div
+                className="relative"
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 relative ${isMale ? 'bg-gradient-to-br from-amber-500/15 to-orange-500/5' : 'bg-gradient-to-br from-violet-500/15 to-purple-500/5'}`}
+                  style={{ border: `1px solid ${isMale ? 'rgba(255,214,10,0.10)' : 'rgba(167,139,250,0.10)'}` }}
+                >
+                  <Trophy className={`w-8 h-8 ${accentColor} opacity-60`} />
+                </div>
+              </motion.div>
+              <p className="text-[14px] text-white/60 font-semibold mb-1">Belum ada peringkat</p>
+              <p className="text-[12px] text-white/30 max-w-[200px] leading-relaxed">
+                {isRegistration
+                  ? 'Daftar sekarang dan jadi yang pertama di leaderboard!'
+                  : 'Peserta akan muncul setelah turnamen dimulai.'}
+              </p>
+              {isRegistration && (
+                <motion.button
+                  onClick={(e) => { e.stopPropagation(); onRegister(); }}
+                  className={`mt-4 px-4 py-2 rounded-xl text-[12px] font-semibold flex items-center gap-1.5 ${isMale ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20 hover:bg-amber-500/25' : 'bg-violet-500/15 text-violet-400 border border-violet-500/20 hover:bg-violet-500/25'} transition-colors`}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Daftar Sekarang
+                </motion.button>
+              )}
             </motion.div>
           )}
 
@@ -1371,15 +1402,32 @@ export function Dashboard({
 
           {!hasClubs && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="glass rounded-2xl p-6 flex flex-col items-center text-center"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1], delay: 0.1 }}
+              className="glass rounded-2xl p-8 sm:p-10 flex flex-col items-center text-center relative overflow-hidden"
             >
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 bg-white/[0.04]">
-                <Shield className="w-6 h-6 text-white/20" />
-              </div>
-              <p className="text-[13px] text-white/40 font-medium">Belum ada club</p>
-              <p className="text-[11px] text-white/20 mt-1">Club akan muncul setelah terbentuk</p>
+              {/* Decorative glow */}
+              <div
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-[60px] pointer-events-none"
+                style={{ background: isMale ? 'rgba(255,214,10,0.04)' : 'rgba(167,139,250,0.04)' }}
+              />
+              {/* Animated shield icon */}
+              <motion.div
+                className="relative"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 bg-white/[0.04]"
+                  style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <Shield className={`w-8 h-8 ${accentColor} opacity-50`} />
+                </div>
+              </motion.div>
+              <p className="text-[14px] text-white/60 font-semibold mb-1">Belum ada club</p>
+              <p className="text-[12px] text-white/30 max-w-[200px] leading-relaxed">
+                Club akan muncul setelah tim terbentuk dan berkompetisi.
+              </p>
             </motion.div>
           )}
 

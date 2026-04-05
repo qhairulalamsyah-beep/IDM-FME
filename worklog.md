@@ -831,3 +831,20 @@ Stage Summary:
 - All logic integrations verified correct
 - Lint clean, compile clean
 
+
+---
+Task ID: 19
+Agent: Main
+Task: Perbaiki UI saat data kosong di Dashboard
+
+Work Log:
+- Improved RANKING empty state: replaced simple text with premium glass card featuring animated trophy icon (float animation), decorative glow, contextual messaging based on tournament status, and "Daftar Sekarang" CTA button when registration is open
+- Improved CLUB empty state: replaced simple text with premium glass card featuring animated shield icon (pulse animation), decorative glow, better typography and messaging
+- Fixed Hero Card contextual messaging: when tournament is null, greeting shows "Data turnamen sedang dimuat..." instead of generic status text; CTA shows "Turnamen belum tersedia" instead of "Menunggu dimulai..."
+- Verified: bun run lint passes with 0 errors
+
+Stage Summary:
+- Empty states now match the premium glass design system (consistent with rest of app)
+- Contextual messaging adapts to tournament status (registration/ongoing/setup/null)
+- Registration CTA appears in empty ranking state when registration is open
+- Hero card gracefully handles null tournament data
