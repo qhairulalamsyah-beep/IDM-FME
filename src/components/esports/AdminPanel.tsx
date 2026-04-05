@@ -3519,10 +3519,16 @@ export function AdminPanel({
               storeFetchData(false);
             } else {
               const data = await res.json().catch(() => ({}));
-              addToast(data.error || 'Gagal mengubah avatar', 'error');
+              // If 401, session expired — adminFetch auto-reauth will handle retry.
+              // Show user-friendly message instead of raw server error.
+              if (res.status === 401) {
+                addToast('Sesi admin expired. Silakan masukkan PIN kembali.', 'warning');
+              } else {
+                addToast(data.error || 'Gagal mengubah avatar peserta', 'error');
+              }
             }
           } catch {
-            addToast('Gagal mengubah avatar', 'error');
+            addToast('Gagal mengubah avatar peserta', 'error');
           }
         }}
       />

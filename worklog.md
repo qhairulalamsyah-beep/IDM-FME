@@ -891,3 +891,29 @@ Stage Summary:
 - Console SyntaxError "Unexpected token '<'" no longer appears
 - Global handler prevents unhandled rejection from DOCTYPE errors
 - verifyAdminSession gracefully handles non-JSON responses
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix admin avatar upload bug in "Kelola Peserta" menu — toast "hanya admin yang dapat melakukan ini"
+
+Work Log:
+- Investigated the bug: searched for error message "hanya admin yang dapat melakukan ini" across codebase
+- Found source: `src/lib/admin-guard.ts:125` — `requireAdmin()` returns `{ success: false, error: 'Akses ditolak. Hanya admin yang bisa melakukan tindakan ini.' }`
+- Traced the upload flow in `PlayerManagementScreen.tsx`:
+  1. Avatar upload calls `adminFetch('/api/upload/avatar', { method: 'POST', body: formData })`
+  2. `/api/upload/avatar` is a PUBLIC endpoint (no `requireAdmin`), so upload succeeds
+  3. On success, `onAvatarChange(userId, url)` is called
+  4. In `AdminPanel.tsx`, `onAvatarChange` calls `adminFetch('/api/users', { method: 'PUT', ... })` 
+  5. `/api/users` PUT uses `requireAdmin` — if JWT expired, returns 401
+  6. `adminFetch` triggers ReAuthModal (z-100), but user may not notice it behind PlayerManagementScreen (z-60)
+  7. User dismisses modal → auth cleared → toast shows "Akses ditolak..."
+- Root cause: `adminFetch` was used unnecessarily for the PUBLIC avatar upload endpoint. When JWT expired, it triggered confusing reauth flow before the actual auth-required PUT request.
+- Fix 1: Changed `PlayerManagementScreen.tsx` to use regular `fetch()` for `/api/upload/avatar` (public endpoint, no auth needed)
+- Fix 2: Improved error handling in `AdminPanel.tsx` `onAvatarChange` — shows user-friendly "Sesi admin expired" message for 401 instead of raw server error
+- Removed unused `adminFetch` import from `PlayerManagementScreen.tsx`
+- Verified: `bun run lint` — clean, no errors
+
+Stage Summary:
+- Fixed admin avatar upload bug by using regular `fetch` for public upload endpoint
+- Improved error messages for auth failures (401 → "Sesi admin expired" warning toast)
+- Files modified: `src/components/esports/PlayerManagementScreen.tsx`, `src/components/esports/AdminPanel.tsx`
