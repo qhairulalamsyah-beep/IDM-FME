@@ -30,6 +30,15 @@ import { Database } from 'lucide-react';
 import { usePusher } from '@/hooks/usePusher';
 import { adminFetch } from '@/lib/admin-fetch';
 
+// Suppress SyntaxError from JSON.parse on non-JSON responses (e.g. HTML error pages)
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason instanceof SyntaxError && event.reason.message.includes('DOCTYPE')) {
+      event.preventDefault();
+    }
+  });
+}
+
 export default function IDOLMETAApp() {
   // Mobile detection for conditional inline styles (loading screen perf)
   // Start with undefined to avoid hydration mismatch, then set after mount

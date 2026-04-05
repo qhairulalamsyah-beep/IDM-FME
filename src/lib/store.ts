@@ -386,7 +386,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         body: JSON.stringify(body),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({ valid: false }));
 
       if (!data.valid) {
         // CRITICAL FIX: Race condition guard
