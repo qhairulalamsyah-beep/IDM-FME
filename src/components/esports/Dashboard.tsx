@@ -984,8 +984,7 @@ export function Dashboard({
       {/* ═══════════════════════════════════════════════════════════
           LEADERBOARD — Top 3 Podium + Rest List (modal-style)
           ═══════════════════════════════════════════════════════════ */}
-      {hasPlayers && (
-        <motion.div variants={item}>
+      <motion.div variants={item}>
           {/* Section header */}
           <div className="flex items-center justify-between px-1 mb-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.06] rounded-lg">
@@ -1004,6 +1003,22 @@ export function Dashboard({
             </motion.button>
           </div>
 
+          {!hasPlayers && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="glass rounded-2xl p-6 flex flex-col items-center text-center"
+            >
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${accentSubtleBg}`}>
+                <Users className={`w-6 h-6 ${accentColor} opacity-40`} />
+              </div>
+              <p className="text-[13px] text-white/40 font-medium">Belum ada peserta</p>
+              <p className="text-[11px] text-white/20 mt-1">Pemain akan muncul setelah mendaftar</p>
+            </motion.div>
+          )}
+
+          {hasPlayers && (
+            <>
           {/* ── Top 3 Podium (modal Leaderboard style) ── */}
           {topPlayers.length >= 3 && (
             <motion.div
@@ -1235,8 +1250,9 @@ export function Dashboard({
               })}
             </motion.div>
           )}
+            </>
+          )}
         </motion.div>
-      )}
 
       {/* ═══════════════════════════════════════════════════════════
           QUICK ACTIONS — 2 Glass-Subtle Cards (+ 2 desktop-only)
@@ -1333,8 +1349,7 @@ export function Dashboard({
       {/* ═══════════════════════════════════════════════════════════
           TOP CLUBS — Club leaderboard only
           ═══════════════════════════════════════════════════════════ */}
-      {hasClubs && (
-        <motion.div variants={item}>
+      <motion.div variants={item}>
           {/* Section header */}
           <div className="flex items-center justify-between px-1 mb-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.06] rounded-lg">
@@ -1353,6 +1368,20 @@ export function Dashboard({
               <ChevronRight className="w-3 h-3" />
             </motion.button>
           </div>
+
+          {!hasClubs && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="glass rounded-2xl p-6 flex flex-col items-center text-center"
+            >
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 bg-white/[0.04]">
+                <Shield className="w-6 h-6 text-white/20" />
+              </div>
+              <p className="text-[13px] text-white/40 font-medium">Belum ada club</p>
+              <p className="text-[11px] text-white/20 mt-1">Club akan muncul setelah terbentuk</p>
+            </motion.div>
+          )}
 
           {/* ── CLUBS LIST ── */}
           {hasClubs && (
@@ -1445,7 +1474,6 @@ export function Dashboard({
             </>
           )}
         </motion.div>
-      )}
 
       {/* ═══════════════════════════════════════════════════════════
           GRAND FINAL BANNER — Premium glass with shimmer holographic
@@ -1456,7 +1484,7 @@ export function Dashboard({
         whileTap={{ scale: 0.985 }}
         transition={springTransition}
         className={`${cardClass} rounded-2xl relative overflow-hidden cursor-pointer`}
-        onClick={() => setQualifiedModalOpen(true)}
+        onClick={() => onNavigate && onNavigate('grandfinal')}
       >
         {/* Shimmer holographic overlay */}
         <div
