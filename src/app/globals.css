@@ -89,6 +89,7 @@
   --rose-muted:  rgba(167, 139, 250, 0.12);
   --rose-glow:   rgba(167, 139, 250, 0.20);
   --ios-pink:    #A78BFA;
+  --ios-gold:     #FFD60A;
 
   --purple:      #BF5AF2;
   --purple-light:#D08AFF;
@@ -109,26 +110,46 @@
   --red:         #FF453A;
   --red-muted:   rgba(255, 69, 58, 0.12);
 
-  /* ── Glass morphism — ultra refined ── */
-  --glass-bg:       rgba(255, 255, 255, 0.04);
-  --glass-hover:    rgba(255, 255, 255, 0.07);
-  --glass-border:   rgba(255, 255, 255, 0.06);
-  --glass-highlight:rgba(255, 255, 255, 0.08);
+  /* ── Glass morphism — Apple ultra refined ── */
+  --glass-bg:       rgba(255, 255, 255, 0.05);
+  --glass-hover:    rgba(255, 255, 255, 0.08);
+  --glass-border:   rgba(255, 255, 255, 0.08);
+  --glass-highlight:rgba(255, 255, 255, 0.12);
 
-  --glass-bg-subtle:  rgba(255, 255, 255, 0.025);
-  --glass-bg-heavy:   rgba(18, 18, 22, 0.88);
+  --glass-bg-subtle:  rgba(255, 255, 255, 0.03);
+  --glass-bg-heavy:   rgba(14, 14, 18, 0.92);
+
+  /* ── Premium Surface System (iOS-inspired) ── */
+  --surface-1: rgba(255, 255, 255, 0.03);   /* lowest elevation */
+  --surface-2: rgba(255, 255, 255, 0.05);   /* cards, sections */
+  --surface-3: rgba(255, 255, 255, 0.08);   /* elevated cards */
+  --surface-4: rgba(255, 255, 255, 0.12);   /* modals, popovers */
+  --surface-5: rgba(28, 28, 34, 0.95);       /* full overlay */
+
+  --surface-border: rgba(255, 255, 255, 0.06);
+  --surface-border-hover: rgba(255, 255, 255, 0.10);
+
+  /* ── Ambient glow (soft colored light) ── */
+  --glow-gold-soft: radial-gradient(ellipse at 50% 0%, rgba(255, 214, 10, 0.08) 0%, transparent 60%);
+  --glow-pink-soft: radial-gradient(ellipse at 50% 0%, rgba(167, 139, 250, 0.08) 0%, transparent 60%);
+  --glow-gold-strong: radial-gradient(ellipse at 50% 0%, rgba(255, 214, 10, 0.15) 0%, transparent 50%);
+  --glow-pink-strong: radial-gradient(ellipse at 50% 0%, rgba(167, 139, 250, 0.15) 0%, transparent 50%);
 
   /* ── Inner glow effects ── */
-  --inner-glow-gold: inset 0 1px 0 rgba(255, 214, 10, 0.10), inset 0 0 24px rgba(255, 214, 10, 0.04);
-  --inner-glow-pink: inset 0 1px 0 rgba(167, 139, 250, 0.10), inset 0 0 24px rgba(167, 139, 250, 0.04);
-  --inner-glow-white: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --inner-glow-gold: inset 0 1px 0 rgba(255, 214, 10, 0.12), inset 0 0 32px rgba(255, 214, 10, 0.05);
+  --inner-glow-pink: inset 0 1px 0 rgba(167, 139, 250, 0.12), inset 0 0 32px rgba(167, 139, 250, 0.05);
+  --inner-glow-white: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 
-  /* ── Depth system — refined shadows ── */
-  --depth-1: 0 1px 4px rgba(0, 0, 0, 0.28), 0 0.5px 1px rgba(0, 0, 0, 0.18);
-  --depth-2: 0 2px 12px rgba(0, 0, 0, 0.32), 0 1px 3px rgba(0, 0, 0, 0.18);
-  --depth-3: 0 4px 24px rgba(0, 0, 0, 0.38), 0 2px 6px rgba(0, 0, 0, 0.18);
-  --depth-4: 0 8px 48px rgba(0, 0, 0, 0.44), 0 4px 12px rgba(0, 0, 0, 0.18);
-  --depth-5: 0 16px 64px rgba(0, 0, 0, 0.50), 0 8px 20px rgba(0, 0, 0, 0.18);
+  /* ── Depth system — Apple-style refined shadows ── */
+  --depth-1: 0 1px 3px rgba(0, 0, 0, 0.24), 0 0.5px 1px rgba(0, 0, 0, 0.12);
+  --depth-2: 0 2px 8px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.12);
+  --depth-3: 0 4px 16px rgba(0, 0, 0, 0.32), 0 2px 4px rgba(0, 0, 0, 0.12);
+  --depth-4: 0 8px 32px rgba(0, 0, 0, 0.36), 0 4px 8px rgba(0, 0, 0, 0.12);
+  --depth-5: 0 16px 48px rgba(0, 0, 0, 0.40), 0 8px 16px rgba(0, 0, 0, 0.12);
+
+  /* ── Colored depth (for division-themed cards) ── */
+  --depth-gold: 0 4px 24px rgba(255, 214, 10, 0.06), 0 2px 8px rgba(0, 0, 0, 0.20);
+  --depth-pink: 0 4px 24px rgba(167, 139, 250, 0.06), 0 2px 8px rgba(0, 0, 0, 0.20);
 
   /* ── Transitions ── */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -264,12 +285,13 @@
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
   border: 0.5px solid var(--glass-border);
-  box-shadow: var(--depth-2);
+  box-shadow: var(--depth-2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   position: relative;
   transition:
     background var(--duration-normal) var(--ease-out-expo),
     border-color var(--duration-normal) var(--ease-out-expo),
-    box-shadow var(--duration-normal) var(--ease-out-expo);
+    box-shadow var(--duration-normal) var(--ease-out-expo),
+    transform var(--duration-normal) var(--ease-out-expo);
 }
 
 .glass::before {
@@ -278,7 +300,7 @@
   inset: 0;
   border-radius: inherit;
   padding: 0.5px;
-  background: linear-gradient(180deg, var(--glass-highlight) 0%, transparent 50%);
+  background: linear-gradient(180deg, var(--glass-highlight) 0%, transparent 40%);
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
@@ -292,24 +314,30 @@
 
 .glass:hover {
   background: var(--glass-hover);
-  border-color: rgba(255, 255, 255, 0.09);
-  box-shadow: var(--depth-3);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: var(--depth-3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass:hover {
+    transform: translateY(-1px);
+  }
 }
 
 /* Even lighter — barely-there glass */
 .glass-subtle {
   background: var(--glass-bg-subtle);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-  border: 0.5px solid rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 0.5px solid rgba(255, 255, 255, 0.04);
   transition:
     background var(--duration-normal) var(--ease-out-expo),
     border-color var(--duration-normal) var(--ease-out-expo);
 }
 
 .glass-subtle:hover {
-  background: rgba(255, 255, 255, 0.045);
-  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.07);
 }
 
 /* Heavy glass — for modals, overlays, sheets */
@@ -341,46 +369,65 @@
 }
 
 /* ========================================
-   3D Card System
+   3D Card System — Responsive Premium
    ======================================== */
 
 .card-3d {
   transform-style: preserve-3d;
-  perspective: 1000px;
+  perspective: 1200px;
   transition:
     transform var(--duration-slow) var(--ease-out-expo),
     box-shadow var(--duration-slow) var(--ease-out-expo);
 }
 
-.card-3d:hover {
-  transform: translateY(-6px) rotateX(2deg);
-  box-shadow: var(--depth-5);
+/* Desktop: full 3D hover */
+@media (hover: hover) and (pointer: fine) {
+  .card-3d:hover {
+    transform: translateY(-8px) rotateX(2deg) scale(1.01);
+    box-shadow: var(--depth-5);
+  }
+  .card-3d:active {
+    transform: translateY(-2px) rotateX(0.5deg) scale(0.98);
+    transition-duration: var(--duration-fast);
+  }
 }
 
-.card-3d:active {
-  transform: translateY(-2px) rotateX(0.5deg) scale(0.985);
-  transition-duration: var(--duration-fast);
+/* Tablet: subtle lift */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .card-3d:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--depth-4);
+  }
 }
 
-/* ── Gold premium card ── */
+/* Mobile: no 3D, just subtle press feedback */
+@media (max-width: 767px) {
+  .card-3d:active {
+    transform: scale(0.98);
+    transition-duration: var(--duration-fast);
+  }
+}
+
+/* ── Gold premium card — enhanced ── */
 .card-gold {
   background:
-    linear-gradient(145deg,
-      rgba(255, 214, 10, 0.06) 0%,
-      rgba(18, 18, 22, 0.78) 35%,
-      rgba(255, 214, 10, 0.02) 100%);
+    linear-gradient(155deg,
+      rgba(255, 214, 10, 0.07) 0%,
+      rgba(18, 18, 22, 0.82) 30%,
+      rgba(255, 214, 10, 0.03) 100%);
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border: 0.5px solid rgba(255, 214, 10, 0.12);
-  border-bottom: 1px solid rgba(255, 214, 10, 0.25);
+  border: 0.5px solid rgba(255, 214, 10, 0.14);
+  border-bottom: 1px solid rgba(255, 214, 10, 0.22);
   box-shadow:
-    var(--depth-2),
+    var(--depth-gold),
     var(--inner-glow-gold),
-    0 0 48px rgba(255, 214, 10, 0.03);
+    0 0 64px rgba(255, 214, 10, 0.04);
   position: relative;
   transition:
     box-shadow var(--duration-slow) var(--ease-out-expo),
-    border-color var(--duration-normal) var(--ease-out-expo);
+    border-color var(--duration-normal) var(--ease-out-expo),
+    transform var(--duration-slow) var(--ease-out-expo);
 }
 
 .card-gold::before {
@@ -389,7 +436,7 @@
   inset: 0;
   border-radius: inherit;
   padding: 0.5px;
-  background: linear-gradient(180deg, rgba(255, 214, 10, 0.10) 0%, transparent 45%);
+  background: linear-gradient(180deg, rgba(255, 214, 10, 0.14) 0%, transparent 40%);
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
@@ -401,35 +448,47 @@
   pointer-events: none;
 }
 
-.card-gold:hover {
-  box-shadow:
-    var(--depth-3),
-    inset 0 1px 0 rgba(255, 214, 10, 0.14),
-    inset 0 0 32px rgba(255, 214, 10, 0.06),
-    0 0 64px rgba(255, 214, 10, 0.05);
-  border-color: rgba(255, 214, 10, 0.18);
-  border-bottom-color: rgba(255, 214, 10, 0.35);
+@media (hover: hover) and (pointer: fine) {
+  .card-gold:hover {
+    box-shadow:
+      0 8px 32px rgba(255, 214, 10, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.24),
+      inset 0 1px 0 rgba(255, 214, 10, 0.18),
+      inset 0 0 40px rgba(255, 214, 10, 0.06),
+      0 0 80px rgba(255, 214, 10, 0.06);
+    border-color: rgba(255, 214, 10, 0.20);
+    border-bottom-color: rgba(255, 214, 10, 0.35);
+    transform: translateY(-2px);
+  }
 }
 
-/* ── Pink premium card ── */
+@media (max-width: 767px) {
+  .card-gold:active {
+    transform: scale(0.99);
+    transition-duration: var(--duration-fast);
+  }
+}
+
+/* ── Pink premium card — enhanced ── */
 .card-pink {
   background:
-    linear-gradient(145deg,
-      rgba(167, 139, 250, 0.06) 0%,
-      rgba(18, 18, 22, 0.78) 35%,
-      rgba(167, 139, 250, 0.02) 100%);
+    linear-gradient(155deg,
+      rgba(167, 139, 250, 0.07) 0%,
+      rgba(18, 18, 22, 0.82) 30%,
+      rgba(167, 139, 250, 0.03) 100%);
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border: 0.5px solid rgba(167, 139, 250, 0.12);
-  border-bottom: 1px solid rgba(167, 139, 250, 0.25);
+  border: 0.5px solid rgba(167, 139, 250, 0.14);
+  border-bottom: 1px solid rgba(167, 139, 250, 0.22);
   box-shadow:
-    var(--depth-2),
+    var(--depth-pink),
     var(--inner-glow-pink),
-    0 0 48px rgba(167, 139, 250, 0.03);
+    0 0 64px rgba(167, 139, 250, 0.04);
   position: relative;
   transition:
     box-shadow var(--duration-slow) var(--ease-out-expo),
-    border-color var(--duration-normal) var(--ease-out-expo);
+    border-color var(--duration-normal) var(--ease-out-expo),
+    transform var(--duration-slow) var(--ease-out-expo);
 }
 
 .card-pink::before {
@@ -438,7 +497,7 @@
   inset: 0;
   border-radius: inherit;
   padding: 0.5px;
-  background: linear-gradient(180deg, rgba(167, 139, 250, 0.10) 0%, transparent 45%);
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.14) 0%, transparent 40%);
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
@@ -450,14 +509,25 @@
   pointer-events: none;
 }
 
-.card-pink:hover {
-  box-shadow:
-    var(--depth-3),
-    inset 0 1px 0 rgba(167, 139, 250, 0.14),
-    inset 0 0 32px rgba(167, 139, 250, 0.06),
-    0 0 64px rgba(167, 139, 250, 0.05);
-  border-color: rgba(167, 139, 250, 0.18);
-  border-bottom-color: rgba(167, 139, 250, 0.35);
+@media (hover: hover) and (pointer: fine) {
+  .card-pink:hover {
+    box-shadow:
+      0 8px 32px rgba(167, 139, 250, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.24),
+      inset 0 1px 0 rgba(167, 139, 250, 0.18),
+      inset 0 0 40px rgba(167, 139, 250, 0.06),
+      0 0 80px rgba(167, 139, 250, 0.06);
+    border-color: rgba(167, 139, 250, 0.20);
+    border-bottom-color: rgba(167, 139, 250, 0.35);
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 767px) {
+  .card-pink:active {
+    transform: scale(0.99);
+    transition-duration: var(--duration-fast);
+  }
 }
 
 /* ========================================
@@ -484,14 +554,14 @@
 
 /* Gold CTA */
 .btn-gold {
-  background: linear-gradient(180deg, #FFD60A 0%, #CCAD08 100%);
+  background: linear-gradient(180deg, #FFD60A 0%, #E6C009 50%, #CCAD08 100%);
   color: #050507;
   font-weight: 700;
   letter-spacing: -0.015em;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.18),
-    0 2px 12px rgba(255, 214, 10, 0.20),
-    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+    0 1px 2px rgba(0, 0, 0, 0.20),
+    0 2px 16px rgba(255, 214, 10, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transition:
     transform var(--duration-fast) var(--ease-out-expo),
     box-shadow var(--duration-normal) var(--ease-out-expo);
@@ -499,10 +569,11 @@
 
 .btn-gold:hover {
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.22),
-    0 4px 20px rgba(255, 214, 10, 0.30),
-    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+    0 2px 4px rgba(0, 0, 0, 0.24),
+    0 4px 24px rgba(255, 214, 10, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transform: translateY(-1px);
+  background: linear-gradient(180deg, #FFE030 0%, #E6C009 50%, #CCAD08 100%);
 }
 
 .btn-gold:active {
@@ -516,14 +587,14 @@
 
 /* Pink CTA */
 .btn-pink {
-  background: linear-gradient(180deg, #A78BFA 0%, #8B5CF6 100%);
+  background: linear-gradient(180deg, #B49AFF 0%, #9B7AFA 50%, #8B5CF6 100%);
   color: #ffffff;
   font-weight: 700;
   letter-spacing: -0.015em;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.18),
-    0 2px 12px rgba(167, 139, 250, 0.20),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    0 1px 2px rgba(0, 0, 0, 0.20),
+    0 2px 16px rgba(167, 139, 250, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
   transition:
     transform var(--duration-fast) var(--ease-out-expo),
     box-shadow var(--duration-normal) var(--ease-out-expo);
@@ -531,10 +602,11 @@
 
 .btn-pink:hover {
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.22),
-    0 4px 20px rgba(167, 139, 250, 0.30),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    0 2px 4px rgba(0, 0, 0, 0.24),
+    0 4px 24px rgba(167, 139, 250, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
   transform: translateY(-1px);
+  background: linear-gradient(180deg, #C4B5FD 0%, #9B7AFA 50%, #8B5CF6 100%);
 }
 
 .btn-pink:active {
