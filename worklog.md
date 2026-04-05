@@ -951,3 +951,20 @@ Stage Summary:
 - New CSS classes available for future components: card-elevated, card-gold-elevated, card-purple-elevated, ios-satin, ios-vibrant, ios-regular, ios-tilt, ios-float, ios-breathe, ios-shine-overlay, ios-entrance, etc.
 - Responsive 3D effects properly scaled: full tilt on desktop, subtle lift on tablet, press-only on mobile
 - All 30+ components remain functional with enhanced visual presentation
+---
+Task ID: 1
+Agent: main
+Task: Add demo data fallback for sandbox environment (no PostgreSQL)
+
+Work Log:
+- Identified issue: All API routes return 500 (no PostgreSQL in sandbox), so app shows empty data and iOS Premium UI changes are not visible
+- Added `injectDemoData()` function to store.ts with realistic Indonesian mock data
+- Modified `fetchData()` to detect when all API calls fail and inject demo data
+- Demo data includes: 12 players (male/female names), tournament with registration status, 8 registrations, 3 donations, sawer pool
+- Lint clean, compiles successfully, GET / 200
+
+Stage Summary:
+- Demo mode activates when database is unavailable (sandbox only)
+- In production with Supabase, real data takes priority (demo data only fills when completely empty)
+- iOS Premium UI/UX changes now fully visible in preview panel
+

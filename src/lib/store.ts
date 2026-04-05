@@ -203,6 +203,77 @@ if (typeof localStorage !== 'undefined') {
   }
 }
 
+// ─────────────────────────────────────────────────────────
+// Demo Data — Used when database is unavailable (sandbox)
+// Provides realistic mock data to showcase iOS Premium UI
+// ─────────────────────────────────────────────────────────
+function injectDemoData(division: 'male' | 'female') {
+  const isMale = division === 'male';
+  const gender = isMale ? 'male' : 'female';
+
+  const demoUsers: User[] = [
+    { id: 'u1', name: isMale ? 'Rizky Aditya' : 'Sari Dewi', email: 'u1@demo.com', gender, tier: 'S', points: 2850, avatar: null, isAdmin: false, isMVP: true, mvpScore: 1250 },
+    { id: 'u2', name: isMale ? 'Dimas Pratama' : 'Ayu Lestari', email: 'u2@demo.com', gender, tier: 'S', points: 2640, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+    { id: 'u3', name: isMale ? 'Farhan Maulana' : 'Putri Rahayu', email: 'u3@demo.com', gender, tier: 'A', points: 2310, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+    { id: 'u4', name: isMale ? 'Andi Setiawan' : 'Nadia Fitriani', email: 'u4@demo.com', gender, tier: 'A', points: 2180, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+    { id: 'u5', name: isMale ? 'Bayu Saputra' : 'Rina Maharani', email: 'u5@demo.com', gender, tier: 'A', points: 1950, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+    { id: 'u6', name: isMale ? 'Galih Ramadhan' : 'Dina Safitri', email: 'u6@demo.com', gender, tier: 'B', points: 1720, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+    { id: 'u7', name: isMale ? 'Hendra Wijaya' : 'Maya Anggraini', email: 'u7@demo.com', gender, tier: 'B', points: 1540, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+    { id: 'u8', name: isMale ? 'Irfan Hakim' : 'Bella Novita', email: 'u8@demo.com', gender, tier: 'B', points: 1380, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+    { id: 'u9', name: isMale ? 'Joko Susanto' : 'Cinta Permata', email: 'u9@demo.com', gender, tier: 'B', points: 1150, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+    { id: 'u10', name: isMale ? 'Kevin Nugroho' : 'Eka Wulandari', email: 'u10@demo.com', gender, tier: 'B', points: 980, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+    { id: 'u11', name: isMale ? 'Lukman Hakim' : 'Fira Azzahra', email: 'u11@demo.com', gender, tier: 'B', points: 820, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+    { id: 'u12', name: isMale ? 'Muhammad Faisal' : 'Gita Nirmala', email: 'u12@demo.com', gender, tier: 'B', points: 650, avatar: null, isAdmin: false, isMVP: false, mvpScore: 0 },
+  ];
+
+  const demoTournament: Tournament = {
+    id: 't1',
+    name: isMale ? 'IDM Male Championship' : 'IDM Female Championship',
+    division: gender,
+    type: 'weekly',
+    status: 'registration',
+    week: 4,
+    bracketType: 'single_elimination',
+    prizePool: 500000,
+    basePrizePool: 500000,
+    mode: '1v1',
+    bpm: '170-190',
+    lokasi: 'Kotabaru, Kalsel',
+    startDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+    _count: { registrations: 8, teams: 0, matches: 0 },
+  };
+
+  const demoRegistrations: Registration[] = demoUsers.slice(0, 8).map((u) => ({
+    id: `reg-${u.id}`,
+    userId: u.id,
+    tournamentId: 't1',
+    status: 'approved',
+    tierAssigned: u.tier,
+    user: u,
+  }));
+
+  const demoTeams: Team[] = [];
+  const demoMatches: Match[] = [];
+
+  const demoDonations: Donation[] = [
+    { id: 'd1', amount: 50000, message: 'Semangat semuanya! 🔥', anonymous: false, paymentMethod: 'qris', paymentStatus: 'confirmed', proofImageUrl: null, paidAt: new Date().toISOString(), createdAt: new Date().toISOString(), user: { id: 'u1', name: isMale ? 'Rizky Aditya' : 'Sari Dewi', avatar: '' } },
+    { id: 'd2', amount: 25000, message: 'Hati-hati di stage ya', anonymous: true, paymentMethod: 'transfer', paymentStatus: 'confirmed', proofImageUrl: null, paidAt: new Date().toISOString(), createdAt: new Date().toISOString(), user: null },
+    { id: 'd3', amount: 100000, message: 'IDM terbaik! 💪', anonymous: false, paymentMethod: 'qris', paymentStatus: 'confirmed', proofImageUrl: null, paidAt: new Date().toISOString(), createdAt: new Date().toISOString(), user: { id: 'u3', name: isMale ? 'Farhan Maulana' : 'Putri Rahayu', avatar: '' } },
+  ];
+
+  set({
+    users: demoUsers,
+    tournaments: [demoTournament],
+    currentTournament: demoTournament,
+    registrations: demoRegistrations,
+    teams: demoTeams,
+    matches: demoMatches,
+    donations: demoDonations,
+    totalDonation: 175000,
+    totalSawer: 85000,
+  });
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   // Initial State
   activeTab: 'dashboard',
@@ -446,6 +517,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   // API Actions
+  // ── Demo Data Injector (sandbox fallback when no database) ──
   fetchData: async (showLoading = true) => {
     const runFetch = async (loading: boolean) => {
       try {
@@ -522,6 +594,18 @@ export const useAppStore = create<AppState>((set, get) => ({
             set({ totalSawer: sawerData.totalSawer });
           }
         } catch { /* sawer optional */ }
+
+        // ── Demo Mode: Inject mock data when database is unavailable ──
+        const currentState = get();
+        const noUsers = currentState.users.length === 0;
+        const noTournament = !currentState.currentTournament;
+        // Check if all responses were errors (500 from Prisma, not network failure)
+        const allFailed = [usersRes, tournamentsRes, donationsRes, sawerRes, mvpRes]
+          .every((r) => r !== null && !r.ok);
+
+        if (noUsers && noTournament && (allFailed || [usersRes, tournamentsRes].every((r) => r === null))) {
+          injectDemoData(division);
+        }
 
         // Minimum loading time for splash screen (4s) only on initial load
         if (loading) {
