@@ -76,7 +76,7 @@ export function TeamListModal({
 
           {/* Bottom Sheet - with drag to close */}
           <motion.div
-            className="relative w-full max-w-md lg:max-w-2xl glass rounded-t-[32px] overflow-hidden flex flex-col"
+            className="relative w-full max-w-md lg:max-w-2xl glass rounded-t-[28px] ios-modal-content overflow-hidden flex flex-col"
             style={{ maxHeight: 'calc(100dvh - 80px)', paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -93,7 +93,7 @@ export function TeamListModal({
             }}
           >
             {/* Premium Drag Handle */}
-            <div className="flex justify-center pt-4 pb-2 cursor-grab active:cursor-grabbing">
+            <div className="ios-sheet-grabber flex justify-center pt-4 pb-2 cursor-grab active:cursor-grabbing">
               <div className="w-12 h-[5px] rounded-full bg-white/20 shadow-sm shadow-white/10" />
             </div>
 
@@ -105,7 +105,7 @@ export function TeamListModal({
                     <Swords className={`w-5 h-5 ${accentClass}`} />
                   </div>
                   <div>
-                    <h2 className="text-[17px] font-bold text-white/90 tracking-tight leading-tight">
+                    <h2 className="ios-section-title text-[17px] font-bold text-white/90 tracking-tight leading-tight">
                       Daftar Tim
                     </h2>
                     <p className="text-[11px] text-white/30 mt-0.5 font-medium">
@@ -144,7 +144,7 @@ export function TeamListModal({
                   {teams.map((team, i) => (
                     <motion.div
                       key={team.id}
-                      className="glass-subtle rounded-2xl p-4.5 lg:p-5 transition-all duration-300"
+                      className="ios-list-item glass-subtle rounded-2xl p-4.5 lg:p-5 transition-all duration-300"
                       style={{ padding: '18px' }}
                       initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}

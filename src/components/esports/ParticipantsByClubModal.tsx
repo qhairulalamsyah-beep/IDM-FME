@@ -248,7 +248,7 @@ export function ParticipantsByClubModal({
 
           {/* Modal */}
           <motion.div
-            className="relative z-10 w-full sm:max-w-lg md:max-w-2xl max-h-[92vh] sm:max-h-[85vh] bg-[#0E0E12] border border-white/[0.06] sm:rounded-3xl rounded-t-3xl overflow-hidden flex flex-col"
+            className="relative z-10 w-full sm:max-w-lg md:max-w-2xl max-h-[92vh] sm:max-h-[85vh] bg-[#0E0E12] border border-white/[0.06] sm:rounded-3xl rounded-t-[28px] ios-modal-content overflow-hidden flex flex-col"
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
@@ -265,7 +265,7 @@ export function ParticipantsByClubModal({
                     <Shield className="w-5 h-5 text-amber-400" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">Peserta & Club</h2>
+                    <h2 className="ios-section-title text-lg font-bold text-white">Peserta & Club</h2>
                     <p className="text-[11px] text-white/35">
                       {totalParticipants} peserta &middot; {clubs.length} club
                     </p>
@@ -367,7 +367,7 @@ export function ParticipantsByClubModal({
                       <motion.div
                         key={club.id}
                         layout
-                        className="rounded-2xl border border-white/[0.05] overflow-hidden"
+                        className="ios-list-item rounded-2xl border border-white/[0.05] overflow-hidden"
                         style={{
                           background: 'linear-gradient(145deg, rgba(255,255,255,0.02) 0%, rgba(14,14,18,0.6) 100%)',
                         }}
@@ -523,7 +523,7 @@ export function ParticipantsByClubModal({
                   {filteredUnassigned.length > 0 && (
                     <motion.div
                       layout
-                      className="rounded-2xl border border-dashed border-white/[0.08] overflow-hidden"
+                      className="ios-list-item rounded-2xl border border-dashed border-white/[0.08] overflow-hidden"
                       style={{
                         background: 'linear-gradient(145deg, rgba(255,255,255,0.01) 0%, rgba(14,14,18,0.4) 100%)',
                       }}

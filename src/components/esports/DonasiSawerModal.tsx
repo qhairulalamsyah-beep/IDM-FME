@@ -312,7 +312,7 @@ export function DonasiSawerModal({
           onClick={closeModal}
         >
           <motion.div
-            className={`w-full max-w-md rounded-t-[28px] p-6 ${cardClass} overflow-y-auto`}
+            className={`w-full max-w-md rounded-t-[28px] ios-modal-content p-6 ${cardClass} overflow-y-auto`}
             style={{ maxHeight: 'calc(100dvh - 80px)', scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.08) transparent', paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 16px)' }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -321,7 +321,7 @@ export function DonasiSawerModal({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Handle */}
-            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
+            <div className="ios-sheet-grabber w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
 
             {/* Back button + Close button (only on steps > 1) */}
             {paymentStep > 1 && paymentStep < 4 && (

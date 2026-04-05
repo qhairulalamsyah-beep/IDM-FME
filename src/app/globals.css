@@ -2067,3 +2067,709 @@
     padding-bottom: 10px;
   }
 }
+
+/* ========================================
+   iOS Apple Premium — Enhanced 3D System
+   ======================================== */
+
+/* Refined perspective containers for desktop, tablet, mobile */
+.perspective-desktop { perspective: 1800px; perspective-origin: 50% 50%; }
+.perspective-tablet { perspective: 1200px; perspective-origin: 50% 60%; }
+.perspective-mobile { perspective: 800px; perspective-origin: 50% 70%; }
+
+/* iOS-style depth layer — subtle parallax on scroll */
+.ios-depth-layer {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Premium float animation — gentle bobbing for desktop */
+@keyframes ios-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.ios-float {
+  animation: ios-float 6s ease-in-out infinite;
+}
+
+/* Subtle scale breathing — for featured cards */
+@keyframes ios-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.008); }
+}
+
+.ios-breathe {
+  animation: ios-breathe 4s ease-in-out infinite;
+}
+
+/* Premium tilt on hover — Apple-style subtle rotation */
+.ios-tilt {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ios-tilt:hover {
+    transform: perspective(1000px) rotateX(1.5deg) rotateY(-1deg) translateY(-4px);
+  }
+}
+
+/* Tablet: reduced tilt */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ios-tilt:hover {
+    transform: perspective(1000px) rotateX(0.8deg) translateY(-2px);
+  }
+}
+
+/* Mobile: no tilt, press only */
+@media (max-width: 767px) {
+  .ios-tilt:active {
+    transform: scale(0.98);
+    transition-duration: 0.1s;
+  }
+}
+
+/* ========================================
+   iOS Material — Satin & Vibrant
+   ======================================== */
+
+/* iOS Satin — subtle frosted glass for content areas */
+.ios-satin {
+  background: rgba(28, 28, 30, 0.70);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  border: 0.5px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.20),
+    0 4px 16px rgba(0, 0, 0, 0.15),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* iOS Vibrant — stronger blur for modals/sheets */
+.ios-vibrant {
+  background: rgba(18, 18, 22, 0.88);
+  backdrop-filter: blur(80px) saturate(200%);
+  -webkit-backdrop-filter: blur(80px) saturate(200%);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.40),
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* iOS Regular — standard system material */
+.ios-regular {
+  background: rgba(30, 30, 34, 0.60);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  border: 0.5px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.20),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Thin separator — Apple-style hairline divider */
+.ios-hairline {
+  height: 0.33px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0.5px 0 rgba(0, 0, 0, 0.04);
+}
+
+/* ========================================
+   iOS Apple Premium Card Variants
+   ======================================== */
+
+/* Elevated card — premium raised appearance */
+.card-elevated {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(18, 18, 22, 0.85) 100%
+  );
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Top highlight — Apple-style light reflection */
+.card-elevated::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.5px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 30%,
+    transparent 50%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-elevated:hover {
+    transform: translateY(-4px) scale(1.005);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.18),
+      0 12px 32px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.10);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .card-elevated:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.16),
+      0 8px 24px rgba(0, 0, 0, 0.10),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+}
+
+@media (max-width: 767px) {
+  .card-elevated:active {
+    transform: scale(0.99);
+    transition-duration: 0.1s;
+  }
+}
+
+/* Gold elevated — male luxury */
+.card-gold-elevated {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 214, 10, 0.06) 0%,
+    rgba(22, 22, 18, 0.85) 35%,
+    rgba(255, 214, 10, 0.02) 100%
+  );
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 0.5px solid rgba(255, 214, 10, 0.12);
+  border-bottom-color: rgba(255, 214, 10, 0.18);
+  border-radius: 20px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 4px 20px rgba(255, 214, 10, 0.05),
+    inset 0 1px 0 rgba(255, 214, 10, 0.10),
+    inset 0 0 40px rgba(255, 214, 10, 0.03);
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease;
+}
+
+.card-gold-elevated::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.5px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 214, 10, 0.12) 0%,
+    rgba(255, 214, 10, 0.02) 30%,
+    transparent 50%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-gold-elevated:hover {
+    transform: translateY(-4px) scale(1.005);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.18),
+      0 8px 32px rgba(255, 214, 10, 0.07),
+      0 0 60px rgba(255, 214, 10, 0.04),
+      inset 0 1px 0 rgba(255, 214, 10, 0.15),
+      inset 0 0 48px rgba(255, 214, 10, 0.05);
+    border-color: rgba(255, 214, 10, 0.18);
+    border-bottom-color: rgba(255, 214, 10, 0.30);
+  }
+}
+
+/* Purple elevated — female soft luxury */
+.card-purple-elevated {
+  background: linear-gradient(
+    160deg,
+    rgba(167, 139, 250, 0.06) 0%,
+    rgba(22, 22, 18, 0.85) 35%,
+    rgba(167, 139, 250, 0.02) 100%
+  );
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 0.5px solid rgba(167, 139, 250, 0.12);
+  border-bottom-color: rgba(167, 139, 250, 0.18);
+  border-radius: 20px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 4px 20px rgba(167, 139, 250, 0.05),
+    inset 0 1px 0 rgba(167, 139, 250, 0.10),
+    inset 0 0 40px rgba(167, 139, 250, 0.03);
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease;
+}
+
+.card-purple-elevated::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.5px;
+  background: linear-gradient(
+    180deg,
+    rgba(167, 139, 250, 0.12) 0%,
+    rgba(167, 139, 250, 0.02) 30%,
+    transparent 50%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-purple-elevated:hover {
+    transform: translateY(-4px) scale(1.005);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.18),
+      0 8px 32px rgba(167, 139, 250, 0.07),
+      0 0 60px rgba(167, 139, 250, 0.04),
+      inset 0 1px 0 rgba(167, 139, 250, 0.15),
+      inset 0 0 48px rgba(167, 139, 250, 0.05);
+    border-color: rgba(167, 139, 250, 0.18);
+    border-bottom-color: rgba(167, 139, 250, 0.30);
+  }
+}
+
+/* ========================================
+   Hero Card — Premium Refinements
+   ======================================== */
+
+/* Corner bleed effect for hero cards */
+.hero-corner-bleed {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+  filter: blur(40px);
+}
+
+/* Info chip — glass tag component */
+.hero-info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.hero-info-chip:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.hero-info-chip .chip-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.hero-info-chip .chip-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.40);
+}
+
+/* Shimmer button overlay */
+.hero-shimmer-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-shimmer-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.12) 45%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.12) 55%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: none;
+  pointer-events: none;
+}
+
+.hero-shimmer-btn:hover::after {
+  transform: translateX(100%);
+  transition: transform 0.8s ease;
+}
+
+/* Result card — inner card for champion/mvp */
+.hero-result-card {
+  border-radius: 18px;
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  overflow: hidden;
+  position: relative;
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s ease;
+}
+
+.hero-result-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.20),
+    0 0 24px rgba(0, 0, 0, 0.05);
+}
+
+/* Result card glow line at top */
+.result-glow {
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ========================================
+   iOS Navigation — Premium Refinements
+   ======================================== */
+
+/* Floating nav bar — refined shadow */
+.ios-nav-float {
+  box-shadow:
+    0 -4px 24px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 0 0.5px rgba(255, 255, 255, 0.02);
+}
+
+/* Pill active indicator for nav */
+.ios-nav-pill {
+  position: relative;
+  overflow: hidden;
+}
+
+.ios-nav-pill::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  transform: translateX(-50%) scale(0);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ios-nav-pill.active::after {
+  transform: translateX(-50%) scale(1);
+}
+
+/* Header bar — refined glass */
+.ios-header-glass {
+  background: linear-gradient(
+    180deg,
+    rgba(28, 28, 32, 0.88) 0%,
+    rgba(20, 20, 24, 0.92) 100%
+  );
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.04),
+    0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* ========================================
+   iOS Modal/Sheet — Premium Presentation
+   ======================================== */
+
+/* Sheet grabber — refined */
+.ios-sheet-grabber {
+  width: 36px;
+  height: 5px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.18);
+  margin: 8px auto 0;
+  box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.10);
+}
+
+/* Modal content — refined spacing */
+.ios-modal-content {
+  padding: 24px;
+}
+
+@media (min-width: 640px) {
+  .ios-modal-content {
+    padding: 32px;
+  }
+}
+
+/* Modal section divider */
+.ios-modal-divider {
+  height: 0.33px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 16px 0;
+}
+
+/* List item — iOS-style with subtle highlight */
+.ios-list-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 12px;
+  transition: background 0.2s ease;
+  min-height: 44px;
+}
+
+.ios-list-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ios-list-item:active {
+  background: rgba(255, 255, 255, 0.06);
+  transition-duration: 0.05s;
+}
+
+/* ========================================
+   iOS Premium Loading & Animations
+   ======================================== */
+
+/* Gentle pulse — for status indicators */
+@keyframes ios-gentle-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.ios-gentle-pulse {
+  animation: ios-gentle-pulse 2s ease-in-out infinite;
+}
+
+/* Smooth entrance — scale + fade */
+@keyframes ios-entrance {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.ios-entrance {
+  animation: ios-entrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered entrance delays */
+.ios-entrance-d1 { animation-delay: 0.05s; }
+.ios-entrance-d2 { animation-delay: 0.10s; }
+.ios-entrance-d3 { animation-delay: 0.15s; }
+.ios-entrance-d4 { animation-delay: 0.20s; }
+.ios-entrance-d5 { animation-delay: 0.25s; }
+
+/* Premium shine sweep for special elements */
+@keyframes ios-shine {
+  0% { transform: translateX(-100%) rotate(15deg); }
+  100% { transform: translateX(200%) rotate(15deg); }
+}
+
+.ios-shine-overlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.ios-shine-overlay::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 60%,
+    transparent 100%
+  );
+  transform: translateX(-100%) rotate(15deg);
+  animation: ios-shine 3s ease-in-out infinite;
+  animation-delay: 1s;
+  pointer-events: none;
+}
+
+/* ========================================
+   iOS Typography — Premium Refinements
+   ======================================== */
+
+/* Section header — Apple-style section title */
+.ios-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Stat number — large tabular display */
+.ios-stat-number {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+
+/* Caption — small description text */
+.ios-caption {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.38);
+  letter-spacing: 0.01em;
+}
+
+/* Label — tiny label text */
+.ios-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.30);
+}
+
+/* ========================================
+   Responsive Layout — iOS Adaptable
+   ======================================== */
+
+/* Desktop grid — wider spacing */
+@media (min-width: 1024px) {
+  .ios-grid-desktop {
+    display: grid;
+    gap: 24px;
+  }
+  .ios-grid-desktop-2 { grid-template-columns: repeat(2, 1fr); }
+  .ios-grid-desktop-3 { grid-template-columns: repeat(3, 1fr); }
+  .ios-grid-desktop-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Tablet grid */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ios-grid-tablet {
+    display: grid;
+    gap: 16px;
+  }
+  .ios-grid-tablet-2 { grid-template-columns: repeat(2, 1fr); }
+  .ios-grid-tablet-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Mobile stack */
+.ios-stack-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .ios-stack-mobile {
+    flex-direction: row;
+    gap: 16px;
+  }
+}
+
+/* ========================================
+   Accent Glow — Soft Colored Lighting
+   ======================================== */
+
+/* Gold ambient glow — for sections */
+.ambient-glow-gold {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 10, 0.06) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Purple ambient glow */
+.ambient-glow-purple {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.06) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Desktop: enhanced glow with animation */
+@media (min-width: 1024px) {
+  .ambient-glow-gold,
+  .ambient-glow-purple {
+    width: 500px;
+    height: 500px;
+    filter: blur(80px);
+  }
+}

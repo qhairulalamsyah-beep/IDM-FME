@@ -532,7 +532,7 @@ export default function IDOLMETAApp() {
             transition={{ duration: 0.6, ease: 'easeInOut' }}
           >
             {/* Premium dark background — CSS-only, matching main app */}
-            <div className="absolute inset-0 -z-10" style={{ background: '#050507' }}>
+            <div className="absolute inset-0 -z-10 ios-depth-layer" style={{ background: '#050507' }}>
               {/* Base gradient — hidden on mobile to reduce paint cost */}
               <div
                 className="absolute inset-0 hidden md:block"
@@ -581,7 +581,7 @@ export default function IDOLMETAApp() {
             >
               {/* Logo image */}
               <motion.div
-                className="relative"
+                className="relative ios-float"
                 animate={{ y: [0, -4, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
               >
@@ -599,7 +599,7 @@ export default function IDOLMETAApp() {
 
               {/* Subtitle — 3D Neon */}
               <motion.p
-                className="mt-3 text-[clamp(10px,3vw,15px)] tracking-[0.3em] uppercase font-bold relative"
+                className="mt-3 text-[clamp(10px,3vw,15px)] tracking-[0.3em] uppercase font-bold relative ios-gentle-pulse"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.6 }}
@@ -647,7 +647,7 @@ export default function IDOLMETAApp() {
               className="mt-10 text-[11px] tracking-[0.25em] uppercase font-medium"
               style={{ color: 'rgba(255,214,10,0.35)' }}
               initial={{ opacity: 0 }}
-              animate={{ opacity: [0, 0.5, 0.5, 0.25, 0.5, 0.5, 0.25, 0.5, 0.5] }}
+              animate={{ opacity: [0, 0.4, 0.6, 0.5, 0.4, 0.6] }}
               transition={{ delay: 1.2, duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             >
               Loading
@@ -655,7 +655,7 @@ export default function IDOLMETAApp() {
 
             {/* ── Loading bar ── */}
             <motion.div
-              className="mt-3 w-48 h-[2px] rounded-full overflow-hidden"
+              className="mt-3 w-56 h-[2px] rounded-full overflow-hidden"
               style={{ background: 'rgba(255,255,255,0.06)' }}
               initial={{ opacity: 0, scaleX: 0.8 }}
               animate={{ opacity: 1, scaleX: 1 }}
@@ -782,7 +782,7 @@ export default function IDOLMETAApp() {
           {users.length === 0 && (
             <motion.button
               onClick={seedDatabase}
-              className="fixed bottom-24 right-4 z-40 p-3 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-400"
+              className="fixed bottom-24 right-4 z-40 p-3 rounded-2xl ios-elevated bg-purple-500/15 border border-purple-500/20 text-purple-400"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -791,7 +791,7 @@ export default function IDOLMETAApp() {
           )}
 
           {/* Main Scrollable Content — contained scroll area */}
-          <div ref={scrollRef} className="relative z-10 max-w-md mx-auto w-full px-4 pb-24 flex-1 min-h-0 overflow-y-auto lg:max-w-none lg:px-8 lg:pb-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 60px)', WebkitOverflowScrolling: 'touch' }}>
+          <div ref={scrollRef} className="relative z-10 max-w-md mx-auto w-full px-4 pb-28 flex-1 min-h-0 overflow-y-auto ios-depth-layer lg:max-w-none lg:px-8 lg:pb-8" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 60px)', WebkitOverflowScrolling: 'touch' }}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${division}-${activeTab}`}
@@ -960,13 +960,13 @@ export default function IDOLMETAApp() {
           />
 
           {/* Desktop Footer — branding bar */}
-          <footer className="hidden lg:block mt-auto flex-shrink-0 py-3 px-8 text-center">
+          <footer className="hidden lg:block mt-auto flex-shrink-0 py-4 px-8 text-center ios-hairline" style={{ borderTop: '0.5px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
             <div className="flex items-center justify-center gap-3 opacity-40">
-              <span className="text-[10px] text-white/15 tracking-wide font-medium">
+              <span className="text-[10px] text-white/20 tracking-wide font-medium">
                 &copy; 2026 IDOL META &mdash; Fan Made Edition
               </span>
               <span className="text-[10px] text-white/10">|</span>
-              <span className="text-[10px] text-white/15 tracking-wide font-medium">
+              <span className="text-[10px] text-white/20 tracking-wide font-medium">
                 IDOL META Kotabaru Pride — Fan Made Edition
               </span>
             </div>

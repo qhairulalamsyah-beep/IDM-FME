@@ -917,3 +917,37 @@ Stage Summary:
 - Fixed admin avatar upload bug by using regular `fetch` for public upload endpoint
 - Improved error messages for auth failures (401 → "Sesi admin expired" warning toast)
 - Files modified: `src/components/esports/PlayerManagementScreen.tsx`, `src/components/esports/AdminPanel.tsx`
+
+---
+Task ID: 19
+Agent: Main
+Task: iOS Apple Premium UI/UX Upgrade — Elegant 3D styling for desktop, tablet, mobile
+
+Work Log:
+- Analyzed full project: 2069-line globals.css, 30+ components, existing gold/purple theme
+- Appended 706 lines of new iOS Apple Premium CSS classes to globals.css (total: 2775 lines)
+  - Enhanced 3D system: perspective containers, float/breathe animations, tilt-on-hover with responsive breakpoints
+  - iOS Material surfaces: satin, vibrant, regular material levels with refined backdrop-filter
+  - Premium card variants: card-elevated, card-gold-elevated, card-purple-elevated with 20px radius
+  - Hero card refinements: corner bleed, info chips, shimmer buttons, result cards
+  - iOS navigation: floating nav, pill active indicators, header glass
+  - Modal/sheet: grabber, content padding, dividers, list items
+  - Premium animations: gentle pulse, entrance animations, shine sweep overlay
+  - Typography: section title, stat number, caption, label
+  - Responsive layout: desktop 2-4 col grids, tablet grids, mobile stack
+  - Accent glow: ambient glow gold/purple with desktop size boost
+- Enhanced Navigation.tsx: ios-nav-float, ios-header-glass, ios-tilt on tabs, larger buttons (w-9 h-9), refined toggles (rounded-10px), logo shine overlay on desktop
+- Enhanced page.tsx: ios-depth-layer on loading/content, ios-float on logo, ios-gentle-pulse on subtitle, wider loading bar, refined footer with blur + hairline, upgraded seed button styling
+- Enhanced Dashboard.tsx: ios-shine-overlay on hero card, ios-float on title, ios-grid-mobile on stats grid, card-elevated on stat cards, rounded-[20px] on all cards/buttons, ios-entrance for staggered animations
+- Refined ParticleField.tsx: softer blob blur values (80-100px), subtler god rays, thinner energy ring, refined corner brackets, gentler data streams, reduced perspective grid opacity
+- Enhanced 7 modal components with ios-modal-content, ios-sheet-grabber, ios-section-title, ios-list-item, ios-modal-divider classes and rounded-t-[28px] corners
+- All changes are CSS/style-only — zero logic modifications
+- ESLint: 0 errors
+- Dev server: compiles successfully (200, 2.2s compile)
+
+Stage Summary:
+- iOS Apple Premium aesthetic upgrade applied across entire UI without breaking any functionality
+- Male gold luxury (#FFD60A) and female soft purple (#A78BFA) color scheme preserved throughout
+- New CSS classes available for future components: card-elevated, card-gold-elevated, card-purple-elevated, ios-satin, ios-vibrant, ios-regular, ios-tilt, ios-float, ios-breathe, ios-shine-overlay, ios-entrance, etc.
+- Responsive 3D effects properly scaled: full tilt on desktop, subtle lift on tablet, press-only on mobile
+- All 30+ components remain functional with enhanced visual presentation

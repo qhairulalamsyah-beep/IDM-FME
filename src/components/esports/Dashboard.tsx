@@ -369,7 +369,7 @@ export function Dashboard({
           ═══════════════════════════════════════════════════════════ */}
       <motion.div variants={item} className="relative">
         <div
-          className={`${cardClass} rounded-3xl relative overflow-hidden hero-card-mesh${isMale ? '' : ' is-female'} hero-noise hero-gradient-border${isMale ? '' : ' is-female'}${onNavigate ? ' cursor-pointer' : ''}`}
+          className={`${cardClass} ios-shine-overlay rounded-3xl relative overflow-hidden hero-card-mesh${isMale ? '' : ' is-female'} hero-noise hero-gradient-border${isMale ? '' : ' is-female'}${onNavigate ? ' cursor-pointer' : ''}`}
           onClick={() => onNavigate && onNavigate('bracket')}
         >
 
@@ -429,6 +429,7 @@ export function Dashboard({
             </div>
 
             {/* ── Tournament Name — bold title below status row ── */}
+            <div className="ios-float">
             <h2
               className={`text-[24px] sm:text-[28px] md:text-[32px] lg:text-[40px] font-black leading-[1.1] mb-2 hero-shimmer-title ${isMale ? 'shimmer-gold' : 'shimmer-pink'}`}
               style={{
@@ -440,6 +441,7 @@ export function Dashboard({
             >
               {tournament?.name || divisionLabel}
             </h2>
+            </div>
 
             {/* ── Two-column layout on tablet+ ── */}
             <div className="md:flex md:items-start md:gap-6 lg:gap-8">
@@ -504,10 +506,10 @@ export function Dashboard({
 
               {/* ── MOBILE ONLY: Prize Pool + Sawer Pool — Side by Side ── */}
               {!showResults && (
-                <div className="md:hidden mb-3.5 flex gap-2.5">
+                <div className="md:hidden mb-3.5 flex gap-2.5 ios-entrance">
                   {/* Prize Pool */}
                   <div
-                    className={`flex-1 relative overflow-hidden rounded-2xl p-3.5 cursor-pointer transition-all hover:scale-[1.02] ${isMale ? 'bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20' : 'bg-gradient-to-br from-violet-500/10 to-purple-500/5 border border-violet-500/20'}`}
+                    className={`flex-1 relative overflow-hidden rounded-[20px] p-3.5 cursor-pointer transition-all hover:scale-[1.02] ${isMale ? 'bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20' : 'bg-gradient-to-br from-violet-500/10 to-purple-500/5 border border-violet-500/20'}`}
                     onClick={(e) => { e.stopPropagation(); onViewPrize?.(); }}
                   >
                     <div className="flex items-center gap-2.5">
@@ -523,7 +525,7 @@ export function Dashboard({
 
                   {/* Sawer Pool */}
                   <div
-                    className="flex-1 relative overflow-hidden rounded-2xl p-3.5 cursor-pointer transition-all hover:scale-[1.02] bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20"
+                    className="flex-1 relative overflow-hidden rounded-[20px] p-3.5 cursor-pointer transition-all hover:scale-[1.02] bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20"
                     onClick={(e) => { e.stopPropagation(); setDonasiSawerDefaultTab('sawer'); setDonasiSawerModalOpen(true); }}
                   >
                     <div className="flex items-center gap-2.5">
@@ -552,7 +554,7 @@ export function Dashboard({
 
               {/* ── DESKTOP/TABLET ONLY: Prize Pool + Sawer Pool — Stacked ── */}
               {!showResults && (
-                <div className="hidden md:block space-y-2.5 mb-3">
+                <div className="hidden md:block space-y-2.5 mb-3 ios-entrance">
                   {/* Prize Pool — full width stacked */}
                   <motion.div
                     initial={{ opacity: 0, x: 8 }}
@@ -560,7 +562,7 @@ export function Dashboard({
                     transition={{ delay: 0.15 }}
                   >
                     <div
-                      className={`relative overflow-hidden rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.02] ${isMale ? 'bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20' : 'bg-gradient-to-br from-violet-500/10 to-purple-500/5 border border-violet-500/20'}`}
+                      className={`relative overflow-hidden rounded-[20px] p-4 cursor-pointer transition-all hover:scale-[1.02] ${isMale ? 'bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20' : 'bg-gradient-to-br from-violet-500/10 to-purple-500/5 border border-violet-500/20'}`}
                       onClick={(e) => { e.stopPropagation(); onViewPrize?.(); }}
                     >
                       <div className="flex items-center gap-3">
@@ -583,7 +585,7 @@ export function Dashboard({
                     transition={{ delay: 0.2 }}
                   >
                     <div
-                      className="relative overflow-hidden rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.02] bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20"
+                      className="relative overflow-hidden rounded-[20px] p-4 cursor-pointer transition-all hover:scale-[1.02] bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20"
                       onClick={(e) => { e.stopPropagation(); setDonasiSawerDefaultTab('sawer'); setDonasiSawerModalOpen(true); }}
                     >
                       <div className="flex items-center gap-3">
@@ -607,7 +609,7 @@ export function Dashboard({
                   {isRegistration && (
                     <motion.button
                       onClick={(e) => { e.stopPropagation(); onRegister(); }}
-                      className={`${btnClass} btn-ios hero-shimmer-btn w-full py-3.5 rounded-2xl text-[14px] font-semibold flex items-center justify-center gap-2.5 relative`}
+                      className={`${btnClass} btn-ios hero-shimmer-btn w-full py-3.5 rounded-[20px] text-[14px] font-semibold flex items-center justify-center gap-2.5 relative`}
                       whileHover={{ scale: 1.012, y: -1 }}
                       whileTap={{ scale: 0.975 }}
                       transition={springTransition}
@@ -623,7 +625,7 @@ export function Dashboard({
                   {isOngoing && (
                     <motion.button
                       onClick={(e) => { e.stopPropagation(); onNavigate?.('bracket'); }}
-                      className={`w-full py-3.5 rounded-2xl text-[14px] font-semibold ${accentBg} ${accentColor} border ${isMale ? 'border-amber-500/20' : 'border-violet-500/20'} flex items-center justify-center gap-2.5`}
+                      className={`w-full py-3.5 rounded-[20px] text-[14px] font-semibold ${accentBg} ${accentColor} border ${isMale ? 'border-amber-500/20' : 'border-violet-500/20'} flex items-center justify-center gap-2.5`}
                       whileHover={{ scale: 1.012 }}
                       whileTap={{ scale: 0.975 }}
                       transition={springTransition}
@@ -654,12 +656,13 @@ export function Dashboard({
                     initial={{ opacity: 0, y: 16, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.6, delay: 0.1, ease: [0.32, 0.72, 0, 1] }}
-                    className="hero-result-card lg:flex-1 lg:min-w-0"
+                    className="hero-result-card rounded-[20px] lg:flex-1 lg:min-w-0"
                     style={{
                       background: isMale
                         ? 'linear-gradient(145deg, rgba(255,214,10,0.06) 0%, rgba(18,18,22,0.50) 50%, rgba(255,214,10,0.02) 100%)'
                         : 'linear-gradient(145deg, rgba(167,139,250,0.06) 0%, rgba(18,18,22,0.50) 50%, rgba(167,139,250,0.02) 100%)',
                       borderColor: isMale ? 'rgba(255,214,10,0.10)' : 'rgba(167,139,250,0.10)',
+                      transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease',
                     }}
                   >
                     {/* Subtle glow line at top */}
@@ -765,10 +768,11 @@ export function Dashboard({
                     initial={{ opacity: 0, y: 16, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.6, delay: 0.3, ease: [0.32, 0.72, 0, 1] }}
-                    className="hero-result-card lg:flex-1 lg:min-w-0"
+                    className="hero-result-card rounded-[20px] lg:flex-1 lg:min-w-0"
                     style={{
                       background: 'linear-gradient(145deg, rgba(255,159,10,0.06) 0%, rgba(28,28,30,0.45) 50%, rgba(255,214,10,0.02) 100%)',
                       borderColor: 'rgba(255,159,10,0.08)',
+                      transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease',
                     }}
                   >
                     {/* Subtle glow line at top */}
@@ -865,11 +869,11 @@ export function Dashboard({
       {/* ═══════════════════════════════════════════════════════════
           QUICK STATS — 3 Glass Cards with inner glow hover
           ═══════════════════════════════════════════════════════════ */}
-      <motion.div variants={item} className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+      <motion.div variants={item} className="grid grid-cols-3 ios-grid-mobile gap-2 sm:gap-3 lg:gap-4">
         {/* PEMAIN */}
         <motion.button
           onClick={onViewPlayers}
-          className="relative glass inner-light rounded-2xl p-3 sm:p-4 lg:p-6 text-center card-3d cursor-pointer group overflow-hidden"
+          className="relative glass inner-light card-elevated rounded-2xl p-3 sm:p-4 lg:p-6 text-center card-3d cursor-pointer group overflow-hidden"
           whileHover={{ scale: 1.04, y: -2 }}
           whileTap={{ scale: 0.96 }}
           transition={springTransition}
@@ -885,7 +889,7 @@ export function Dashboard({
             }}
           />
           <div className="relative z-10">
-            <div className={`w-8 h-8 sm:w-9 sm:h-9 lg:w-12 lg:h-12 rounded-xl mx-auto mb-2 sm:mb-2.5 lg:mb-3 flex items-center justify-center ${accentSubtleBg}`}>
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 lg:w-14 lg:h-14 rounded-2xl mx-auto mb-2 sm:mb-2.5 lg:mb-3 flex items-center justify-center ${accentSubtleBg}`}>
               <Users className={`w-4 h-4 sm:w-[18px] sm:h-[18px] lg:w-6 lg:h-6 ${accentColor}`} />
             </div>
             <p className={`text-[17px] sm:text-[20px] lg:text-3xl font-extrabold ${gradientClass} tracking-tight leading-none`}>
@@ -909,7 +913,7 @@ export function Dashboard({
         {/* DONASI / SUPPORT */}
         <motion.button
           onClick={() => { setDonasiSawerDefaultTab('donasi'); setDonasiSawerModalOpen(true); }}
-          className="relative glass inner-light rounded-2xl p-3 sm:p-4 lg:p-6 text-center card-3d cursor-pointer group overflow-hidden"
+          className="relative glass inner-light card-elevated rounded-2xl p-3 sm:p-4 lg:p-6 text-center card-3d cursor-pointer group overflow-hidden"
           whileHover={{ scale: 1.04, y: -2 }}
           whileTap={{ scale: 0.96 }}
           transition={springTransition}
@@ -922,7 +926,7 @@ export function Dashboard({
             }}
           />
           <div className="relative z-10">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-12 lg:h-12 rounded-xl mx-auto mb-2 sm:mb-2.5 lg:mb-3 flex items-center justify-center bg-red-500/10">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 lg:w-14 lg:h-14 rounded-2xl mx-auto mb-2 sm:mb-2.5 lg:mb-3 flex items-center justify-center bg-red-500/10">
               <Heart className="w-4 h-4 sm:w-[18px] sm:h-[18px] lg:w-6 lg:h-6 text-red-400" fill="currentColor" />
             </div>
             <p className="text-[17px] sm:text-[20px] lg:text-3xl font-extrabold text-red-400 tracking-tight leading-none">
@@ -946,7 +950,7 @@ export function Dashboard({
         {/* TIM */}
         <motion.button
           onClick={onViewTeams}
-          className="relative glass inner-light rounded-2xl p-3 sm:p-4 lg:p-6 text-center card-3d cursor-pointer group overflow-hidden"
+          className="relative glass inner-light card-elevated rounded-2xl p-3 sm:p-4 lg:p-6 text-center card-3d cursor-pointer group overflow-hidden"
           whileHover={{ scale: 1.04, y: -2 }}
           whileTap={{ scale: 0.96 }}
           transition={springTransition}
@@ -961,7 +965,7 @@ export function Dashboard({
             }}
           />
           <div className="relative z-10">
-            <div className={`w-8 h-8 sm:w-9 sm:h-9 lg:w-12 lg:h-12 rounded-xl mx-auto mb-2 sm:mb-2.5 lg:mb-3 flex items-center justify-center ${accentSubtleBg}`}>
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 lg:w-14 lg:h-14 rounded-2xl mx-auto mb-2 sm:mb-2.5 lg:mb-3 flex items-center justify-center ${accentSubtleBg}`}>
               <Swords className={`w-4 h-4 sm:w-[18px] sm:h-[18px] lg:w-6 lg:h-6 ${accentColor}`} />
             </div>
             <p className={`text-[17px] sm:text-[20px] lg:text-3xl font-extrabold ${gradientClass} tracking-tight leading-none`}>
@@ -1293,7 +1297,7 @@ export function Dashboard({
           {/* Daftar */}
           <motion.button
             onClick={onRegister}
-            className="glass-subtle inner-light rounded-2xl p-3 sm:p-4 text-left group"
+            className="glass-subtle inner-light card-elevated rounded-[20px] p-3 sm:p-4 text-left group"
             whileHover={{ scale: 1.025, y: -3 }}
             whileTap={{ scale: 0.975 }}
             transition={springTransition}
@@ -1315,7 +1319,7 @@ export function Dashboard({
           {/* Bracket */}
           <motion.button
             onClick={() => onNavigate && onNavigate('bracket')}
-            className="glass-subtle inner-light rounded-2xl p-3 sm:p-4 text-left group"
+            className="glass-subtle inner-light card-elevated rounded-[20px] p-3 sm:p-4 text-left group"
             whileHover={{ scale: 1.025, y: -3 }}
             whileTap={{ scale: 0.975 }}
             transition={springTransition}
@@ -1335,7 +1339,7 @@ export function Dashboard({
           {/* Leaderboard */}
           <motion.button
             onClick={() => onNavigate && onNavigate('leaderboard')}
-            className="glass-subtle inner-light rounded-2xl p-3 sm:p-4 text-left group"
+            className="glass-subtle inner-light card-elevated rounded-[20px] p-3 sm:p-4 text-left group"
             whileHover={{ scale: 1.025, y: -3 }}
             whileTap={{ scale: 0.975 }}
             transition={springTransition}
@@ -1355,7 +1359,7 @@ export function Dashboard({
           {/* Total Donasi */}
           <motion.button
             onClick={() => onViewDonation && onViewDonation()}
-            className="glass-subtle inner-light rounded-2xl p-3 sm:p-4 text-left group"
+            className="glass-subtle inner-light card-elevated rounded-[20px] p-3 sm:p-4 text-left group"
             whileHover={{ scale: 1.025, y: -3 }}
             whileTap={{ scale: 0.975 }}
             transition={springTransition}
@@ -1380,7 +1384,7 @@ export function Dashboard({
       {/* ═══════════════════════════════════════════════════════════
           TOP CLUBS — Club leaderboard only
           ═══════════════════════════════════════════════════════════ */}
-      <motion.div variants={item}>
+      <motion.div variants={item} className="ios-entrance">
           {/* Section header */}
           <div className="flex items-center justify-between px-1 mb-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.06] rounded-lg">

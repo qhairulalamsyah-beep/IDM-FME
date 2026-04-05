@@ -112,7 +112,7 @@ export function PrizeBreakdownModal({ isOpen, onOpenChange, prizePool, division 
 
           {/* Sheet - with drag to close */}
           <motion.div
-            className="relative glass rounded-t-[32px] w-full max-w-md lg:max-w-lg overflow-hidden flex flex-col"
+            className="relative glass rounded-t-[28px] ios-modal-content w-full max-w-md lg:max-w-lg overflow-hidden flex flex-col"
             style={{ maxHeight: 'calc(100dvh - 80px)', paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -128,7 +128,7 @@ export function PrizeBreakdownModal({ isOpen, onOpenChange, prizePool, division 
             }}
           >
             {/* Premium Drag Handle */}
-            <div className="flex justify-center pt-4 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing">
+            <div className="ios-sheet-grabber flex justify-center pt-4 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing">
               <div className="w-12 h-[5px] rounded-full bg-white/20 shadow-sm shadow-white/10" />
             </div>
 
@@ -140,7 +140,7 @@ export function PrizeBreakdownModal({ isOpen, onOpenChange, prizePool, division 
                     <Trophy className={`w-[18px] h-[18px] ${accentClass}`} />
                   </div>
                   <div>
-                    <h2 className="text-[17px] font-bold text-white/90 tracking-tight leading-tight">Distribusi Hadiah</h2>
+                    <h2 className="ios-section-title text-[17px] font-bold text-white/90 tracking-tight leading-tight">Distribusi Hadiah</h2>
                     <p className="text-[11px] text-white/30 mt-0.5 font-medium">
                       Total Prize Pool
                     </p>
@@ -189,7 +189,7 @@ export function PrizeBreakdownModal({ isOpen, onOpenChange, prizePool, division 
                   return (
                     <motion.div
                       key={tier.label}
-                      className={`glass-subtle rounded-2xl p-4 border ${tier.colors.border} relative overflow-hidden transition-all duration-300`}
+                      className={`ios-list-item glass-subtle rounded-2xl p-4 border ${tier.colors.border} relative overflow-hidden transition-all duration-300`}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{

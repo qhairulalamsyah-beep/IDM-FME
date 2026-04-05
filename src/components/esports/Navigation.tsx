@@ -133,12 +133,13 @@ export function Navigation({ activeTab, onTabChange, division, onToggleDivision,
       >
         {/* Glass bar */}
         <div
-          className="relative rounded-2xl overflow-hidden"
+          className="relative rounded-2xl overflow-hidden ios-nav-float"
           style={{
             background: 'linear-gradient(180deg, rgba(30,30,35,0.92) 0%, rgba(20,20,25,0.95) 100%)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
             boxShadow: '0 -8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.04)',
+            borderRadius: '20px',
           }}
         >
           {/* Top accent line */}
@@ -341,7 +342,7 @@ export function TopBar({
         >
           {/* Glass header */}
           <div
-            className="relative rounded-b-2xl overflow-hidden"
+            className="relative rounded-b-2xl overflow-hidden ios-header-glass"
             style={{
               background: 'linear-gradient(180deg, rgba(30,30,35,0.92) 0%, rgba(20,20,25,0.95) 100%)',
               backdropFilter: 'blur(24px)',
@@ -364,7 +365,7 @@ export function TopBar({
                 onClick={() => onTabChange?.('dashboard')}
               >
                 <motion.div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center"
+                  className="w-8 h-8 rounded-[10px] flex items-center justify-center"
                   style={{
                     background: `linear-gradient(135deg, rgba(${t.gfGlowColor},1) 0%, rgba(${t.gfGlowColor2},1) 100%)`,
                     boxShadow: `0 2px 8px rgba(${t.gfGlowColor},0.3)`,
@@ -389,15 +390,16 @@ export function TopBar({
               <div className="flex items-center gap-1.5">
                 {/* Division toggle */}
                 <div
-                  className="relative flex rounded-lg overflow-hidden"
+                  className="relative flex overflow-hidden"
                   style={{
                     background: 'rgba(255,255,255,0.04)',
                     border: '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: '10px',
                   }}
                 >
                   <button
                     onClick={() => division !== 'male' && onToggleDivision()}
-                    className={`px-2.5 py-1 text-[10px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
+                    className={`px-3 py-1.5 text-[10px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
                       division === 'male'
                         ? `bg-gradient-to-r from-amber-400 to-yellow-500 text-black rounded-l-md`
                         : 'text-white/45 hover:text-white/60'
@@ -407,7 +409,7 @@ export function TopBar({
                   </button>
                   <button
                     onClick={() => division !== 'female' && onToggleDivision()}
-                    className={`px-2.5 py-1 text-[10px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
+                    className={`px-3 py-1.5 text-[10px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
                       division === 'female'
                         ? `bg-gradient-to-r from-purple-400 to-violet-500 text-white rounded-r-md`
                         : 'text-white/45 hover:text-white/60'
@@ -420,7 +422,7 @@ export function TopBar({
                 {/* Profile */}
                 <motion.button
                   onClick={onProfileClick}
-                  className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer bg-white/[0.04] border border-white/[0.05]`}
+                  className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer bg-white/[0.04] border border-white/[0.05]`}
                   whileTap={{ scale: 0.9 }}
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
@@ -434,7 +436,7 @@ export function TopBar({
                 {/* Admin */}
                 <motion.button
                   onClick={onAdminClick}
-                  className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                  className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
                     isAdminAuthenticated
                       ? `bg-gradient-to-br from-amber-400/15 to-orange-500/10 border border-amber-400/20`
                       : 'bg-white/[0.04] border border-white/[0.05]'
@@ -475,7 +477,7 @@ export function TopBar({
           transition={{ type: 'spring', stiffness: 280, damping: 28 }}
         >
           <div
-            className="relative"
+            className="relative ios-header-glass"
             style={{
               background: 'linear-gradient(180deg, rgba(30,30,35,0.92) 0%, rgba(20,20,25,0.95) 100%)',
               backdropFilter: 'blur(24px)',
@@ -501,7 +503,7 @@ export function TopBar({
                     onClick={() => onTabChange?.('dashboard')}
                   >
                     <motion.div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      className="w-9 h-9 rounded-[10px] flex items-center justify-center"
                       style={{
                         background: `linear-gradient(135deg, rgba(${t.gfGlowColor},1) 0%, rgba(${t.gfGlowColor2},1) 100%)`,
                         boxShadow: `0 2px 8px rgba(${t.gfGlowColor},0.3)`,
@@ -539,15 +541,16 @@ export function TopBar({
                 <div className="flex items-center gap-2">
                   {/* Division toggle */}
                   <div
-                    className="relative flex rounded-lg overflow-hidden"
+                    className="relative flex overflow-hidden"
                     style={{
                       background: 'rgba(255,255,255,0.04)',
                       border: '1px solid rgba(255,255,255,0.05)',
+                      borderRadius: '10px',
                     }}
                   >
                     <button
                       onClick={() => division !== 'male' && onToggleDivision()}
-                      className={`px-3 py-1.5 text-[11px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
+                      className={`px-3.5 py-1.5 text-[11px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
                         division === 'male'
                           ? `bg-gradient-to-r from-amber-400 to-yellow-500 text-black rounded-l-md`
                           : 'text-white/45 hover:text-white/60'
@@ -557,7 +560,7 @@ export function TopBar({
                     </button>
                     <button
                       onClick={() => division !== 'female' && onToggleDivision()}
-                      className={`px-3 py-1.5 text-[11px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
+                      className={`px-3.5 py-1.5 text-[11px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
                         division === 'female'
                           ? `bg-gradient-to-r from-purple-400 to-violet-500 text-white rounded-r-md`
                           : 'text-white/45 hover:text-white/60'
@@ -570,7 +573,7 @@ export function TopBar({
                   {/* Profile */}
                 <motion.button
                   onClick={onProfileClick}
-                  className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer bg-white/[0.04] border border-white/[0.05]`}
+                  className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer bg-white/[0.04] border border-white/[0.05]`}
                   whileTap={{ scale: 0.9 }}
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
@@ -584,7 +587,7 @@ export function TopBar({
                 {/* Admin */}
                   <motion.button
                     onClick={onAdminClick}
-                    className={`relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                    className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
                       isAdminAuthenticated
                         ? `bg-gradient-to-br from-amber-400/15 to-orange-500/10 border border-amber-400/20`
                         : 'bg-white/[0.04] border border-white/[0.05]'
@@ -626,7 +629,7 @@ export function TopBar({
           transition={{ type: 'spring', stiffness: 280, damping: 28 }}
         >
           <div
-            className="relative"
+            className="relative ios-header-glass"
             style={{
               background: 'linear-gradient(180deg, rgba(30,30,35,0.92) 0%, rgba(20,20,25,0.95) 100%)',
               backdropFilter: 'blur(24px)',
@@ -652,7 +655,7 @@ export function TopBar({
                     onClick={() => onTabChange?.('dashboard')}
                   >
                     <motion.div
-                      className="w-7 h-7 rounded-lg flex items-center justify-center"
+                      className="w-8 h-8 rounded-[10px] flex items-center justify-center ios-shine-overlay"
                       style={{
                         background: `linear-gradient(135deg, rgba(${t.gfGlowColor},1) 0%, rgba(${t.gfGlowColor2},1) 100%)`,
                         boxShadow: `0 2px 8px rgba(${t.gfGlowColor},0.3)`,
@@ -690,15 +693,16 @@ export function TopBar({
                 <div className="flex items-center gap-2">
                   {/* Division toggle */}
                   <div
-                    className="relative flex rounded-lg overflow-hidden"
+                    className="relative flex overflow-hidden"
                     style={{
                       background: 'rgba(255,255,255,0.04)',
                       border: '1px solid rgba(255,255,255,0.05)',
+                      borderRadius: '10px',
                     }}
                   >
                     <button
                       onClick={() => division !== 'male' && onToggleDivision()}
-                      className={`px-3 py-1 text-[11px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
+                      className={`px-3.5 py-1.5 text-[11px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
                         division === 'male'
                           ? `bg-gradient-to-r from-amber-400 to-yellow-500 text-black rounded-l-md`
                           : 'text-white/45 hover:text-white/60'
@@ -708,7 +712,7 @@ export function TopBar({
                     </button>
                     <button
                       onClick={() => division !== 'female' && onToggleDivision()}
-                      className={`px-3 py-1 text-[11px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
+                      className={`px-3.5 py-1.5 text-[11px] font-semibold tracking-wide transition-colors duration-200 cursor-pointer ${
                         division === 'female'
                           ? `bg-gradient-to-r from-purple-400 to-violet-500 text-white rounded-r-md`
                           : 'text-white/45 hover:text-white/60'
@@ -721,7 +725,7 @@ export function TopBar({
                   {/* Profile */}
                 <motion.button
                   onClick={onProfileClick}
-                  className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer bg-white/[0.04] border border-white/[0.05]`}
+                  className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer bg-white/[0.04] border border-white/[0.05]`}
                   whileTap={{ scale: 0.9 }}
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
@@ -735,7 +739,7 @@ export function TopBar({
                 {/* Admin */}
                   <motion.button
                     onClick={onAdminClick}
-                    className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer ${
+                    className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer ${
                       isAdminAuthenticated
                         ? `bg-gradient-to-br from-amber-400/15 to-orange-500/10 border border-amber-400/20`
                         : 'bg-white/[0.04] border border-white/[0.05]'
@@ -792,7 +796,7 @@ function TopBarTab({
   return (
     <motion.button
       onClick={onClick}
-      className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold tracking-wide cursor-pointer outline-none transition-all duration-200"
+      className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold tracking-wide cursor-pointer outline-none transition-all duration-200 ios-tilt"
       style={{
         color: isActive ? t.activeText : 'rgba(255,255,255,0.45)',
         background: isActive ? `linear-gradient(180deg, rgba(${t.gfGlowColor},0.1) 0%, rgba(${t.gfGlowColor},0.03) 100%)` : 'transparent',
@@ -829,7 +833,7 @@ function TopBarGrandFinalTab({
   return (
     <motion.button
       onClick={onClick}
-      className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer outline-none transition-all duration-200"
+      className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer outline-none transition-all duration-200 ios-tilt"
       style={{
         color: isActive ? t.activeText : 'rgba(255,255,255,0.5)',
         background: `linear-gradient(135deg, rgba(${t.gfGlowColor},0.15) 0%, rgba(${t.gfGlowColor2},0.1) 100%)`,

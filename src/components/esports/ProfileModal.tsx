@@ -425,7 +425,7 @@ export function ProfileModal({ isOpen, onOpenChange, division }: ProfileModalPro
     <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
       <SheetContent
         side="right"
-        className="!max-w-md w-full bg-[#0a0a0f]/95 backdrop-blur-2xl border-l border-white/[0.06] p-0 overflow-hidden"
+        className="!max-w-md w-full bg-[#0a0a0f]/95 backdrop-blur-2xl border-l border-white/[0.06] p-0 overflow-hidden ios-modal-content"
       >
         {/* Close button (override default) */}
         <button
@@ -436,7 +436,7 @@ export function ProfileModal({ isOpen, onOpenChange, division }: ProfileModalPro
         </button>
 
         <SheetHeader className="px-5 pt-5 pb-3">
-          <SheetTitle className="text-white/90 text-base font-bold flex items-center gap-2.5">
+          <SheetTitle className="ios-section-title text-white/90 text-base font-bold flex items-center gap-2.5">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${accentBg}`}>
               <UserCircle className={`w-[18px] h-[18px] ${accentClass}`} />
             </div>
@@ -504,7 +504,7 @@ export function ProfileModal({ isOpen, onOpenChange, division }: ProfileModalPro
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.03, duration: 0.2 }}
-                          className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] hover:border-white/[0.08] transition-all text-left group"
+                          className="ios-list-item w-full flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] hover:border-white/[0.08] transition-all text-left group"
                           whileTap={{ scale: 0.98 }}
                         >
                           {/* Avatar */}
@@ -656,7 +656,7 @@ export function ProfileModal({ isOpen, onOpenChange, division }: ProfileModalPro
                     </div>
 
                     {/* ── Divider ── */}
-                    <div className="divider" />
+                    <div className="divider ios-modal-divider" />
 
                     {/* ── Stats Grid ── */}
                     {(() => {
@@ -685,7 +685,7 @@ export function ProfileModal({ isOpen, onOpenChange, division }: ProfileModalPro
                     {/* ── Info Rows ── */}
                     <div className="glass-subtle rounded-2xl px-4">
                       {profile.phone && (
-                        <div className="flex items-center gap-3 py-3.5 border-b border-white/[0.04]">
+                        <div className="ios-list-item flex items-center gap-3 py-3.5 border-b border-white/[0.04]">
                           <Phone className="w-4 h-4 text-white/25 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-[10px] text-white/30 uppercase tracking-wider font-semibold">WhatsApp</p>
@@ -694,7 +694,7 @@ export function ProfileModal({ isOpen, onOpenChange, division }: ProfileModalPro
                         </div>
                       )}
                       {profile.city && (
-                        <div className="flex items-center gap-3 py-3.5 border-b border-white/[0.04]">
+                        <div className="ios-list-item flex items-center gap-3 py-3.5 border-b border-white/[0.04]">
                           <MapPin className="w-4 h-4 text-white/25 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-[10px] text-white/30 uppercase tracking-wider font-semibold">Asal Kota</p>
@@ -702,7 +702,7 @@ export function ProfileModal({ isOpen, onOpenChange, division }: ProfileModalPro
                           </div>
                         </div>
                       )}
-                      <div className="flex items-center gap-3 py-3.5">
+                      <div className="ios-list-item flex items-center gap-3 py-3.5">
                         <Users className="w-4 h-4 text-white/25 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] text-white/30 uppercase tracking-wider font-semibold">Bergabung</p>

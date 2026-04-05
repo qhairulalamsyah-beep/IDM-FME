@@ -58,7 +58,7 @@ export function GradientBackground({ division }: { division: Division }) {
           className="absolute w-[600px] h-[600px] rounded-full"
           style={{
             background: `radial-gradient(circle, rgba(${theme.primary},0.07) 0%, rgba(${theme.primary},0.02) 35%, transparent 65%)`,
-            filter: 'blur(80px)',
+            filter: 'blur(100px)',
             left: '-10%',
             bottom: '-15%',
           }}
@@ -67,7 +67,7 @@ export function GradientBackground({ division }: { division: Division }) {
           className="absolute w-[500px] h-[500px] rounded-full"
           style={{
             background: `radial-gradient(circle, rgba(${theme.secondary},0.055) 0%, rgba(${theme.secondary},0.015) 35%, transparent 65%)`,
-            filter: 'blur(70px)',
+            filter: 'blur(90px)',
             right: '-8%',
             top: '-10%',
           }}
@@ -84,7 +84,7 @@ export function GradientBackground({ division }: { division: Division }) {
           className="absolute w-[800px] h-[800px] rounded-full"
           style={{
             background: `radial-gradient(circle, rgba(${theme.primary},0.07) 0%, rgba(${theme.primary},0.02) 35%, transparent 65%)`,
-            filter: 'blur(80px)',
+            filter: 'blur(100px)',
             left: '-10%',
             bottom: '-15%',
           }}
@@ -101,7 +101,7 @@ export function GradientBackground({ division }: { division: Division }) {
           className="absolute w-[700px] h-[700px] rounded-full"
           style={{
             background: `radial-gradient(circle, rgba(${theme.secondary},0.055) 0%, rgba(${theme.secondary},0.015) 35%, transparent 65%)`,
-            filter: 'blur(70px)',
+            filter: 'blur(90px)',
             right: '-8%',
             top: '-10%',
           }}
@@ -119,7 +119,7 @@ export function GradientBackground({ division }: { division: Division }) {
             className="absolute w-[550px] h-[550px] rounded-full"
             style={{
               background: `radial-gradient(circle, rgba(${theme.tertiary},0.04) 0%, transparent 55%)`,
-              filter: 'blur(60px)',
+              filter: 'blur(80px)',
               right: '15%',
               top: '30%',
             }}
@@ -137,7 +137,7 @@ export function GradientBackground({ division }: { division: Division }) {
             className="absolute w-[450px] h-[450px] rounded-full"
             style={{
               background: `radial-gradient(circle, rgba(${theme.primary},0.035) 0%, transparent 50%)`,
-              filter: 'blur(50px)',
+              filter: 'blur(60px)',
               left: '20%',
               top: '50%',
             }}
@@ -323,7 +323,7 @@ export function Premium3DEffects({
       {/* ═══ GOD RAYS — Slowly rotating diagonal light beams (desktop only) ═══ */}
       <div className="hidden lg:block">
         <motion.div
-          className="absolute inset-0 opacity-[0.03] lg:opacity-[0.045]"
+          className="absolute inset-0 opacity-[0.025] lg:opacity-[0.035]"
           animate={{ rotate: [0, 2, 0, -2, 0] }}
           transition={{ duration: 30, repeat: Infinity, ease: 'easeInOut' }}
           style={{ transformOrigin: '50% 0%' }}
@@ -382,7 +382,7 @@ export function Premium3DEffects({
             marginTop: 'min(-250px, -35vw)',
             marginLeft: 'min(-250px, -35vw)',
             borderRadius: '50%',
-            border: `1px solid rgba(${accentRgb},0.06)`,
+            border: `0.5px solid rgba(${accentRgb},0.06)`,
             boxShadow: `
               inset 0 0 60px rgba(${accentRgb},0.02),
               0 0 60px rgba(${accentRgb},0.02)
@@ -668,14 +668,14 @@ export function Premium3DEffects({
             {/* Static base line */}
             <div
               className="absolute top-0 bottom-0 w-[0.5px]"
-              style={{ background: `rgba(${stream.color},0.04)` }}
+              style={{ background: `rgba(${stream.color},0.03)` }}
             />
             {/* Traveling pulse */}
             <motion.div
               className="absolute w-[1px] h-[80px]"
               style={{
-                background: `linear-gradient(180deg, transparent 0%, rgba(${stream.color},0.2) 30%, rgba(${stream.color},0.35) 50%, rgba(${stream.color},0.2) 70%, transparent 100%)`,
-                boxShadow: `0 0 8px 2px rgba(${stream.color},0.06)`,
+                background: `linear-gradient(180deg, transparent 0%, rgba(${stream.color},0.15) 30%, rgba(${stream.color},0.25) 50%, rgba(${stream.color},0.15) 70%, transparent 100%)`,
+                boxShadow: `0 0 8px 2px rgba(${stream.color},0.04)`,
                 left: '-0.25px',
               }}
               animate={{ top: ['-80px', '105vh'] }}
@@ -690,7 +690,7 @@ export function Premium3DEffects({
             <motion.div
               className="absolute w-[0.5px] h-[50px]"
               style={{
-                background: `linear-gradient(180deg, transparent 0%, rgba(${stream.color},0.1) 50%, transparent 100%)`,
+                background: `linear-gradient(180deg, transparent 0%, rgba(${stream.color},0.08) 50%, transparent 100%)`,
                 left: '-0.25px',
               }}
               animate={{ top: ['-50px', '105vh'] }}
@@ -706,7 +706,7 @@ export function Premium3DEffects({
       </div>
 
       {/* ═══ 3D PERSPECTIVE GRID — Bottom depth effect (desktop only) ═══ */}
-      <div className="hidden lg:block absolute bottom-0 left-0 right-0 h-[30%] overflow-hidden opacity-[0.03]">
+      <div className="hidden lg:block absolute bottom-0 left-0 right-0 h-[30%] overflow-hidden opacity-[0.025]">
         <div
           className="absolute inset-0"
           style={{
@@ -766,7 +766,7 @@ export function Premium3DEffects({
           <motion.div
             className="absolute top-4 left-4 w-12 h-[1px]"
             style={{
-              background: `linear-gradient(90deg, rgba(${accentRgb},0.25), transparent)`,
+              background: `linear-gradient(90deg, rgba(${accentRgb},0.18), transparent)`,
               boxShadow: `0 0 8px 1px rgba(${accentRgb},0.06)`,
             }}
             animate={{ opacity: [0.6, 1, 0.6], scaleX: [0.9, 1, 0.9] }}
@@ -775,7 +775,7 @@ export function Premium3DEffects({
           <motion.div
             className="absolute top-4 left-4 w-[1px] h-12"
             style={{
-              background: `linear-gradient(180deg, rgba(${accentRgb},0.25), transparent)`,
+              background: `linear-gradient(180deg, rgba(${accentRgb},0.15), transparent)`,
               boxShadow: `0 0 8px 1px rgba(${accentRgb},0.06)`,
             }}
             animate={{ opacity: [0.6, 1, 0.6], scaleY: [0.9, 1, 0.9] }}
@@ -788,7 +788,7 @@ export function Premium3DEffects({
           <motion.div
             className="absolute bottom-4 right-4 w-12 h-[1px]"
             style={{
-              background: `linear-gradient(90deg, transparent, rgba(${accentRgb},0.20))`,
+              background: `linear-gradient(90deg, transparent, rgba(${accentRgb},0.14))`,
               boxShadow: `0 0 8px 1px rgba(${accentRgb},0.05)`,
             }}
             animate={{ opacity: [0.5, 1, 0.5], scaleX: [0.9, 1, 0.9] }}
@@ -797,7 +797,7 @@ export function Premium3DEffects({
           <motion.div
             className="absolute bottom-4 right-4 w-[1px] h-12"
             style={{
-              background: `linear-gradient(180deg, transparent, rgba(${accentRgb},0.20))`,
+              background: `linear-gradient(180deg, transparent, rgba(${accentRgb},0.14))`,
               boxShadow: `0 0 8px 1px rgba(${accentRgb},0.05)`,
             }}
             animate={{ opacity: [0.5, 1, 0.5], scaleY: [0.9, 1, 0.9] }}
@@ -810,7 +810,7 @@ export function Premium3DEffects({
           <motion.div
             className="absolute top-3 right-3 w-8 h-[0.5px]"
             style={{
-              background: `linear-gradient(90deg, transparent, rgba(${accentRgb2},0.12))`,
+              background: `linear-gradient(90deg, transparent, rgba(${accentRgb2},0.10))`,
             }}
             animate={{ opacity: [0.4, 0.8, 0.4] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
@@ -818,7 +818,7 @@ export function Premium3DEffects({
           <motion.div
             className="absolute top-3 right-3 w-[0.5px] h-8"
             style={{
-              background: `linear-gradient(180deg, rgba(${accentRgb2},0.12), transparent)`,
+              background: `linear-gradient(180deg, rgba(${accentRgb2},0.10), transparent)`,
             }}
             animate={{ opacity: [0.4, 0.8, 0.4] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.7 }}
@@ -830,7 +830,7 @@ export function Premium3DEffects({
           <motion.div
             className="absolute bottom-3 left-3 w-8 h-[0.5px]"
             style={{
-              background: `linear-gradient(90deg, rgba(${accentRgb2},0.12), transparent)`,
+              background: `linear-gradient(90deg, rgba(${accentRgb2},0.10), transparent)`,
             }}
             animate={{ opacity: [0.4, 0.8, 0.4] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
@@ -838,7 +838,7 @@ export function Premium3DEffects({
           <motion.div
             className="absolute bottom-3 left-3 w-[0.5px] h-8"
             style={{
-              background: `linear-gradient(180deg, transparent, rgba(${accentRgb2},0.12))`,
+              background: `linear-gradient(180deg, transparent, rgba(${accentRgb2},0.10))`,
             }}
             animate={{ opacity: [0.4, 0.8, 0.4] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1.7 }}

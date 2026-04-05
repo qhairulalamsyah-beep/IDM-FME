@@ -72,7 +72,7 @@ export function PlayerListModal({ isOpen, onOpenChange, players, division }: Pla
 
           {/* Sheet - with drag to close */}
           <motion.div
-            className="relative glass rounded-t-[32px] w-full max-w-md lg:max-w-2xl overflow-hidden flex flex-col"
+            className="relative glass rounded-t-[28px] ios-modal-content w-full max-w-md lg:max-w-2xl overflow-hidden flex flex-col"
             style={{ maxHeight: 'calc(100dvh - 80px)', paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -88,7 +88,7 @@ export function PlayerListModal({ isOpen, onOpenChange, players, division }: Pla
             }}
           >
             {/* Premium Drag Handle */}
-            <div className="flex justify-center pt-4 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing">
+            <div className="ios-sheet-grabber flex justify-center pt-4 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing">
               <div className="w-12 h-[5px] rounded-full bg-white/20 shadow-sm shadow-white/10" />
             </div>
 
@@ -100,7 +100,7 @@ export function PlayerListModal({ isOpen, onOpenChange, players, division }: Pla
                     <Users className={`w-[18px] h-[18px] ${accentClass}`} />
                   </div>
                   <div>
-                    <h2 className="text-[17px] font-bold text-white/90 tracking-tight leading-tight">Daftar Pemain</h2>
+                    <h2 className="ios-section-title text-[17px] font-bold text-white/90 tracking-tight leading-tight">Daftar Pemain</h2>
                     <p className="text-[11px] text-white/30 mt-0.5 font-medium">
                       {players.length} pemain terdaftar
                     </p>
@@ -183,7 +183,7 @@ export function PlayerListModal({ isOpen, onOpenChange, players, division }: Pla
                   {filtered.map((player, index) => (
                     <motion.div
                       key={player.id}
-                      className="glass-subtle rounded-2xl px-4 py-3.5 lg:px-5 lg:py-3 group cursor-pointer transition-all duration-300 hover:translate-y-[-2px]"
+                      className="ios-list-item glass-subtle rounded-2xl px-4 py-3.5 lg:px-5 lg:py-3 group cursor-pointer transition-all duration-300 hover:translate-y-[-2px]"
                       style={{
                         boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                       }}

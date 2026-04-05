@@ -176,10 +176,10 @@ export function RegistrationModal({
     <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
       <SheetContent
         side="bottom"
-        className="!max-h-[92vh] rounded-t-3xl bg-[#0a0a0f]/95 backdrop-blur-2xl border-t border-white/[0.06] overflow-hidden"
+        className="!max-h-[92vh] rounded-t-[28px] ios-modal-content bg-[#0a0a0f]/95 backdrop-blur-2xl border-t border-white/[0.06] overflow-hidden"
       >
         {/* Drag handle */}
-        <div className="flex justify-center pt-2 pb-0">
+        <div className="ios-sheet-grabber flex justify-center pt-2 pb-0">
           <div className="w-10 h-1 rounded-full bg-white/15" />
         </div>
 
@@ -254,7 +254,7 @@ export function RegistrationModal({
                       />
                     </div>
                     <div>
-                      <h3 className="text-[13px] font-bold text-white/90">
+                      <h3 className="ios-section-title text-[13px] font-bold text-white/90">
                         Formulir Pendaftaran
                       </h3>
                       <p className="text-[11px] text-white/30 font-medium">
@@ -365,7 +365,7 @@ export function RegistrationModal({
                   </div>
 
                   {/* ── Divider ── */}
-                  <div className="divider" />
+                  <div className="divider ios-modal-divider" />
 
                   {/* ── Avatar Upload ── */}
                   <div>
