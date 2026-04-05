@@ -536,14 +536,15 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         // Fix #27: Detect total network failure (all requests failed)
         if ([usersRes, tournamentsRes, donationsRes, sawerRes, mvpRes].every((r) => r === null)) {
-          get().addToast('Tidak dapat terhubung ke server', 'error');
+          // Inject demo data instead of showing error
+          injectDemoData(division);
           if (loading) set({ isLoading: false });
           return;
         }
 
         // Process users
         const usersData = usersRes ? await usersRes.json().catch(() => null) : null;
-        if (usersData?.success) {
+        if (usersData?.success && usersData.users?.length > 0) {
           let users = usersData.users;
 
           // Merge MVP data (mvpScore from raw SQL endpoint)
@@ -595,15 +596,14 @@ export const useAppStore = create<AppState>((set, get) => ({
           }
         } catch { /* sawer optional */ }
 
-        // ── Demo Mode: Inject mock data when database is unavailable ──
+        // ── Demo Mode: Inject mock data when database is empty or unavailable ──
         const currentState = get();
         const noUsers = currentState.users.length === 0;
         const noTournament = !currentState.currentTournament;
-        // Check if all responses were errors (500 from Prisma, not network failure)
-        const allFailed = [usersRes, tournamentsRes, donationsRes, sawerRes, mvpRes]
-          .every((r) => r !== null && !r.ok);
 
-        if (noUsers && noTournament && (allFailed || [usersRes, tournamentsRes].every((r) => r === null))) {
+        // Trigger demo data if: no users AND no tournament (regardless of API status)
+        // This handles both: database disconnected (500) AND database connected but empty (200 + [])
+        if (noUsers && noTournament) {
           injectDemoData(division);
         }
 
@@ -619,8 +619,17 @@ export const useAppStore = create<AppState>((set, get) => ({
         if (loading) set({ isLoading: false });
       } catch (error) {
         console.error('Error fetching data:', error);
+        // If fetch fails entirely, inject demo data as fallback
+        const currentState = get();
+        if (currentState.users.length === 0 && !currentState.currentTournament) {
+          injectDemoData(get().division);
+        }
         set({ isLoading: false });
-        get().addToast('Gagal memuat data', 'error');
+        // Only show error toast if demo data was NOT injected
+        const afterState = get();
+        if (afterState.users.length === 0) {
+          get().addToast('Gagal memuat data', 'error');
+        }
       }
     };
 
